@@ -373,7 +373,7 @@ public abstract class Monitor
     /**
      * Constant used to initialize all the numeric values.
      */
-    static final Integer INTEGER_ZERO = new Integer(0);
+    static final Integer INTEGER_ZERO = 0;
 
 
     /*
@@ -523,7 +523,7 @@ public abstract class Monitor
         //
         ObservedObject o = createObservedObject(object);
         o.setAlreadyNotified(RESET_FLAGS_ALREADY_NOTIFIED);
-        o.setDerivedGauge(null);
+        o.setDerivedGauge(INTEGER_ZERO);
         o.setDerivedGaugeTimeStamp(System.currentTimeMillis());
         observedObjects.add(o);
 
