@@ -1,6 +1,24 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ * CA 95054 USA or visit www.sun.com if you need additional information or
+ * have any questions.
  */
 
 /*
@@ -31,10 +49,11 @@ public class JarFromManifestFailure {
         arList.add(new File("HelloLib.jar"));
         jar(new File(libFile, "JarPointer.jar"), arList, testClasses);
 
-        String [] args1 = new String[3];
-        args1[0] = "-cp";
-        args1[1] = new File(libFile, "JarPointer.jar").toString().replace('\\', '/');
-        args1[2] = new File(testSrc, "test/SayHello.java").toString().replace('\\', '/');
+        String[] args1 = {
+            "-d", ".",
+            "-cp", new File(libFile, "JarPointer.jar").getPath().replace('\\', '/'),
+            new File(testSrc, "test/SayHello.java").getPath().replace('\\', '/')
+        };
         System.err.println("First compile!!!");
         if (com.sun.tools.javac.Main.compile(args1) != 0) {
             throw new AssertionError("Failure in first compile!");
@@ -42,10 +61,11 @@ public class JarFromManifestFailure {
 
         System.err.println("Second compile!!!");
 
-        args1 = new String[3];
-        args1[0] = "-cp";
-        args1[1] = new File(libFile, "JarPointer.jar").toString().replace('\\', '/');
-        args1[2] = new File(testSrc, "test1/SayHelloToo.java").toString().replace('\\', '/');
+        args1 = new String[] {
+            "-d", ".",
+            "-cp", new File(libFile, "JarPointer.jar").getPath().replace('\\', '/'),
+            new File(testSrc, "test1/SayHelloToo.java").getPath().replace('\\', '/')
+        };
         if (com.sun.tools.javac.Main.compile(args1) != 0) {
             throw new AssertionError("Failure in second compile!");
         }
