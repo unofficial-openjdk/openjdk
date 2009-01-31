@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)cmsGCAdaptivePolicyCounters.cpp	1.16 07/05/05 17:05:25 JVM"
 #endif
 /*
  * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.

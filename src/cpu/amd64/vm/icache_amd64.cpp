@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)icache_amd64.cpp	1.13 07/05/17 15:39:46 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -51,7 +51,7 @@ void ICacheStubGenerator::generate_icache_flush(
   __ mfence();
 
   __ bind(flush_line);
-  __ clflush(Address(addr, 0));
+  __ clflush(Address(addr));
   __ addq(addr, ICache::line_size);
   __ decrementl(lines);
   __ jcc(Assembler::notZero, flush_line);

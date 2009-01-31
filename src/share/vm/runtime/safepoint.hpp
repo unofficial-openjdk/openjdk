@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)safepoint.hpp	1.103 07/05/26 16:02:40 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -62,11 +62,6 @@ class SafepointSynchronize : AllStatic {
       _other_thread = 2
   };
 
-  enum SafepointTimeoutReason {
-    _spinning_timeout = 0,
-    _blocking_timeout = 1
-  };
-
   typedef struct { 
     int    _vmop_type;                         // type of VM operation triggers the safepoint
     int    _nof_total_threads;                 // total number of Java threads
@@ -112,10 +107,6 @@ private:
   inline static void inc_page_trap_count() {
     Atomic::inc(&_safepoint_stats[_cur_stat_index]._nof_threads_hit_page_trap);
   }
-
-  // For debug long safepoint 
-  static void print_safepoint_timeout(SafepointTimeoutReason timeout_reason);
-
 public:
 
   // Main entry points
@@ -151,7 +142,7 @@ public:
   static void print_state()                                PRODUCT_RETURN;
   static void safepoint_msg(const char* format, ...)       PRODUCT_RETURN;
   
-  static void deferred_initialize_stat();
+  static void initialize_stat();
   static void print_stat_on_exit();
   inline static void inc_vmop_coalesced_count() { _coalesced_vmop_count++; }
 

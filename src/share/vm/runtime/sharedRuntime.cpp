@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)sharedRuntime.cpp	1.382 07/07/19 12:19:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -468,6 +468,11 @@ address SharedRuntime::compute_compiled_exc_handler(nmethod* nm, address ret_pc,
 JRT_ENTRY(void, SharedRuntime::throw_AbstractMethodError(JavaThread* thread))
   // These errors occur only at call sites
   throw_and_post_jvmti_exception(thread, vmSymbols::java_lang_AbstractMethodError());
+JRT_END
+
+JRT_ENTRY(void, SharedRuntime::throw_IncompatibleClassChangeError(JavaThread* thread))
+  // These errors occur only at call sites
+  throw_and_post_jvmti_exception(thread, vmSymbols::java_lang_IncompatibleClassChangeError(), "vtable stub");
 JRT_END
 
 JRT_ENTRY(void, SharedRuntime::throw_ArithmeticException(JavaThread* thread))

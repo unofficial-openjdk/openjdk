@@ -132,12 +132,6 @@ ifeq ($(ARCH_DATA_MODEL), 32)
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.dll
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.pdb
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.map
-  # kernel vm
-  EXPORT_KERNEL_DIR = $(EXPORT_JRE_BIN_DIR)/kernel
-  EXPORT_LIST += $(EXPORT_KERNEL_DIR)/Xusage.txt
-  EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.dll
-  EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.pdb
-  EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.map
 endif
 
 ifeq ($(BUILD_WIN_SA), 1)

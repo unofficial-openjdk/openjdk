@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LIRGenerator_i486.cpp	1.13 07/05/05 17:04:13 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -65,22 +65,22 @@ void LIRItem::load_nonconstant() {
 //--------------------------------------------------------------
 
 
-LIR_Opr LIRGenerator::exceptionOopOpr() { return FrameMap::rax_oop_opr; }
-LIR_Opr LIRGenerator::exceptionPcOpr()  { return FrameMap::rdx_opr; }
-LIR_Opr LIRGenerator::divInOpr()        { return FrameMap::rax_opr; }
-LIR_Opr LIRGenerator::divOutOpr()       { return FrameMap::rax_opr; }
-LIR_Opr LIRGenerator::remOutOpr()       { return FrameMap::rdx_opr; }
-LIR_Opr LIRGenerator::shiftCountOpr()   { return FrameMap::rcx_opr; }
-LIR_Opr LIRGenerator::syncTempOpr()     { return FrameMap::rax_opr; }
+LIR_Opr LIRGenerator::exceptionOopOpr() { return FrameMap::eax_oop_opr; }
+LIR_Opr LIRGenerator::exceptionPcOpr()  { return FrameMap::edx_opr; }
+LIR_Opr LIRGenerator::divInOpr()        { return FrameMap::eax_opr; }
+LIR_Opr LIRGenerator::divOutOpr()       { return FrameMap::eax_opr; }
+LIR_Opr LIRGenerator::remOutOpr()       { return FrameMap::edx_opr; }
+LIR_Opr LIRGenerator::shiftCountOpr()   { return FrameMap::ecx_opr; }
+LIR_Opr LIRGenerator::syncTempOpr()     { return FrameMap::eax_opr; }
 LIR_Opr LIRGenerator::getThreadTemp()   { return LIR_OprFact::illegalOpr; }
 
 
 LIR_Opr LIRGenerator::result_register_for(ValueType* type, bool callee) {
   LIR_Opr opr;
   switch (type->tag()) {
-    case intTag:     opr = FrameMap::rax_opr;          break;
-    case objectTag:  opr = FrameMap::rax_oop_opr;      break;
-    case longTag:    opr = FrameMap::rax_rdx_long_opr; break; 
+    case intTag:     opr = FrameMap::eax_opr;          break;
+    case objectTag:  opr = FrameMap::eax_oop_opr;      break;
+    case longTag:    opr = FrameMap::eax_edx_long_opr; break; 
     case floatTag:   opr = UseSSE >= 1 ? FrameMap::xmm0_float_opr  : FrameMap::fpu0_float_opr;  break;
     case doubleTag:  opr = UseSSE >= 2 ? FrameMap::xmm0_double_opr : FrameMap::fpu0_double_opr;  break;
     
@@ -225,7 +225,7 @@ bool LIRGenerator::strength_reduce_multiply(LIR_Opr left, int c, LIR_Opr result,
 
 void LIRGenerator::store_stack_parameter (LIR_Opr item, ByteSize offset_from_sp) {
   BasicType type = item->type();
-  __ store(item, new LIR_Address(FrameMap::rsp_opr, in_bytes(offset_from_sp), type));
+  __ store(item, new LIR_Address(FrameMap::esp_opr, in_bytes(offset_from_sp), type));
 }
 
 //----------------------------------------------------------------------
@@ -296,12 +296,9 @@ void LIRGenerator::do_StoreIndexed(StoreIndexed* x) {
     __ store_check(value.result(), array.result(), tmp1, tmp2, tmp3, store_check_info);
   }
 
+  __ move(value.result(), array_addr, null_check_info);
   if (obj_store) {
-    __ move(value.result(), array_addr, null_check_info);
-    // Seems to be a precise 
-    post_barrier(LIR_OprFact::address(array_addr), value.result());
-  } else {
-    __ move(value.result(), array_addr, null_check_info);
+    write_barrier(LIR_OprFact::address(array_addr));
   }
 }
 
@@ -484,7 +481,7 @@ void LIRGenerator::do_ArithmeticOp_Long(ArithmeticOp* x) {
     left.load_item();
     right.load_item();
 
-    LIR_Opr reg = FrameMap::rax_rdx_long_opr;
+    LIR_Opr reg = FrameMap::eax_edx_long_opr;
     arithmetic_op_long(x->op(), reg, left.result(), right.result(), NULL);
     LIR_Opr result = rlock_result(x);
     __ move(reg, result);
@@ -507,13 +504,13 @@ void LIRGenerator::do_ArithmeticOp_Long(ArithmeticOp* x) {
 void LIRGenerator::do_ArithmeticOp_Int(ArithmeticOp* x) {
   if (x->op() == Bytecodes::_idiv || x->op() == Bytecodes::_irem) {
     // The requirements for division and modulo
-    // input : rax,: dividend                         min_int
-    //         reg: divisor   (may not be rax,/rdx)   -1
+    // input : eax: dividend                         min_int
+    //         reg: divisor   (may not be eax/edx)   -1
     //
-    // output: rax,: quotient  (= rax, idiv reg)       min_int
-    //         rdx: remainder (= rax, irem reg)       0
+    // output: eax: quotient  (= eax idiv reg)       min_int
+    //         edx: remainder (= eax irem reg)       0
 
-    // rax, and rdx will be destroyed
+    // eax and edx will be destroyed
 
     // Note: does this invalidate the spec ???
     LIRItem right(x->y(), this);
@@ -541,7 +538,7 @@ void LIRGenerator::do_ArithmeticOp_Int(ArithmeticOp* x) {
       __ cmp(lir_cond_equal, right.result(), LIR_OprFact::intConst(0));
       __ branch(lir_cond_equal, T_INT, new DivByZeroStub(info));
     }
-    LIR_Opr tmp = FrameMap::rdx_opr; // idiv and irem use rdx in their implementation
+    LIR_Opr tmp = FrameMap::edx_opr; // idiv and irem use edx in their implementation
     if (x->op() == Bytecodes::_irem) {
       __ irem(left.result(), right.result(), result_reg, tmp, info);
     } else if (x->op() == Bytecodes::_idiv) {
@@ -624,7 +621,7 @@ void LIRGenerator::do_ArithmeticOp(ArithmeticOp* x) {
 
 // _ishl, _lshl, _ishr, _lshr, _iushr, _lushr
 void LIRGenerator::do_ShiftOp(ShiftOp* x) {
-  // count must always be in rcx
+  // count must always be in ecx
   LIRItem value(x->x(), this);
   LIRItem count(x->y(), this);
 
@@ -692,11 +689,11 @@ void LIRGenerator::do_AttemptUpdate(Intrinsic* x) {
   LIRItem cmp_value (x->argument_at(1), this);  // value to compare with field
   LIRItem new_value (x->argument_at(2), this);  // replace field with new_value if it matches cmp_value
   
-  // compare value must be in rdx,eax (hi,lo); may be destroyed by cmpxchg8 instruction
-  cmp_value.load_item_force(FrameMap::rax_rdx_long_opr);
+  // compare value must be in edx,eax (hi,lo); may be destroyed by cmpxchg8 instruction
+  cmp_value.load_item_force(FrameMap::eax_edx_long_opr);
   
-  // new value must be in rcx,ebx (hi,lo)
-  new_value.load_item_force(FrameMap::rbx_rcx_long_opr);
+  // new value must be in ecx,ebx (hi,lo)
+  new_value.load_item_force(FrameMap::ebx_ecx_long_opr);
   
   // object pointer register is overwritten with field address
   obj.load_item();
@@ -732,23 +729,21 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   offset.load_nonconstant();
 
   if (type == objectType) {
-    cmp.load_item_force(FrameMap::rax_oop_opr);
+    cmp.load_item_force(FrameMap::eax_oop_opr);
     val.load_item();
   } else if (type == intType) {
-    cmp.load_item_force(FrameMap::rax_opr);
+    cmp.load_item_force(FrameMap::eax_opr);
     val.load_item();
   } else if (type == longType) {
-    cmp.load_item_force(FrameMap::rax_rdx_long_opr);
-    val.load_item_force(FrameMap::rbx_rcx_long_opr);
+    cmp.load_item_force(FrameMap::eax_edx_long_opr);
+    val.load_item_force(FrameMap::ebx_ecx_long_opr);
   } else {
     ShouldNotReachHere();
   }
 
-  LIR_Opr addr = new_pointer_register();
+  LIR_Opr addr = new_register(T_OBJECT);
   __ move(obj.result(), addr);
   __ add(addr, offset.result(), addr);
-
-
 
   LIR_Opr ill = LIR_OprFact::illegalOpr;  // for convenience
   if (type == objectType) 
@@ -764,10 +759,8 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   // generate conditional move of boolean result
   LIR_Opr result = rlock_result(x);
   __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result);
-  if (type == objectType) {   // Write-barrier needed for Object fields.
-    // Seems to be precise 
-    post_barrier(addr, val.result());
-  }
+  if (type == objectType)   // Write-barrier needed for Object fields.
+    write_barrier(addr);
 }
 
 
@@ -836,12 +829,12 @@ void LIRGenerator::do_ArrayCopy(Intrinsic* x) {
   // operands for arraycopy must use fixed registers, otherwise
   // LinearScan will fail allocation (because arraycopy always needs a
   // call)
-  src.load_item_force     (FrameMap::rcx_oop_opr);
-  src_pos.load_item_force (FrameMap::rdx_opr);
-  dst.load_item_force     (FrameMap::rax_oop_opr);
-  dst_pos.load_item_force (FrameMap::rbx_opr);
-  length.load_item_force  (FrameMap::rdi_opr);
-  LIR_Opr tmp =           (FrameMap::rsi_opr);
+  src.load_item_force     (FrameMap::ecx_oop_opr);
+  src_pos.load_item_force (FrameMap::edx_opr);
+  dst.load_item_force     (FrameMap::eax_oop_opr);
+  dst_pos.load_item_force (FrameMap::ebx_opr);
+  length.load_item_force  (FrameMap::edi_opr);
+  LIR_Opr tmp =           (FrameMap::esi_opr);
   set_no_result(x);
 
   int flags;
@@ -859,8 +852,8 @@ LIR_Opr fixed_register_for(BasicType type) {
   switch (type) {
     case T_FLOAT:  return FrameMap::fpu0_float_opr;
     case T_DOUBLE: return FrameMap::fpu0_double_opr;
-    case T_INT:    return FrameMap::rax_opr;
-    case T_LONG:   return FrameMap::rax_rdx_long_opr;
+    case T_INT:    return FrameMap::eax_opr;
+    case T_LONG:   return FrameMap::eax_edx_long_opr;
     default:       ShouldNotReachHere(); return LIR_OprFact::illegalOpr;
   }        
 }
@@ -935,11 +928,11 @@ void LIRGenerator::do_NewInstance(NewInstance* x) {
   LIR_Opr reg = result_register_for(x->type());
   LIR_Opr klass_reg = new_register(objectType);
   new_instance(reg, x->klass(),
-                       FrameMap::rcx_oop_opr,
-                       FrameMap::rdi_oop_opr,
-                       FrameMap::rsi_oop_opr,
+                       FrameMap::ecx_oop_opr,
+                       FrameMap::edi_oop_opr,
+                       FrameMap::esi_oop_opr,
                        LIR_OprFact::illegalOpr,
-                       FrameMap::rdx_oop_opr, info);
+                       FrameMap::edx_oop_opr, info);
   LIR_Opr result = rlock_result(x);
   __ move(reg, result);
 }
@@ -949,14 +942,14 @@ void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
   CodeEmitInfo* info = state_for(x, x->state());
 
   LIRItem length(x->length(), this);
-  length.load_item_force(FrameMap::rbx_opr);
+  length.load_item_force(FrameMap::ebx_opr);
 
   LIR_Opr reg = result_register_for(x->type());
-  LIR_Opr tmp1 = FrameMap::rcx_oop_opr;
-  LIR_Opr tmp2 = FrameMap::rsi_oop_opr;
-  LIR_Opr tmp3 = FrameMap::rdi_oop_opr;
+  LIR_Opr tmp1 = FrameMap::ecx_oop_opr;
+  LIR_Opr tmp2 = FrameMap::esi_oop_opr;
+  LIR_Opr tmp3 = FrameMap::edi_oop_opr;
   LIR_Opr tmp4 = reg;
-  LIR_Opr klass_reg = FrameMap::rdx_oop_opr;
+  LIR_Opr klass_reg = FrameMap::edx_oop_opr;
   LIR_Opr len = length.result();
   BasicType elem_type = x->elt_type();
   
@@ -982,13 +975,13 @@ void LIRGenerator::do_NewObjectArray(NewObjectArray* x) {
   CodeEmitInfo* info = state_for(x, x->state());
 
   const LIR_Opr reg = result_register_for(x->type());
-  LIR_Opr tmp1 = FrameMap::rcx_oop_opr;
-  LIR_Opr tmp2 = FrameMap::rsi_oop_opr;
-  LIR_Opr tmp3 = FrameMap::rdi_oop_opr;
+  LIR_Opr tmp1 = FrameMap::ecx_oop_opr;
+  LIR_Opr tmp2 = FrameMap::esi_oop_opr;
+  LIR_Opr tmp3 = FrameMap::edi_oop_opr;
   LIR_Opr tmp4 = reg;
-  LIR_Opr klass_reg = FrameMap::rdx_oop_opr;
+  LIR_Opr klass_reg = FrameMap::edx_oop_opr;
 
-  length.load_item_force(FrameMap::rbx_opr);
+  length.load_item_force(FrameMap::ebx_opr);
   LIR_Opr len = length.result();
 
   CodeStub* slow_path = new NewObjectArrayStub(klass_reg, len, reg, info);
@@ -1036,10 +1029,10 @@ void LIRGenerator::do_NewMultiArray(NewMultiArray* x) {
   LIR_Opr reg = result_register_for(x->type());
   jobject2reg_with_patching(reg, x->klass(), patching_info);
 
-  LIR_Opr rank = FrameMap::rbx_opr;
+  LIR_Opr rank = FrameMap::ebx_opr;
   __ move(LIR_OprFact::intConst(x->rank()), rank);
-  LIR_Opr varargs = FrameMap::rcx_opr;
-  __ move(FrameMap::rsp_opr, varargs);
+  LIR_Opr varargs = FrameMap::ecx_opr;
+  __ move(FrameMap::esp_opr, varargs);
   LIR_OprList* args = new LIR_OprList(3);
   args->append(reg);
   args->append(rank);
@@ -1251,14 +1244,10 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
     __ move(tmp, addr);
   } else {
     LIR_Address* addr = new LIR_Address(src, offset, type);
-    bool is_obj = (type == T_ARRAY || type == T_OBJECT);
-    if (is_obj) {
-      __ move(data, addr);
+    __ move(data, addr);
+    if (type == T_ARRAY || type == T_OBJECT) {
       assert(src->is_register(), "must be register");
-      // Seems to be a precise address
-      post_barrier(LIR_OprFact::address(addr), data);
-    } else {
-      __ move(data, addr);
+      write_barrier(LIR_OprFact::address(addr));
     }
   }
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)psScavenge.cpp	1.98 07/06/08 23:12:37 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.

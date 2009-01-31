@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)relocator.hpp	1.27 07/05/05 17:06:54 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.

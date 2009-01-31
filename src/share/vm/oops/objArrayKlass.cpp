@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)objArrayKlass.cpp	1.147 07/05/29 09:44:23 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.

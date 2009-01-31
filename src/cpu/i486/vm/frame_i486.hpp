@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame_i486.hpp	1.78 07/05/05 17:04:15 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -31,8 +31,7 @@
 // can correspond to multiple source level frames because of inlining.
 // A frame is comprised of {pc, fp, sp}
 
-// ------------------------------ Asm interpreter ----------------------------------------
-// Layout of asm interpreter frame:
+// Layout of interpreter frame:
 //    [expression stack      ] * <- sp
 //    [monitors              ]   \
 //     ...                        | monitor block size
@@ -50,45 +49,6 @@
 //    [oop temp              ]                     (only for native calls)
 //    [locals and parameters ]   
 //                               <- sender sp
-// ------------------------------ Asm interpreter ----------------------------------------
-
-// ------------------------------ C++ interpreter ----------------------------------------
-//
-// Layout of C++ interpreter frame: (While executing in BytecodeInterpreter::run)
-//
-//                             <- SP (current esp/rsp)
-//    [local variables         ] BytecodeInterpreter::run local variables
-//    ...                        BytecodeInterpreter::run local variables
-//    [local variables         ] BytecodeInterpreter::run local variables
-//    [old frame pointer       ]   fp [ BytecodeInterpreter::run's ebp/rbp ]
-//    [return pc               ]  (return to frame manager)
-//    [interpreter_state*      ]  (arg to BytecodeInterpreter::run)   --------------
-//    [expression stack        ] <- last_Java_sp                           |
-//    [...                     ] * <- interpreter_state.stack              |
-//    [expression stack        ] * <- interpreter_state.stack_base         |
-//    [monitors                ]   \                                       |
-//     ...                          | monitor block size                   |
-//    [monitors                ]   / <- interpreter_state.monitor_base     |
-//    [struct interpretState   ] <-----------------------------------------|
-//    [return pc               ] (return to callee of frame manager [1]
-//    [locals and parameters   ]   
-//                               <- sender sp
-
-// [1] When the c++ interpreter calls a new method it returns to the frame
-//     manager which allocates a new frame on the stack. In that case there
-//     is no real callee of this newly allocated frame. The frame manager is
-//     aware of the  additional frame(s) and will pop them as nested calls
-//     complete. Howevers tTo make it look good in the debugger the frame
-//     manager actually installs a dummy pc pointing to RecursiveInterpreterActivation
-//     with a fake interpreter_state* parameter to make it easy to debug
-//     nested calls.
-
-// Note that contrary to the layout for the assembly interpreter the
-// expression stack allocated for the C++ interpreter is full sized.
-// However this is not as bad as it seems as the interpreter frame_manager
-// will truncate the unused space on succesive method calls.
-//
-// ------------------------------ C++ interpreter ----------------------------------------
 
  public:
   enum {
@@ -96,10 +56,7 @@
     // All frames
     link_offset                                      =  0,
     return_addr_offset                               =  1,
-    // In C++ interpreter we find send_sp by other means...
-    // However compiled code (c1) uses this value
     sender_sp_offset                                 =  2,
-#ifndef CC_INTERP
 
     // Interpreter frames
     interpreter_frame_result_handler_offset          =  3, // for native calls only
@@ -112,13 +69,11 @@
     interpreter_frame_mdx_offset                     = interpreter_frame_method_offset - 1,
     interpreter_frame_cache_offset                   = interpreter_frame_mdx_offset - 1,
     interpreter_frame_locals_offset                  = interpreter_frame_cache_offset - 1,
-    interpreter_frame_bcx_offset                     = interpreter_frame_locals_offset - 1,
+    interpreter_frame_bcx_offset                     = interpreter_frame_locals_offset - 1,    
     interpreter_frame_initial_sp_offset              = interpreter_frame_bcx_offset - 1,
 
     interpreter_frame_monitor_block_top_offset       = interpreter_frame_initial_sp_offset,
     interpreter_frame_monitor_block_bottom_offset    = interpreter_frame_initial_sp_offset,
-
-#endif // CC_INTERP
 
     // Entry frames
     entry_frame_call_wrapper_offset                  =  2,
@@ -126,8 +81,6 @@
     // Native frames
 
     native_frame_initial_param_offset                =  2
-
-
   };
 
  private:
@@ -161,12 +114,5 @@
   
   // expression stack tos if we are nested in a java call
   intptr_t* interpreter_frame_last_sp() const;
-#ifndef CC_INTERP
-  // deoptimization support
   void interpreter_frame_set_last_sp(intptr_t* sp);
-#endif // CC_INTERP
-
-#ifdef CC_INTERP
-  inline interpreterState get_interpreterState() const;
-#endif // CC_INTERP
 

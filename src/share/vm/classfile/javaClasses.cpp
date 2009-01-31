@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)javaClasses.cpp	1.247 07/05/17 15:50:20 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -308,7 +308,7 @@ oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
       Handle comp_mirror;
       if (k->oop_is_typeArray()) {
         BasicType type = typeArrayKlass::cast(k->as_klassOop())->element_type();
-        comp_mirror = Universe::java_mirror(type);
+        comp_mirror = SystemDictionary::java_mirror(type);
         assert(comp_mirror.not_null(), "must have primitive mirror");
       } else if (k->oop_is_objArray()) {
         klassOop element_klass = objArrayKlass::cast(k->as_klassOop())->element_klass();
@@ -394,15 +394,15 @@ BasicType java_lang_Class::primitive_type(oop java_class) {
     // Note: create_basic_type_mirror above initializes ak to a non-null value.
     type = arrayKlass::cast(ak)->element_type();
   } else {
-    assert(java_class == Universe::void_mirror(), "only valid non-array primitive");
+    assert(java_class == SystemDictionary::void_mirror(), "only valid non-array primitive");
   }
-  assert(Universe::java_mirror(type) == java_class, "must be consistent");
+  assert(SystemDictionary::java_mirror(type) == java_class, "must be consistent");
   return type;
 }
 
 
 oop java_lang_Class::primitive_mirror(BasicType t) {
-  oop mirror = Universe::java_mirror(t);
+  oop mirror = SystemDictionary::java_mirror(t);
   assert(mirror != NULL && mirror->is_a(SystemDictionary::class_klass()), "must be a Class");
   assert(java_lang_Class::is_primitive(mirror), "must be primitive");
   return mirror;
@@ -1125,7 +1125,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
     } else {
       if (fr.is_first_frame()) break;      
       address pc = fr.pc();
-      if (fr.is_interpreted_frame()) {
+      if (AbstractInterpreter::contains(pc)) {
         intptr_t bcx = fr.interpreter_frame_bcx();
         method = fr.interpreter_frame_method();
         bci =  fr.is_bci(bcx) ? bcx : method->bci_from((address)bcx);

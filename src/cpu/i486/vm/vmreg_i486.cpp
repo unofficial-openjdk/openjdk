@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmreg_i486.cpp	1.6 07/05/05 17:04:20 JVM"
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -26,11 +26,7 @@
  */
 
 #include "incls/_precompiled.incl"
-#ifndef AMD64
 #include "incls/_vmreg_i486.cpp.incl"
-#else
-#include "incls/_vmreg_amd64.cpp.incl"
-#endif // AMD64
 
 
 
@@ -39,9 +35,6 @@ void VMRegImpl::set_regName() {
   int i;
   for (i = 0; i < ConcreteRegisterImpl::max_gpr ; i++) {
     regName[i  ] = reg->name();
-#ifdef AMD64
-    regName[i++] = reg->name();
-#endif // AMD64
     reg = reg->successor();
   }
 

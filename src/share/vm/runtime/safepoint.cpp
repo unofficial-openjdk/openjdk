@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)safepoint.cpp	1.305 07/05/29 09:44:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -37,7 +37,6 @@ jlong SafepointSynchronize::_last_safepoint = 0;
 volatile int SafepointSynchronize::_safepoint_counter = 0;
 static volatile int PageArmed = 0 ;        // safepoint polling page is RO|RW vs PROT_NONE
 static volatile int TryingToBlock = 0 ;    // proximate value -- for advisory use only
-static bool timeout_error_printed = false; 
 
 // Roll all threads forward to a safepoint and suspend them all
 void SafepointSynchronize::begin() {   
@@ -82,7 +81,8 @@ void SafepointSynchronize::begin() {
   // Save the starting time, so that it can be compared to see if this has taken
   // too long to complete.
   jlong safepoint_limit_time;
-  timeout_error_printed = false;
+  static bool timeout_error_printed = false;
+  
   
   // Begin the process of bringing the system to a safepoint.
   // Java threads can be in several different states and are
@@ -129,7 +129,7 @@ void SafepointSynchronize::begin() {
   }
 
   // Make interpreter safepoint aware
-  Interpreter::notice_safepoints(); 
+  AbstractInterpreter::notice_safepoints(); 
 
   if (UseCompilerSafepoints && DeferPollingPageLoopCount < 0) { 
     // Make polling safepoint aware
@@ -148,7 +148,7 @@ void SafepointSynchronize::begin() {
 #endif // ASSERT
 
   if (SafepointTimeout)
-    safepoint_limit_time = os::javaTimeNanos() + (jlong)SafepointTimeoutDelay * MICROUNITS;
+    safepoint_limit_time = os::javaTimeMillis() + (jlong)SafepointTimeoutDelay;
 
   // Iterate through all threads until it have been determined how to stop them all at a safepoint  
   unsigned int iterations = 0;
@@ -172,15 +172,36 @@ void SafepointSynchronize::begin() {
       }
     }
 
-    if ( (PrintSafepointStatistics || (PrintSafepointStatisticsTimeout > 0)) 
-         && iterations == 0) {
+    if (PrintSafepointStatistics && iterations == 0) {
       begin_statistics(nof_threads, still_running);
     }
 
     if (still_running > 0) {
       // Check for if it takes to long
-      if (SafepointTimeout && safepoint_limit_time < os::javaTimeNanos()) {
-        print_safepoint_timeout(_spinning_timeout);
+      if (SafepointTimeout && safepoint_limit_time < os::javaTimeMillis()) {
+        if (!timeout_error_printed) {
+          timeout_error_printed = true;
+          // Print out the thread IDs which didn't reach the safepoint
+          // for debugging purposes (useful when there are lots of
+          // threads in the debugger)
+          tty->print_cr("# SafepointSynchronize::begin: Fatal error:");
+          tty->print_cr("# SafepointSynchronize::begin: Timed out while attempting to reach a safepoint.");
+          tty->print_cr("# SafepointSynchronize::begin: Threads which did not reach the safepoint:");
+          for(JavaThread *cur = Threads::first(); cur; cur = cur->next()) {
+            ThreadSafepointState *cur_state = cur->safepoint_state();
+            if (cur_state->is_running()) {         
+              tty->print("# ");
+              cur_state->print();
+              cur->osthread()->print();
+              tty->print_cr("");
+            }
+          }
+          tty->print_cr("# SafepointSynchronize::begin: (End of list)");
+        }
+
+        if (DieOnSafepointTimeout) {
+          fatal("Safepoint Timeout");
+        }
       }
 
       // Spin to avoid context switching.  
@@ -273,28 +294,50 @@ void SafepointSynchronize::begin() {
       Safepoint_lock->wait(true);  // true, means with no safepoint checks
     } else {
       // Compute remaining time
-      jlong remaining_time = safepoint_limit_time - os::javaTimeNanos();
+      jlong remaining_time = safepoint_limit_time - os::javaTimeMillis();
 
       // If there is no remaining time, then there is an error
-      if (remaining_time < 0 || Safepoint_lock->wait(true, remaining_time / MICROUNITS)) {
-        print_safepoint_timeout(_blocking_timeout);
+      if (remaining_time < 0 || Safepoint_lock->wait(true, remaining_time)) {
+        if (!timeout_error_printed) {
+          timeout_error_printed = true;
+          // Print out the thread IDs which didn't reach the safepoint
+          // for debugging purposes (useful when there are lots of
+          // threads in the debugger)
+          tty->print_cr("# SafepointSynchronize::begin: Fatal error:");
+          tty->print_cr("# SafepointSynchronize::begin: Timed out while waiting for all threads to stop.");
+          tty->print_cr("# SafepointSynchronize::begin: Threads which did not reach the safepoint:");
+          for(JavaThread *cur = Threads::first(); cur; cur = cur->next()) {
+            ThreadSafepointState *cur_state = cur->safepoint_state();
+            if (cur_state->type() == ThreadSafepointState::_call_back) {
+              if (!cur_state->has_called_back()) {
+                tty->print("# ");
+                cur_state->print();
+                cur->osthread()->print();
+                tty->print_cr("");
+              }
+            }
+          }
+          tty->print_cr("# SafepointSynchronize::begin: (End of list)");
+        }
+
+        if (DieOnSafepointTimeout) {
+          fatal("Safepoint Timeout");
+        }
       }
     }
-  }             
+  }               
   assert(_waiting_to_block == 0, "sanity check");
 
 #ifndef PRODUCT
   if (SafepointTimeout) {
-    jlong current_time = os::javaTimeNanos();
+    jlong current_time = os::javaTimeMillis();
     if (safepoint_limit_time < current_time) {
-      tty->print_cr("# SafepointSynchronize: Finished after " 
-                    INT64_FORMAT_W(6) " ms", 
-                    ((current_time - safepoint_limit_time) / MICROUNITS + 
-                     SafepointTimeoutDelay)); 
+      tty->print_cr("# SafepointSynchronize: Finished after %.4f seconds",
+        0.001 * ((double)current_time - (double)safepoint_limit_time + (double)SafepointTimeoutDelay) );
     }
   }
 #endif
-
+    
   assert((_safepoint_counter & 0x1) == 0, "must be even");
   assert(Threads_lock->owned_by_self(), "must hold Threads_lock");
   _safepoint_counter ++;
@@ -354,7 +397,7 @@ void SafepointSynchronize::end() {
   }
 
   // Remove safepoint check from interpreter
-  Interpreter::ignore_safepoints();
+  AbstractInterpreter::ignore_safepoints();
 
   {
     MutexLocker mu(Safepoint_lock);
@@ -696,51 +739,6 @@ void SafepointSynchronize::handle_polling_page_exception(JavaThread *thread) {
   // print_me(sp,stack_copy,was_oops);
 }
 
-
-void SafepointSynchronize::print_safepoint_timeout(SafepointTimeoutReason reason) {
-  if (!timeout_error_printed) {
-    timeout_error_printed = true;
-    // Print out the thread infor which didn't reach the safepoint for debugging
-    // purposes (useful when there are lots of threads in the debugger).
-    tty->print_cr("");
-    tty->print_cr("# SafepointSynchronize::begin: Timeout detected:");
-    if (reason ==  _spinning_timeout) {
-      tty->print_cr("# SafepointSynchronize::begin: Timed out while spinning to reach a safepoint.");
-    } else if (reason == _blocking_timeout) {
-      tty->print_cr("# SafepointSynchronize::begin: Timed out while waiting for threads to stop.");
-    }
-    
-    tty->print_cr("# SafepointSynchronize::begin: Threads which did not reach the safepoint:");
-    ThreadSafepointState *cur_state;
-    ResourceMark rm;
-    for(JavaThread *cur_thread = Threads::first(); cur_thread; 
-        cur_thread = cur_thread->next()) {
-      cur_state = cur_thread->safepoint_state();
-      
-      if (cur_thread->thread_state() != _thread_blocked &&
-          ((reason == _spinning_timeout && cur_state->is_running()) ||
-           (reason == _blocking_timeout && !cur_state->has_called_back()))) {
-        tty->print("# ");
-        cur_thread->print();
-        tty->print_cr("");
-      }
-    }
-    tty->print_cr("# SafepointSynchronize::begin: (End of list)");
-  }
-
-  // To debug the long safepoint, specify both DieOnSafepointTimeout & 
-  // ShowMessageBoxOnError.
-  if (DieOnSafepointTimeout) {
-    char msg[1024];
-    VM_Operation *op = VMThread::vm_operation();
-    sprintf(msg, "Safepoint sync time longer than %d ms detected when executing %s.",
-            SafepointTimeoutDelay,
-            op != NULL ? op->name() : "no vm operation");
-    fatal(msg);
-  }
-}
-  
-
 // -------------------------------------------------------------------------------------------------------
 // Implementation of ThreadSafepointState 
 
@@ -970,11 +968,8 @@ jlong  SafepointSynchronize::_max_sync_time = 0;
 static jlong  last_safepoint_start_time = 0;
 static jlong  sync_end_time = 0;  
 static bool   need_to_track_page_armed_status = false;
-static bool   init_done = false;
 
-void SafepointSynchronize::deferred_initialize_stat() {
-  if (init_done) return;
-
+void SafepointSynchronize::initialize_stat() {
   if (PrintSafepointStatisticsCount <= 0) {
     fatal("Wrong PrintSafepointStatisticsCount");
   }
@@ -1010,13 +1005,10 @@ void SafepointSynchronize::deferred_initialize_stat() {
   }
  
   tty->print_cr("page_trap_count");
-
-  init_done = true;
 }
 
 void SafepointSynchronize::begin_statistics(int nof_threads, int nof_running) {
-  deferred_initialize_stat();
-
+  
   SafepointStats *spstat = &_safepoint_stats[_cur_stat_index];
 
   VM_Operation *op = VMThread::vm_operation();
@@ -1148,8 +1140,9 @@ void SafepointSynchronize::print_statistics() {
 // print_statistics to print out the rest of the sampling.  Then
 // it tries to summarize the sampling.
 void SafepointSynchronize::print_stat_on_exit() {
-  if (_safepoint_stats == NULL) return;
-  
+  assert(Thread::current()->is_VM_thread(), 
+         "print_stat_on_exit not called on VMThread");
+
   SafepointStats *spstat = &_safepoint_stats[_cur_stat_index];
   
   // During VM exit, end_statistics may not get called and in that

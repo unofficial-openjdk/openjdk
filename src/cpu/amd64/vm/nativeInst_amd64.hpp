@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)nativeInst_amd64.hpp	1.14 07/05/05 17:04:07 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -40,7 +40,8 @@
 // The base class for different kinds of native instruction abstractions.
 // Provides the primitive operations to manipulate code relative to this.
 
-class NativeInstruction VALUE_OBJ_CLASS_SPEC {
+class NativeInstruction VALUE_OBJ_CLASS_SPEC
+{
   friend class Relocation;
 
  public:
@@ -49,7 +50,8 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
     nop_instruction_size = 1
   };
 
-  bool is_nop() { 
+  bool is_nop()
+  { 
     return ubyte_at(0) == nop_instruction_code;
   }
 
@@ -59,50 +61,59 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   inline bool is_jump();
   inline bool is_cond_jump();
   inline bool is_safepoint_poll();
-  inline bool is_mov_literal64();
  
  protected:
 
-  address addr_at(int offset) const {
+  address addr_at(int offset) const
+  {
     return address(this) + offset; 
   }
 
-  s_char sbyte_at(int offset) const {
+  s_char sbyte_at(int offset) const
+  {
     return *(s_char*) addr_at(offset);
   }
 
-  u_char ubyte_at(int offset) const {
+  u_char ubyte_at(int offset) const
+  {
     return *(u_char*) addr_at(offset);
   }
   
-  int int_at(int offset) const {
+  int int_at(int offset) const
+  {
     return *(int*) addr_at(offset);
   }
 
-  intptr_t ptr_at(int offset) const {
+  intptr_t ptr_at(int offset) const
+  {
     return *(intptr_t*) addr_at(offset);
   }
 
-  oop oop_at(int offset) const {
+  oop oop_at(int offset) const
+  {
     return *(oop*) addr_at(offset);
   }
 
-  void set_byte_at(int offset, u_char c) {
+  void set_byte_at(int offset, u_char c)
+  {
     *(u_char*) addr_at(offset) = c;
     wrote(offset);
   }
 
-  void set_int_at(int offset, int i) {
+  void set_int_at(int offset, int i)
+  {
     *(int*) addr_at(offset) = i;
     wrote(offset);
   }
 
-  void set_ptr_at(int offset, intptr_t ptr) {
+  void set_ptr_at(int offset, intptr_t ptr)
+  {
     *(intptr_t*) addr_at(offset) = ptr;
     wrote(offset);
   }
 
-  void set_oop_at(int offset, oop o) {
+  void set_oop_at(int offset, oop o)
+  {
     *(oop*) addr_at(offset) = o;
     wrote(offset);
   }
@@ -118,7 +129,8 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   inline friend NativeInstruction* nativeInstruction_at(address address);
 };
 
-inline NativeInstruction* nativeInstruction_at(address address) {
+inline NativeInstruction* nativeInstruction_at(address address) 
+{
   NativeInstruction* inst = (NativeInstruction*) address;
 #ifdef ASSERT
   //inst->verify();
@@ -133,7 +145,8 @@ inline NativeCall* nativeCall_before(address return_address);
 // The NativeCall is an abstraction for accessing/manipulating native
 // call rel32off instructions (used to manipulate inline caches,
 // primitive & dll calls, etc.).
-class NativeCall : public NativeInstruction {
+class NativeCall : public NativeInstruction 
+{
  public:
   enum amd64_specific_constants {
     instruction_code      = 0xE8,
@@ -147,27 +160,33 @@ class NativeCall : public NativeInstruction {
     cache_line_size = BytesPerWord // conservative estimate!
   };
 
-  address instruction_address() const       { 
+  address instruction_address() const       
+  { 
     return addr_at(instruction_offset);
   }
 
-  address next_instruction_address() const { 
+  address next_instruction_address() const
+  { 
     return addr_at(return_address_offset); 
   }
 
-  int displacement() const {
+  int displacement() const
+  {
     return int_at(displacement_offset);
   }
 
-  address displacement_address() const { 
+  address displacement_address() const
+  { 
     return addr_at(displacement_offset); 
   }
 
-  address return_address() const {
+  address return_address() const
+  {
     return addr_at(return_address_offset);
   }
 
-  address destination() const {
+  address destination() const
+  {
     // Getting the destination of a call isn't safe because that call can
     // be getting patched while you're calling this.  There's only special
     // places where this can be called but not automatically verifiable by
@@ -176,7 +195,8 @@ class NativeCall : public NativeInstruction {
     return return_address() + displacement();
   }
 
-  void set_destination(address dest) {
+  void set_destination(address dest)
+  {
     assert((labs((intptr_t) dest - (intptr_t) return_address())  &
             0xFFFFFFFF00000000) == 0,
            "must be 32bit offset");
@@ -185,7 +205,8 @@ class NativeCall : public NativeInstruction {
 
   void set_destination_mt_safe(address dest);
 
-  void verify_alignment() {
+  void verify_alignment()
+  {
     assert((intptr_t) addr_at(displacement_offset) % BytesPerInt == 0,
            "must be aligned");
   }
@@ -197,7 +218,8 @@ class NativeCall : public NativeInstruction {
   inline friend NativeCall* nativeCall_at(address address);
   inline friend NativeCall* nativeCall_before(address return_address);
 
-  static bool is_call_at(address instr) {
+  static bool is_call_at(address instr)
+  {
     return ((*instr) & 0xFF) == NativeCall::instruction_code;
   }
 
@@ -205,7 +227,8 @@ class NativeCall : public NativeInstruction {
     return is_call_at(return_address - NativeCall::return_address_offset);
   }
 
-  static bool is_call_to(address instr, address target) {
+  static bool is_call_to(address instr, address target) 
+  {
     return 
       nativeInstruction_at(instr)->is_call() &&
       nativeCall_at(instr)->destination() == target;
@@ -218,7 +241,8 @@ class NativeCall : public NativeInstruction {
   static void replace_mt_safe(address instr_addr, address code_buffer);  
 };
 
-inline NativeCall* nativeCall_before(address return_address) {
+inline NativeCall* nativeCall_before(address return_address)
+{
   NativeCall* call = (NativeCall*) (return_address - NativeCall::return_address_offset);
 #ifdef ASSERT
   call->verify();
@@ -226,7 +250,8 @@ inline NativeCall* nativeCall_before(address return_address) {
   return call;
 }
 
-inline NativeCall* nativeCall_at(address address) {
+inline NativeCall* nativeCall_at(address address)
+{
   NativeCall* call = (NativeCall*) (address - NativeCall::instruction_offset);
 #ifdef ASSERT
   call->verify();
@@ -237,7 +262,8 @@ inline NativeCall* nativeCall_at(address address) {
 // An interface for accessing/manipulating native mov reg64, imm64
 // instructions.  (used to manipulate inlined 64-bit data dll calls,
 // etc.)
-class NativeMovConstReg : public NativeInstruction {
+class NativeMovConstReg : public NativeInstruction
+{
  public:
   enum amd64_specific_constants {
     // instruction_code     = 0xB848, // Real byte order is 0x48 (REX_W), 0xB8
@@ -248,19 +274,23 @@ class NativeMovConstReg : public NativeInstruction {
     register_mask           = 0x07
   };
 
-  address instruction_address() const {
+  address instruction_address() const
+  {
     return addr_at(instruction_offset);
   }
 
-  address next_instruction_address() const {
+  address next_instruction_address() const
+  {
     return addr_at(next_instruction_offset);
   }
 
-  intptr_t data() const {
+  intptr_t data() const
+  {
     return ptr_at(data_offset);
   }
 
-  void set_data(intptr_t x) {
+  void set_data(intptr_t x)
+  {
     set_ptr_at(data_offset, x);
   }
 
@@ -276,7 +306,8 @@ class NativeMovConstReg : public NativeInstruction {
   inline friend NativeMovConstReg* nativeMovConstReg_before(address address);
 };
 
-inline NativeMovConstReg* nativeMovConstReg_at(address address) {
+inline NativeMovConstReg* nativeMovConstReg_at(address address)
+{
   NativeMovConstReg* test =
       (NativeMovConstReg*) (address - NativeMovConstReg::instruction_offset);
 #ifdef ASSERT
@@ -285,7 +316,8 @@ inline NativeMovConstReg* nativeMovConstReg_at(address address) {
   return test;
 }
 
-inline NativeMovConstReg* nativeMovConstReg_before(address address) {
+inline NativeMovConstReg* nativeMovConstReg_before(address address)
+{
   NativeMovConstReg* test =
       (NativeMovConstReg*) (address - NativeMovConstReg::instruction_size - NativeMovConstReg::instruction_offset);
 #ifdef ASSERT
@@ -294,13 +326,16 @@ inline NativeMovConstReg* nativeMovConstReg_before(address address) {
   return test;
 }
 
-class NativeMovConstRegPatching : public NativeMovConstReg {
+class NativeMovConstRegPatching : public NativeMovConstReg
+{
  private:
   inline friend NativeMovConstRegPatching* nativeMovConstRegPatching_at(
     address address);
 };
 
-inline NativeMovConstRegPatching* nativeMovConstRegPatching_at( address address) {
+inline NativeMovConstRegPatching* nativeMovConstRegPatching_at(
+  address address)
+{
   NativeMovConstRegPatching* test = 
         (NativeMovConstRegPatching*)(address - NativeMovConstReg::instruction_offset);
 
@@ -311,7 +346,8 @@ inline NativeMovConstRegPatching* nativeMovConstRegPatching_at( address address)
 }
 
 // jmp rel32off
-class NativeJump : public NativeInstruction {
+class NativeJump : public NativeInstruction
+{
  public:
   enum amd64_specific_constants {
     instruction_code        = 0xE9,
@@ -321,21 +357,25 @@ class NativeJump : public NativeInstruction {
     next_instruction_offset = 5
   };
 
-  address instruction_address() const {
+  address instruction_address() const
+  {
     return addr_at(instruction_offset);
   }
   
-  address next_instruction_address() const {
+  address next_instruction_address() const
+  {
     return addr_at(next_instruction_offset);
   }  
   
-  address jump_destination() const {
+  address jump_destination() const
+  {
     address dest = address(int_at(data_offset) + next_instruction_address());
     // return -1 if jump to self
     return (dest == (address) this) ? (address) -1 : dest;
   }
 
-  void set_jump_destination(address dest) { 
+  void set_jump_destination(address dest)
+  { 
     if (dest == (address) -1) { // can't encode jump to -1
       set_int_at(data_offset, -5); // jump to self
     } else {
@@ -364,7 +404,8 @@ class NativeJump : public NativeInstruction {
                                    address dest);
 };
 
-inline NativeJump* nativeJump_at(address address) {
+inline NativeJump* nativeJump_at(address address)
+{
   NativeJump* jump = (NativeJump*) (address - NativeJump::instruction_offset);
 #ifdef ASSERT
   jump->verify();
@@ -373,7 +414,8 @@ inline NativeJump* nativeJump_at(address address) {
 }
 
 // Handles all kinds of jump on Intel. Long/far, conditional/unconditional
-class NativeGeneralJump : public NativeInstruction {
+class NativeGeneralJump : public NativeInstruction
+{
  public:
   enum amd64_specific_constants {
     // Constans does not apply, since the lengths and offsets depends
@@ -386,7 +428,8 @@ class NativeGeneralJump : public NativeInstruction {
     instruction_size         = 5
   };
 
-  address instruction_address() const {
+  address instruction_address() const
+  {
     return addr_at(0);
   }
 
@@ -404,14 +447,16 @@ class NativeGeneralJump : public NativeInstruction {
   void verify();
 };
 
-inline NativeGeneralJump* nativeGeneralJump_at(address address) {
+inline NativeGeneralJump* nativeGeneralJump_at(address address)
+{
   NativeGeneralJump* jump = (NativeGeneralJump*) address;
   debug_only(jump->verify();)
   return jump;
 }
 
 
-class NativePopReg : public NativeInstruction {
+class NativePopReg : public NativeInstruction
+{
  public:
   enum amd64_specific_constants {
     instruction_code        = 0x58,
@@ -425,7 +470,8 @@ class NativePopReg : public NativeInstruction {
   static void insert(address code_pos, Register reg);
 };
 
-class NativeIllegalInstruction : public NativeInstruction {
+class NativeIllegalInstruction : public NativeInstruction
+{
  public:
   enum amd64_specific_constants {
     instruction_code        = 0x0B0F, // ud2a, real byte order is: 0x0F, 0x0B
@@ -439,7 +485,8 @@ class NativeIllegalInstruction : public NativeInstruction {
 };
 
 // return instruction that does not pop values of the stack
-class NativeReturn : public NativeInstruction {
+class NativeReturn : public NativeInstruction 
+{
  public:
   enum amd64_specific_constants {
     instruction_code        = 0xC3,
@@ -450,7 +497,8 @@ class NativeReturn : public NativeInstruction {
 };
 
 // return instruction that does pop values of the stack
-class NativeReturnX : public NativeInstruction {
+class NativeReturnX : public NativeInstruction 
+{
  public:
   enum amd64_specific_constants {
     instruction_code        = 0xC2,
@@ -461,48 +509,50 @@ class NativeReturnX : public NativeInstruction {
 };
 
 // Simple test vs memory
-class NativeTstRegMem : public NativeInstruction {
+class NativeTstRegMem : public NativeInstruction 
+{
  public:
   enum amd64_specific_constants {
     instruction_code_regImem = 0x85
   };
 };
 
-inline bool NativeInstruction::is_illegal() {
+inline bool NativeInstruction::is_illegal()
+{
   return 
     (short) int_at(0) == (short) NativeIllegalInstruction::instruction_code;
 }
 
-inline bool NativeInstruction::is_call() {
+inline bool NativeInstruction::is_call()
+{
   return ubyte_at(0) == NativeCall::instruction_code;
 }
 
-inline bool NativeInstruction::is_return() {
+inline bool NativeInstruction::is_return()
+{
   return 
     ubyte_at(0) == NativeReturn::instruction_code ||
     ubyte_at(0) == NativeReturnX::instruction_code;
 } 
 
-inline bool NativeInstruction::is_jump() {
+inline bool NativeInstruction::is_jump()
+{
   return 
     ubyte_at(0) == NativeJump::instruction_code ||
     ubyte_at(0) == 0xEB; /* short jump */
 }
 
-inline bool NativeInstruction::is_cond_jump() { 
+inline bool NativeInstruction::is_cond_jump()
+{ 
   return 
     (int_at(0) & 0xF0FF) == 0x800F /* long jump */ ||
     (ubyte_at(0) & 0xF0) == 0x70; /* short jump */
 }
 
-inline bool NativeInstruction::is_safepoint_poll() {
+inline bool NativeInstruction::is_safepoint_poll()
+{
   return
     ubyte_at(0) == NativeTstRegMem::instruction_code_regImem &&
     ubyte_at(1) == 0x05 && // 00 rax 101
     ((intptr_t) addr_at(6)) + int_at(2) == (intptr_t) os::get_polling_page();
-}
-
-inline bool NativeInstruction::is_mov_literal64() {
-    return ((ubyte_at(0) == Assembler::REX_W || ubyte_at(0) == Assembler::REX_WB) &&
-          (ubyte_at(1) & (0xff ^ NativeMovConstReg::register_mask)) == 0xB8);
 }

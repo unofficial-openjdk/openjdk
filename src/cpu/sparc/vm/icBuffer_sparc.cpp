@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)icBuffer_sparc.cpp	1.34 07/05/05 17:04:28 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.

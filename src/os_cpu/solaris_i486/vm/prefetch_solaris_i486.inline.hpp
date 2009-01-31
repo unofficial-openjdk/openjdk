@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)prefetch_solaris_i486.inline.hpp	1.8 07/05/05 17:04:52 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.

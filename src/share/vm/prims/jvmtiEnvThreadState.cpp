@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jvmtiEnvThreadState.cpp	1.23 07/05/23 10:53:46 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.

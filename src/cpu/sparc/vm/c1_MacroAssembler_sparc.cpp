@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_MacroAssembler_sparc.cpp	1.64 07/05/05 17:04:26 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -373,7 +373,7 @@ void C1_MacroAssembler::allocate_array(
 
 void C1_MacroAssembler::verify_stack_oop(int stack_offset) {
   if (!VerifyOops) return;
-  verify_oop_addr(Address(SP, 0, stack_offset + STACK_BIAS));
+  verify_oop_addr(Address(SP, 0, stack_offset));
 }
 
 void C1_MacroAssembler::verify_not_null_oop(Register r) {

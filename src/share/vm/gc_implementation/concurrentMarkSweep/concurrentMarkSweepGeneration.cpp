@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)concurrentMarkSweepGeneration.cpp	1.290 07/07/17 11:49:58 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -4081,7 +4081,7 @@ bool CMSCollector::do_marking_mt(bool asynch) {
   while (_restart_addr != NULL) {
     // XXX For now we do not make use of ABORTED state and have not
     // yet implemented the right abort semantics (even in the original
-    // single-threaded CMS case). That needs some more investigation
+    // single-threaded CMS case. That needs some more investigation
     // and is deferred for now; see CR# TBF. 07252005YSR. XXX
     assert(!CMSAbortSemantics || tsk.aborted(), "Inconsistency");
     // If _restart_addr is non-NULL, a marking stack overflow
@@ -4238,9 +4238,7 @@ void CMSCollector::abortable_preclean() {
       // take a short break.
       if (workdone < CMSAbortablePrecleanMinWorkPerIteration) {
         // Sleep for some time, waiting for work to accumulate
-        stopTimer();
         cmsThread()->wait_on_cms_lock(CMSAbortablePrecleanWaitMillis);
-        startTimer();
         waited++;
       }
     }
@@ -4325,10 +4323,8 @@ size_t CMSCollector::preclean_work(bool clean_refs, bool clean_survivor) {
     // the computed reachability of the referents, the
     // only properties manipulated by the precleaning
     // of these reference lists.
-    stopTimer();
     CMSTokenSyncWithLocks x(true /* is cms thread */,
                             bitMapLock());
-    startTimer();
     sample_eden();
     // The following will yield to allow foreground
     // collection to proceed promptly. XXX YSR:
@@ -4350,10 +4346,8 @@ size_t CMSCollector::preclean_work(bool clean_refs, bool clean_survivor) {
                              &_markBitMap, &_modUnionTable,
                              &_markStack, &_revisitStack,
                              true /* precleaning phase */);
-    stopTimer();
     CMSTokenSyncWithLocks ts(true /* is cms thread */,
                              bitMapLock());
-    startTimer();
     unsigned int before_count =
       GenCollectedHeap::heap()->total_collections();
     SurvivorSpacePrecleanClosure
@@ -4487,10 +4481,13 @@ size_t CMSCollector::preclean_mod_union_table(
 
     MemRegion dirtyRegion;
     {
-      stopTimer();
       CMSTokenSync ts(true);
-      startTimer();
       sample_eden();
+
+      if (PrintGCDetails) {
+        startTimer();
+      }
+
       // Get dirty region starting at nextOffset (inclusive),
       // simultaneously clearing it.
       dirtyRegion = 
@@ -4510,16 +4507,20 @@ size_t CMSCollector::preclean_mod_union_table(
     // We'll scan the cards in the dirty region (with periodic
     // yields for foreground GC as needed).
     if (!dirtyRegion.is_empty()) {
+      if (PrintGCDetails) {
+        stopTimer();
+      }
       assert(numDirtyCards > 0, "consistency check");
       HeapWord* stop_point = NULL;
       {
-        stopTimer();
         CMSTokenSyncWithLocks ts(true, gen->freelistLock(),
                                  bitMapLock());
-        startTimer();
         verify_work_stacks_empty();
         verify_overflow_empty();
         sample_eden();
+        if (PrintGCDetails) {
+          startTimer();
+        }
         stop_point =
           gen->cmsSpace()->object_iterate_careful_m(dirtyRegion, cl);
       }
@@ -4534,9 +4535,7 @@ size_t CMSCollector::preclean_mod_union_table(
                (_collectorState == AbortablePreclean && should_abort_preclean()),
                "Unparsable objects should only be in perm gen.");
 
-        stopTimer();
         CMSTokenSyncWithLocks ts(true, bitMapLock());
-        startTimer();
         _modUnionTable.mark_range(MemRegion(stop_point, dirtyRegion.end()));
         if (should_abort_preclean()) {
           break; // out of preclean loop
@@ -4546,11 +4545,17 @@ size_t CMSCollector::preclean_mod_union_table(
           lastAddr = next_card_start_after_block(stop_point);
         }
       }
+      if (PrintGCDetails) {
+        stopTimer();
+      }
     } else {
       assert(lastAddr == endAddr, "consistency check");
       assert(numDirtyCards == 0, "consistency check");
       break;
     }
+  }
+  if (PrintGCDetails) {
+    stopTimer();
   }
   verify_work_stacks_empty();
   verify_overflow_empty();
@@ -4587,10 +4592,13 @@ size_t CMSCollector::preclean_card_table(ConcurrentMarkSweepGeneration* gen,
       // See comments in "Precleaning notes" above on why we
       // do this locking. XXX Could the locking overheads be
       // too high when dirty cards are sparse? [I don't think so.]
-      stopTimer();
       CMSTokenSync x(true); // is cms thread
-      startTimer();
       sample_eden();
+
+      if (PrintGCDetails) {
+        startTimer();
+      }
+
       // Get and clear dirty region from card table
       dirtyRegion = _ct->ct_bs()->dirty_card_range_after_preclean(
                                     MemRegion(nextAddr, endAddr));
@@ -4602,12 +4610,16 @@ size_t CMSCollector::preclean_card_table(ConcurrentMarkSweepGeneration* gen,
       dirtyRegion.word_size()/CardTableModRefBS::card_size_in_words;
 
     if (!dirtyRegion.is_empty()) {
-      stopTimer();
+      if (PrintGCDetails) {
+        stopTimer();
+      }
       CMSTokenSyncWithLocks ts(true, gen->freelistLock(), bitMapLock());
-      startTimer();
       sample_eden();
       verify_work_stacks_empty();
       verify_overflow_empty();
+      if (PrintGCDetails) {
+        startTimer();
+      }
       HeapWord* stop_point =
         gen->cmsSpace()->object_iterate_careful_m(dirtyRegion, cl);
       if (stop_point != NULL) {
@@ -4626,9 +4638,15 @@ size_t CMSCollector::preclean_card_table(ConcurrentMarkSweepGeneration* gen,
           lastAddr = next_card_start_after_block(stop_point);
         }
       }
+      if (PrintGCDetails) {
+        stopTimer();
+      }
     } else {
       break;
     }
+  }
+  if (PrintGCDetails) {
+    stopTimer();
   }
   verify_work_stacks_empty();
   verify_overflow_empty();
@@ -4720,7 +4738,7 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
     // or of an indication of whether the scavenge did indeed occur,
     // we cannot rely on TLAB's having been filled and must do
     // so here just in case a scavenge did not happen.
-    gch->ensure_parsability(false);  // fill TLAB's, but no need to retire them
+      gch->ensure_parsability(false);  // fill TLAB's, but no need to retire them
     // Update the saved marks which may affect the root scans.
     gch->save_marks();
   
@@ -8344,7 +8362,6 @@ bool CMSCollector::take_from_overflow_list(size_t num, CMSMarkStack* stack) {
   for (oop next; i > 0 && cur != NULL; cur = next, i--) {
     next = oop(cur->mark());
     cur->set_mark(proto);   // until proven otherwise
-    assert(cur->is_oop(), "Should be an oop");
     bool res = stack->push(cur);
     assert(res, "Bit off more than can chew?");
     NOT_PRODUCT(n++;)
@@ -8399,7 +8416,6 @@ bool CMSCollector::par_take_from_overflow_list(size_t num,
   for (cur = prefix; cur != NULL; cur = next) {
     next = oop(cur->mark());
     cur->set_mark(proto);   // until proven otherwise
-    assert(cur->is_oop(), "Should be an oop");
     bool res = work_q->push(cur);
     assert(res, "Bit off more than we can chew?");
     NOT_PRODUCT(n++;)

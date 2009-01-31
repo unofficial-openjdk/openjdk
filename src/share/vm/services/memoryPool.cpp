@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)memoryPool.cpp	1.35 07/05/29 09:44:30 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.

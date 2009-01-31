@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)bitMap.inline.hpp	1.8 07/05/05 17:07:07 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.

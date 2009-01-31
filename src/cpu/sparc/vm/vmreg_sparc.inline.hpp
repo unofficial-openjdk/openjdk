@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmreg_sparc.inline.hpp	1.6 07/05/05 17:04:33 JVM"
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.

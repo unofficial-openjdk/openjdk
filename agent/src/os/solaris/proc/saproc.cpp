@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)saproc.cpp	1.29 07/05/05 17:02:04 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.

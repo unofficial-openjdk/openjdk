@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_win32_amd64.cpp	1.12 07/05/05 17:04:54 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #include "incls/_assembler_win32_amd64.cpp.incl"
 
 
-void MacroAssembler::int3() {
+void Assembler::int3() {
   emit_byte(0xCC);
 }
 
@@ -52,7 +52,7 @@ void MacroAssembler::get_thread(Register thread) {
    pushq(r11);
 
    movl(c_rarg0, ThreadLocalStorage::thread_index());
-   call(RuntimeAddress((address)TlsGetValue));
+   call((address)TlsGetValue, relocInfo::none);
 
    popq(r11);
    popq(rsp);

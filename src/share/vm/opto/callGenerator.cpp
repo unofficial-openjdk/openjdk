@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)callGenerator.cpp	1.47 07/05/05 17:06:12 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -403,11 +403,6 @@ public:
                          CallGenerator* if_hit, float hit_prob)
     : CallGenerator(if_missed->method())
   {
-    // The call profile data may predict the hit_prob as extreme as 0 or 1.
-    // Remove the extremes values from the range.
-    if (hit_prob > PROB_MAX)   hit_prob = PROB_MAX;
-    if (hit_prob < PROB_MIN)   hit_prob = PROB_MIN;
-
     _predicted_receiver = predicted_receiver;
     _if_missed          = if_missed;
     _if_hit             = if_hit;
@@ -561,17 +556,7 @@ JVMState* UncommonTrapCallGenerator::generate(JVMState* jvms) {
   int nargs = method()->arg_size();
   kit.inc_sp(nargs);
   assert(nargs <= kit.sp() && kit.sp() <= jvms->stk_size(), "sane sp w/ args pushed");
-  if (_reason == Deoptimization::Reason_class_check &&
-      _action == Deoptimization::Action_maybe_recompile) {
-    // Temp fix for 6529811
-    // Don't allow uncommon_trap to override our decision to recompile in the event
-    // of a class cast failure for a monomorphic call as it will never let us convert
-    // the call to either bi-morphic or megamorphic and can lead to unc-trap loops
-    bool keep_exact_action = true;
-    kit.uncommon_trap(_reason, _action, NULL, "monomorphic vcall checkcast", false, keep_exact_action);
-  } else {
-    kit.uncommon_trap(_reason, _action);
-  }
+  kit.uncommon_trap(_reason, _action);
   return kit.transfer_exceptions_into_jvms();
 }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LIRAssembler_sparc.hpp	1.34 07/05/05 17:04:25 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -78,12 +78,7 @@
   void pack64( Register rs, Register rd );
   void unpack64( Register rd );
 
-enum {
-#ifdef _LP64
-         call_stub_size = 68,
-#else
-         call_stub_size = 20,
-#endif // _LP64
+  enum { call_stub_size = 20 ,
          exception_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(10*4),
          deopt_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(10*4) };
 

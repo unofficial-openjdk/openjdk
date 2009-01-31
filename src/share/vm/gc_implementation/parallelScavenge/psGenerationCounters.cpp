@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)psGenerationCounters.cpp	1.7 07/05/05 17:05:29 JVM"
 #endif
 
 /*

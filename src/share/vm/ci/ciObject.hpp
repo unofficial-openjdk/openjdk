@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)ciObject.hpp	1.24 07/05/05 17:05:16 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -71,6 +71,7 @@ protected:
     return JNIHandles::resolve_non_null(_handle);
   }
 
+  bool is_perm() { return (_ident & PERM_FLAG) != 0; }
   void set_perm() {
     _ident |=  PERM_FLAG;
   }
@@ -99,11 +100,6 @@ public:
   // making other arrangements for dealing with the oop.
   // See ciEnv::make_perm_array
   bool has_encoding();
-
-  // Is this object guaranteed to be in the permanent part of the heap?
-  // If so, CollectedHeap::can_elide_permanent_oop_store_barriers is relevant.
-  // If the answer is false, no guarantees are made.
-  bool is_perm() { return (_ident & PERM_FLAG) != 0; }
 
   // The address which the compiler should embed into the
   // generated code to represent this oop.  This address

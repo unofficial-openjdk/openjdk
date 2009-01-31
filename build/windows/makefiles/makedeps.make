@@ -107,8 +107,6 @@ MakeDepsIDEOptions=\
         -additionalFile includeDB_compiler1 \
         -additionalFile includeDB_compiler2 \
         -additionalFile includeDB_core \
-        -additionalFile includeDB_features \
-        -additionalFile includeDB_jvmti \
         -additionalFile includeDB_gc \
         -additionalFile includeDB_gc_parallel \
         -additionalFile includeDB_gc_parallelScavenge \

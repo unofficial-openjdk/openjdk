@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)connode.cpp	1.217 07/05/17 15:57:42 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -790,32 +790,10 @@ Node *ConvI2LNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       // of slightly differing type assertions.  Such slight differences
       // arise routinely as a result of loop unrolling, so this is a
       // post-unrolling graph cleanup.  Choose a type which depends only
-      // on my input.  (Exception:  Keep a range assertion of >=0 or <0.)
-      jlong lo1 = this_type->_lo;
-      jlong hi1 = this_type->_hi;
-      int   w1  = this_type->_widen;
-      if (lo1 != (jint)lo1 ||
-          hi1 != (jint)hi1 ||
-          lo1 > hi1) {
-        // Overflow leads to wraparound, wraparound leads to range saturation.
-        lo1 = min_jint; hi1 = max_jint;
-      } else if (lo1 >= 0) {
-        // Keep a range assertion of >=0.
-        lo1 = 0;        hi1 = max_jint;
-      } else if (hi1 < 0) {
-        // Keep a range assertion of <0.
-        lo1 = min_jint; hi1 = -1;
-      } else {
-        lo1 = min_jint; hi1 = max_jint;
-      }
-      const TypeLong* wtype = TypeLong::make(MAX2((jlong)in_type->_lo, lo1),
-                                             MIN2((jlong)in_type->_hi, hi1),
-                                             MAX2((int)in_type->_widen, w1));
-      if (wtype != type()) {
-        set_type(wtype);
-        // Note: this_type still has old type value, for the logic below.
-        this_changed = this;
-      }
+      // on my input.
+      set_type(TypeLong::make(in_type->_lo, in_type->_hi, in_type->_widen));
+      // Note: this_type still has old type value, for the logic below.
+      this_changed = this;
     }
   }
 

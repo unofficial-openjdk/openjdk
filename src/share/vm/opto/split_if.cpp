@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)split_if.cpp	1.68 07/05/05 17:06:29 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interp_masm_sparc.cpp	1.198 07/05/17 15:48:06 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,7 +28,6 @@
 #include "incls/_precompiled.incl"
 #include "incls/_interp_masm_sparc.cpp.incl"
 
-#ifndef CC_INTERP
 #ifndef FAST_DISPATCH
 #define FAST_DISPATCH 1
 #endif
@@ -41,12 +40,6 @@
 const Address InterpreterMacroAssembler::l_tmp( FP, 0,  (frame::interpreter_frame_l_scratch_fp_offset    * wordSize ) + STACK_BIAS);
 const Address InterpreterMacroAssembler::d_tmp( FP, 0,  (frame::interpreter_frame_d_scratch_fp_offset    * wordSize) + STACK_BIAS);
 
-#else // CC_INTERP
-#ifndef STATE
-#define STATE(field_name) Lstate, in_bytes(byte_offset_of(BytecodeInterpreter, field_name))
-#endif // STATE
-
-#endif // CC_INTERP
 
 void InterpreterMacroAssembler::compute_extra_locals_size_in_bytes(Register args_size, Register locals_size, Register delta) {
   // Note: this algorithm is also used by C1's OSR entry sequence.
@@ -65,7 +58,6 @@ void InterpreterMacroAssembler::compute_extra_locals_size_in_bytes(Register args
   sll(delta, LogBytesPerWord, delta);  // extra space for locals in bytes
 }
 
-#ifndef CC_INTERP
 
 // Dispatch code executed in the prolog of a bytecode which does not do it's
 // own dispatch. The dispatch address is computed and placed in IdispatchAddress
@@ -258,10 +250,7 @@ void InterpreterMacroAssembler::super_call_VM_leaf(Register thread_cache, addres
   mov(arg_1, O0);
   MacroAssembler::call_VM_leaf_base(thread_cache, entry_point, 1);
 }
-#endif /* CC_INTERP */
 
-
-#ifndef CC_INTERP
 
 void InterpreterMacroAssembler::dispatch_base(TosState state, address* table) {
   assert_not_delayed();
@@ -1260,7 +1249,6 @@ void InterpreterMacroAssembler::remove_activation(TosState state,
 #endif /* COMPILER2 */
   
 }
-#endif /* CC_INTERP */
 
 
 // Lock object
@@ -1397,8 +1385,6 @@ void InterpreterMacroAssembler::unlock_object(Register lock_reg) {
     bind(done);
   }
 }
-
-#ifndef CC_INTERP
 
 // Get the method data pointer from the methodOop and set the
 // specified register to its value.
@@ -2248,21 +2234,14 @@ void InterpreterMacroAssembler::compute_stack_base( Register Rdest ) {
   add( Lesp,      wordSize,                                    Rdest );
 }
 
-#endif /* CC_INTERP */
+
 
 void InterpreterMacroAssembler::increment_invocation_counter( Register Rtmp, Register Rtmp2 ) {
   assert(UseCompiler, "incrementing must be useful");
-#ifdef CC_INTERP
-  Address inv_counter(G5_method, 0, in_bytes(methodOopDesc::invocation_counter_offset()
-                            + InvocationCounter::counter_offset()));
-  Address be_counter(G5_method, 0, in_bytes(methodOopDesc::backedge_counter_offset()
-                            + InvocationCounter::counter_offset()));
-#else
   Address inv_counter(Lmethod, 0, in_bytes(methodOopDesc::invocation_counter_offset()
 			    + InvocationCounter::counter_offset()));
   Address be_counter(Lmethod, 0, in_bytes(methodOopDesc::backedge_counter_offset()
                             + InvocationCounter::counter_offset()));
-#endif /* CC_INTERP */
   int delta = InvocationCounter::count_increment;
 
   // Load each counter in a register
@@ -2288,17 +2267,10 @@ void InterpreterMacroAssembler::increment_invocation_counter( Register Rtmp, Reg
 
 void InterpreterMacroAssembler::increment_backedge_counter( Register Rtmp, Register Rtmp2 ) {
   assert(UseCompiler, "incrementing must be useful");
-#ifdef CC_INTERP
-  Address be_counter(G5_method, 0, in_bytes(methodOopDesc::backedge_counter_offset()
-                            + InvocationCounter::counter_offset()));
-  Address inv_counter(G5_method, 0, in_bytes(methodOopDesc::invocation_counter_offset()
-                            +  InvocationCounter::counter_offset()));
-#else
   Address be_counter(Lmethod, 0, in_bytes(methodOopDesc::backedge_counter_offset()
 			    + InvocationCounter::counter_offset()));
   Address inv_counter(Lmethod, 0, in_bytes(methodOopDesc::invocation_counter_offset()
                             + InvocationCounter::counter_offset()));
-#endif /* CC_INTERP */
   int delta = InvocationCounter::count_increment;
   // Load each counter in a register
   ld( be_counter, Rtmp );
@@ -2319,7 +2291,6 @@ void InterpreterMacroAssembler::increment_backedge_counter( Register Rtmp, Regis
   // Note that this macro must leave backedge_count + invocation_count in Rtmp!
 }
 
-#ifndef CC_INTERP
 void InterpreterMacroAssembler::test_backedge_count_for_osr( Register backedge_count,
                                                              Register branch_bcp,
                                                              Register Rtmp ) {
@@ -2449,7 +2420,7 @@ void InterpreterMacroAssembler::verify_oop_or_return_address(Register reg, Regis
 void InterpreterMacroAssembler::verify_FPU(int stack_depth, TosState state) {
   if (state == ftos || state == dtos) MacroAssembler::verify_FPU(stack_depth);
 }
-#endif /* CC_INTERP */
+
 
 // Inline assembly for:
 //
@@ -2461,9 +2432,6 @@ void InterpreterMacroAssembler::verify_FPU(int stack_depth, TosState state) {
 // }
 
 void InterpreterMacroAssembler::notify_method_entry() {
-
-  // C++ interpreter only uses this for native methods.
-
   // Whenever JVMTI puts a thread in interp_only_mode, method
   // entry/exit events are sent for that thread to track stack
   // depth.  If it is possible to enter interp_only_mode we add
@@ -2506,11 +2474,8 @@ void InterpreterMacroAssembler::notify_method_entry() {
 // Native methods have their result stored in d_tmp and l_tmp
 // Java methods have their result stored in the expression stack
 
-void InterpreterMacroAssembler::notify_method_exit(bool is_native_method,
-                                                   TosState state,
-                                                   NotifyMethodExitMode mode) {
-  // C++ interpreter only uses this for native methods.
-
+void InterpreterMacroAssembler::notify_method_exit(
+  bool is_native_method, TosState state, NotifyMethodExitMode mode) {
   // Whenever JVMTI puts a thread in interp_only_mode, method
   // entry/exit events are sent for that thread to track stack
   // depth.  If it is possible to enter interp_only_mode we add
@@ -2552,16 +2517,8 @@ void InterpreterMacroAssembler::notify_method_exit(bool is_native_method,
   }
 }
 
-void InterpreterMacroAssembler::save_return_value(TosState state, bool is_native_call) {
-#ifdef CC_INTERP
-  // result potentially in O0/O1: save it across calls
-  stf(FloatRegisterImpl::D, F0, STATE(_native_fresult));
-#ifdef _LP64
-  stx(O0, STATE(_native_lresult));
-#else
-  std(O0, STATE(_native_lresult));
-#endif
-#else // CC_INTERP
+void InterpreterMacroAssembler::save_return_value(
+    TosState state, bool is_native_call) {
   if (is_native_call) {
     stf(FloatRegisterImpl::D, F0, d_tmp);
 #ifdef _LP64
@@ -2572,18 +2529,10 @@ void InterpreterMacroAssembler::save_return_value(TosState state, bool is_native
   } else {
     push(state);
   }
-#endif // CC_INTERP
 }
 
-void InterpreterMacroAssembler::restore_return_value( TosState state, bool is_native_call) {
-#ifdef CC_INTERP
-  ldf(FloatRegisterImpl::D, STATE(_native_fresult), F0);
-#ifdef _LP64
-  ldx(STATE(_native_lresult), O0);
-#else
-  ldd(STATE(_native_lresult), O0);
-#endif
-#else // CC_INTERP
+void InterpreterMacroAssembler::restore_return_value(
+    TosState state, bool is_native_call) {
   if (is_native_call) {
     ldf(FloatRegisterImpl::D, d_tmp, F0);
 #ifdef _LP64
@@ -2594,5 +2543,4 @@ void InterpreterMacroAssembler::restore_return_value( TosState state, bool is_na
   } else {
     pop(state);
   }
-#endif // CC_INTERP
 }

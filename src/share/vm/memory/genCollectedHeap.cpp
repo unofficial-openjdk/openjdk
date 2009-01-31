@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)genCollectedHeap.cpp	1.189 07/06/12 09:41:51 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -565,16 +565,11 @@ void GenCollectedHeap::do_collection(bool  full,
       }
     }
 
-    // Update "complete" boolean wrt what actually transpired --
-    // for instance, a promotion failure could have led to
-    // a whole heap collection.
-    complete = complete || (max_level_collected == n_gens() - 1);
-
     if (PrintGCDetails) {
       print_heap_change(gch_prev_used);
         
       // Print perm gen info for full GC with PrintGCDetails flag.
-      if (complete) {
+      if (full && max_level == n_gens() - 1) {
         print_perm_heap_change(perm_prev_used);
       }
     }
@@ -583,7 +578,6 @@ void GenCollectedHeap::do_collection(bool  full,
       // Adjust generation sizes.
       _gens[j]->compute_new_size();
     }
-
     if (complete) {
       // Ask the permanent generation to adjust size for full collections
       perm()->compute_new_size();

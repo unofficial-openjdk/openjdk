@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)verificationType.hpp	1.17 07/05/05 17:07:01 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.

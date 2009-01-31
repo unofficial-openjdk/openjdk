@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)forte.cpp	1.69 07/05/17 16:02:39 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.

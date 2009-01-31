@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c2_globals_sparc.hpp	1.61 07/05/05 17:04:26 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,11 +34,7 @@ define_pd_global(bool, InlineIntrinsics,             false);
 define_pd_global(bool, PreferInterpreterNativeStubs, false);
 define_pd_global(bool, ProfileTraps,                 true);
 define_pd_global(bool, UseOnStackReplacement,        true);
-#ifdef CC_INTERP
-define_pd_global(bool, ProfileInterpreter,           false);
-#else
 define_pd_global(bool, ProfileInterpreter,           true);
-#endif // CC_INTERP
 define_pd_global(bool, TieredCompilation,            false);
 #ifdef TIERED
 define_pd_global(intx, CompileThreshold,             1000);
@@ -89,22 +85,15 @@ define_pd_global(bool, OptoScheduling,               true);
 define_pd_global(intx, InitialCodeCacheSize,     2048*K); // Integral multiple of CodeCacheExpansionSize
 define_pd_global(intx, ReservedCodeCacheSize,    48*M);
 define_pd_global(intx, CodeCacheExpansionSize,   64*K);
-
-// Ergonomics related flags
-define_pd_global(uintx, DefaultMaxRAM,           32*G);
 #else
 // InitialCodeCacheSize derived from specjbb2000 run.
 define_pd_global(intx, InitialCodeCacheSize,     1536*K); // Integral multiple of CodeCacheExpansionSize
 define_pd_global(intx, ReservedCodeCacheSize,    32*M);
 define_pd_global(intx, CodeCacheExpansionSize,   32*K);
-// Ergonomics related flags
-define_pd_global(uintx, DefaultMaxRAM,           1*G);
 #endif
 define_pd_global(uintx,CodeCacheMinBlockLength,  4);
 
-// Heap related flags
 define_pd_global(uintx, PermSize,    ScaleForWordSize(16*M));
 define_pd_global(uintx, MaxPermSize, ScaleForWordSize(64*M));
 
-// Ergonomics related flags
 define_pd_global(bool, NeverActAsServerClassMachine, false);

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)biasedLocking.hpp	1.11 07/05/17 16:05:21 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.

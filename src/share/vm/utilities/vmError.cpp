@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmError.cpp	1.31 07/05/23 10:54:29 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -802,7 +802,7 @@ void VMError::report_and_die() {
       out.print_raw   (cmd);
       out.print_raw_cr("\" ..."); 
 
-      os::fork_and_exec(cmd);
+      fork_and_exec(cmd);
     }
 
     // done with OnError
@@ -865,7 +865,7 @@ void VM_ReportJavaOutOfMemory::doit() {
 #endif
     tty->print_cr("\"%s\"...", cmd);
 
-    os::fork_and_exec(cmd);
+    _err->fork_and_exec(cmd);
   }
 }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)top.hpp	1.16 07/05/05 17:07:11 JVM"
 #endif
 /*
  * Copyright 1997 Sun Microsystems, Inc.  All Rights Reserved.

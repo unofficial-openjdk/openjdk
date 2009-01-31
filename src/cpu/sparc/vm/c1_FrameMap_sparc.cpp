@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_FrameMap_sparc.cpp	1.74 07/05/05 17:04:25 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -41,7 +41,7 @@ LIR_Opr FrameMap::map_to_opr(BasicType type, VMRegPair* reg, bool outgoing) {
     // The calling convention does not count the SharedRuntime::out_preserve_stack_slots() value
     // so we must add it in here.
     int st_off = (r_1->reg2stack() + SharedRuntime::out_preserve_stack_slots()) * VMRegImpl::stack_slot_size;
-    opr = LIR_OprFact::address(new LIR_Address(SP_opr, st_off + STACK_BIAS, type));
+    opr = LIR_OprFact::address(new LIR_Address(SP_opr, st_off, type));
   } else if (r_1->is_Register()) {
     Register reg = r_1->as_Register();
     if (outgoing) {
@@ -49,7 +49,7 @@ LIR_Opr FrameMap::map_to_opr(BasicType type, VMRegPair* reg, bool outgoing) {
     } else {
       assert(!reg->is_out(), "should be using O regs");
     }
-    if (r_2->is_Register() && (type == T_LONG || type == T_DOUBLE)) {
+    if (r_2->is_Register()) {
       opr = as_long_opr(reg);
     } else if (type == T_OBJECT || type == T_ARRAY) {
       opr = as_oop_opr(reg);
@@ -308,8 +308,8 @@ void FrameMap::init () {
   I6_oop_opr = as_oop_opr(I6);
   I7_oop_opr = as_oop_opr(I7);
 
-  FP_opr = as_pointer_opr(FP);
-  SP_opr = as_pointer_opr(SP);
+  FP_opr = as_opr(FP);
+  SP_opr = as_opr(SP);
 
   F0_opr = as_float_opr(F0);
   F0_double_opr = as_double_opr(F0);
@@ -345,14 +345,14 @@ LIR_Opr FrameMap::stack_pointer() {
 
 
 bool FrameMap::validate_frame() {
-  int max_offset = in_bytes(framesize_in_bytes());
+  int max_offset = in_bytes(framesize_in_bytes()) + STACK_BIAS;
   int java_index = 0;
   for (int i = 0; i < _incoming_arguments->length(); i++) {
     LIR_Opr opr = _incoming_arguments->at(i);
     if (opr->is_stack()) {
-      max_offset = MAX2(_argument_locations->at(java_index), max_offset);
+      max_offset = MAX2(_argument_locations->at(java_index) + STACK_BIAS, max_offset);
     }
     java_index += type2size[opr->type()];
   }
-  return Assembler::is_simm13(max_offset + STACK_BIAS);
+  return Assembler::is_simm13(max_offset);
 }

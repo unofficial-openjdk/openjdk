@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jvmtiThreadState.hpp	1.35 07/05/05 17:06:40 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.

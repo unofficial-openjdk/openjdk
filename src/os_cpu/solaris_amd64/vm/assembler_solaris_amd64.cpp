@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_solaris_amd64.cpp	1.9 07/05/05 17:04:50 JVM"
 #endif
 /*
  * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,8 +28,9 @@
 #include "incls/_precompiled.incl"
 #include "incls/_assembler_solaris_amd64.cpp.incl"
 
-void MacroAssembler::int3() {
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+void Assembler::int3() {
+  call(CAST_FROM_FN_PTR(address, os::breakpoint),
+       relocInfo::runtime_call_type);
 }
 
 void MacroAssembler::get_thread(Register thread) {
@@ -44,8 +45,7 @@ void MacroAssembler::get_thread(Register thread) {
   } else if (tlsMode == ThreadLocalStorage::pd_tlsAccessDirect) { 	// T2
     // mov r, fs:[tlsOffset]
     emit_byte(Assembler::FS_segment);
-    ExternalAddress tls_off((address) ThreadLocalStorage::pd_getTlsOffset());
-    movptr(thread, tls_off);
+    movq(thread, Address((address) ThreadLocalStorage::pd_getTlsOffset(), relocInfo::none));
     return;
   }
 
@@ -72,7 +72,8 @@ void MacroAssembler::get_thread(Register thread) {
   pushq(r11);
 
   movl(rdi, ThreadLocalStorage::thread_index());
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, thr_getspecific)));
+  call(CAST_FROM_FN_PTR(address, thr_getspecific),
+       relocInfo::runtime_call_type);
 
   popq(r11);
   popq(rsp);

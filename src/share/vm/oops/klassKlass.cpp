@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)klassKlass.cpp	1.69 07/05/29 09:44:21 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -97,8 +97,8 @@ int klassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   // The following are in the perm gen and are treated
   // specially in a later phase of a perm gen collection; ...
   assert(oop(k)->is_perm(), "should be in perm");
-  assert(oop(k->subklass())->is_perm_or_null(), "should be in perm");
-  assert(oop(k->next_sibling())->is_perm_or_null(), "should be in perm");
+  assert(oop(k->adr_subklass())->is_perm(), "should be in perm");
+  assert(oop(k->adr_next_sibling())->is_perm(), "should be in perm");
   // ... don't scan them normally, but remember this klassKlass
   // for later (see, for instance, oop_follow_contents above
   // for what MarkSweep does with it.

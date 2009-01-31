@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)collectedHeap.cpp	1.23 07/05/05 17:05:40 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -131,23 +131,6 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(Thread* thread, size_t size) {
   thread->tlab().fill(obj, obj + size, new_tlab_size);
   return obj;
 }
-
-oop CollectedHeap::new_store_barrier(oop new_obj) {
-  // %%% This needs refactoring.  (It was imported from the server compiler.)
-  guarantee(can_elide_tlab_store_barriers(), "store barrier elision not supported");
-  BarrierSet* bs = this->barrier_set();
-  assert(bs->has_write_region_opt(), "Barrier set does not have write_region");
-  int new_size = new_obj->size();
-  bs->write_region(MemRegion((HeapWord*)new_obj, new_size));
-  return new_obj;
-}
-
-bool CollectedHeap::can_elide_permanent_oop_store_barriers() const {
-  // %%% This needs refactoring.  (It was gating logic from the server compiler.)
-  guarantee(kind() < CollectedHeap::G1CollectedHeap, "");
-  return !UseConcMarkSweepGC;
-}
-
 
 HeapWord* CollectedHeap::allocate_new_tlab(size_t size) {
   guarantee(false, "thread-local allocation buffers not supported");

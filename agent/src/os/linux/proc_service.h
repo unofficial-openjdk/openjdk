@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)proc_service.h	1.11 07/05/05 17:02:03 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)forte.hpp	1.7 07/05/05 17:06:31 JVM"
 #endif
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,6 @@
 
 class Forte : AllStatic {
  public:
-   static void register_stub(const char* name, address start, address end)
-                                                 KERNEL_RETURN;
+   static void register_stub(const char* name, address start, address end);    
                                                  // register internal VM stub
 };

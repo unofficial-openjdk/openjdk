@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U%"
+#pragma ident "@(#)hotspot_jni.d	1.8 07/05/05 17:04:38"
 #endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)stubGenerator_i486.cpp	1.90 07/10/31 09:45:31 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -70,7 +70,8 @@ class StubGenerator: public StubCodeGenerator {
 #define inc_counter_np(counter) (0)
 #else
   void inc_counter_np_(int& counter) {
-    __ increment(ExternalAddress((address)&counter));
+    Address counter_addr((int) &counter, relocInfo::none);
+    __ increment(counter_addr);
   }
 #define inc_counter_np(counter) \
   BLOCK_COMMENT("inc_counter " #counter); \
@@ -93,18 +94,18 @@ class StubGenerator: public StubCodeGenerator {
   //------------------------------------------------------------------------------------------------------------------------
   // Call stubs are used to call Java from C
   //
-  //    [ return_from_Java     ] <--- rsp
+  //    [ return_from_Java     ] <--- esp
   //    [ argument word n      ]
   //      ...
   // -N [ argument word 1      ]
   // -7 [ Possible padding for stack alignment ] 
   // -6 [ Possible padding for stack alignment ] 
   // -5 [ Possible padding for stack alignment ] 
-  // -4 [ mxcsr save           ] <--- rsp_after_call
-  // -3 [ saved rbx,            ] 
-  // -2 [ saved rsi            ]
-  // -1 [ saved rdi            ]
-  //  0 [ saved rbp,            ] <--- rbp,
+  // -4 [ mxcsr save           ] <--- esp_after_call
+  // -3 [ saved ebx            ] 
+  // -2 [ saved esi            ]
+  // -1 [ saved edi            ]
+  //  0 [ saved ebp            ] <--- ebp
   //  1 [ return address       ]
   //  2 [ ptr. to call wrapper ]
   //  3 [ result               ]
@@ -123,54 +124,53 @@ class StubGenerator: public StubCodeGenerator {
     // stub code parameters / addresses
     assert(frame::entry_frame_call_wrapper_offset == 2, "adjust this code");
     bool  sse_save = false;
-    const Address rsp_after_call(rbp, -4 * wordSize); // same as in generate_catch_exception()!
+    const Address esp_after_call(ebp, -4 * wordSize); // same as in generate_catch_exception()!
     const int     locals_count_in_bytes  (4*wordSize); 
-    const Address mxcsr_save    (rbp, -4 * wordSize);
-    const Address saved_rbx     (rbp, -3 * wordSize);
-    const Address saved_rsi     (rbp, -2 * wordSize);
-    const Address saved_rdi     (rbp, -1 * wordSize);
-    const Address result        (rbp,  3 * wordSize);
-    const Address result_type   (rbp,  4 * wordSize);
-    const Address method        (rbp,  5 * wordSize);
-    const Address entry_point   (rbp,  6 * wordSize);
-    const Address parameters    (rbp,  7 * wordSize);
-    const Address parameter_size(rbp,  8 * wordSize);
-    const Address thread        (rbp,  9 * wordSize); // same as in generate_catch_exception()!
+    const Address mxcsr_save    (ebp, -4 * wordSize);
+    const Address saved_ebx     (ebp, -3 * wordSize);
+    const Address saved_esi     (ebp, -2 * wordSize);
+    const Address saved_edi     (ebp, -1 * wordSize);
+    const Address result        (ebp,  3 * wordSize);
+    const Address result_type   (ebp,  4 * wordSize);
+    const Address method        (ebp,  5 * wordSize);
+    const Address entry_point   (ebp,  6 * wordSize);
+    const Address parameters    (ebp,  7 * wordSize);
+    const Address parameter_size(ebp,  8 * wordSize);
+    const Address thread        (ebp,  9 * wordSize); // same as in generate_catch_exception()!
     sse_save =  UseSSE > 0;
 
     // stub code
     __ enter();    
-    __ movl(rcx, parameter_size);              // parameter counter
-    __ shll(rcx, Interpreter::logStackElementSize()); // convert parameter count to bytes
-    __ addl(rcx, locals_count_in_bytes);       // reserve space for register saves
-    __ subl(rsp, rcx);
-    __ andl(rsp, -(StackAlignmentInBytes));    // Align stack 
+    __ movl(ecx, parameter_size);              // parameter counter
+    __ shll(ecx, Interpreter::logStackElementSize()); // convert parameter count to bytes
+    __ addl(ecx, locals_count_in_bytes);       // reserve space for register saves
+    __ subl(esp, ecx);
+    __ andl(esp, -(StackAlignmentInBytes));    // Align stack 
 
-    // save rdi, rsi, & rbx, according to C calling conventions
-    __ movl(saved_rdi, rdi); 
-    __ movl(saved_rsi, rsi); 
-    __ movl(saved_rbx, rbx); 
+    // save edi, esi, & ebx, according to C calling conventions
+    __ movl(saved_edi, edi); 
+    __ movl(saved_esi, esi); 
+    __ movl(saved_ebx, ebx); 
     // save and initialize %mxcsr
     if (sse_save) {
       Label skip_ldmx;
       __ stmxcsr(mxcsr_save);
-      __ movl(rax, mxcsr_save);
-      __ andl(rax, MXCSR_MASK);    // Only check control and mask bits
-      ExternalAddress mxcsr_std(StubRoutines::addr_mxcsr_std());
-      __ cmp32(rax, mxcsr_std);
+      __ movl(eax, mxcsr_save);
+      __ andl(eax, MXCSR_MASK);    // Only check control and mask bits
+      __ cmpl(eax, *(int *)(StubRoutines::addr_mxcsr_std()));
       __ jcc(Assembler::equal, skip_ldmx);
-      __ ldmxcsr(mxcsr_std);
+      __ ldmxcsr(Address((int)StubRoutines::addr_mxcsr_std(), relocInfo::none));
       __ bind(skip_ldmx);
     }
 
     // make sure the control word is correct.
-    __ fldcw(ExternalAddress(StubRoutines::addr_fpu_cntrl_wrd_std()));
+    __ fldcw(Address((int) StubRoutines::addr_fpu_cntrl_wrd_std(), relocInfo::none));
 
 #ifdef ASSERT
     // make sure we have no pending exceptions
     { Label L;
-      __ movl(rcx, thread);
-      __ cmpl(Address(rcx, Thread::pending_exception_offset()), NULL_WORD);
+      __ movl(ecx, thread);
+      __ cmpl(Address(ecx, Thread::pending_exception_offset()), NULL_WORD);
       __ jcc(Assembler::equal, L);
       __ stop("StubRoutines::call_stub: entered with pending exception");
       __ bind(L);
@@ -180,8 +180,8 @@ class StubGenerator: public StubCodeGenerator {
     // pass parameters if any
     BLOCK_COMMENT("pass parameters if any");
     Label parameters_done;
-    __ movl(rcx, parameter_size);  // parameter counter
-    __ testl(rcx, rcx);
+    __ movl(ecx, parameter_size);  // parameter counter
+    __ testl(ecx, ecx);
     __ jcc(Assembler::zero, parameters_done);
 
     // parameter passing loop
@@ -189,35 +189,35 @@ class StubGenerator: public StubCodeGenerator {
     Label loop;
     // Copy Java parameters in reverse order (receiver last)
     // Note that the argument order is inverted in the process
-    // source is rdx[rcx: N-1..0]
-    // dest   is rsp[rbx: 0..N-1]
+    // source is edx[ecx: N-1..0]
+    // dest   is esp[ebx: 0..N-1]
 
-    __ movl(rdx, parameters);          // parameter pointer
-    __ xorl(rbx, rbx);
+    __ movl(edx, parameters);          // parameter pointer
+    __ xorl(ebx, ebx);
 
     __ BIND(loop);
     if (TaggedStackInterpreter) {
-      __ movl(rax, Address(rdx, rcx, Interpreter::stackElementScale(),
+      __ movl(eax, Address(edx, ecx, Interpreter::stackElementScale(),
                       -2*wordSize));                          // get tag
-      __ movl(Address(rsp, rbx, Interpreter::stackElementScale(),
-                      Interpreter::expr_tag_offset_in_bytes(0)), rax);     // store tag
+      __ movl(Address(esp, ebx, Interpreter::stackElementScale(),
+                      Interpreter::expr_tag_offset_in_bytes(0)), eax);     // store tag
     }
 
     // get parameter
-    __ movl(rax, Address(rdx, rcx, Interpreter::stackElementScale(), -wordSize));
-    __ movl(Address(rsp, rbx, Interpreter::stackElementScale(), 
-                    Interpreter::expr_offset_in_bytes(0)), rax);          // store parameter
-    __ increment(rbx);
-    __ decrement(rcx); 
+    __ movl(eax, Address(edx, ecx, Interpreter::stackElementScale(), -wordSize));
+    __ movl(Address(esp, ebx, Interpreter::stackElementScale(), 
+                    Interpreter::expr_offset_in_bytes(0)), eax);          // store parameter
+    __ increment(ebx);
+    __ decrement(ecx); 
     __ jcc(Assembler::notZero, loop);
 
     // call Java function
     __ BIND(parameters_done);
-    __ movl(rbx, method);              // get methodOop
-    __ movl(rax, entry_point);         // get entry_point
-    __ movl(rsi, rsp);                 // set sender sp
+    __ movl(ebx, method);              // get methodOop
+    __ movl(eax, entry_point);         // get entry_point
+    __ movl(esi, esp);                 // set sender sp
     BLOCK_COMMENT("call Java function");
-    __ call(rax);
+    __ call(eax, relocInfo::none);
 
     BLOCK_COMMENT("call_stub_return_address:");
     return_address = __ pc();
@@ -228,62 +228,62 @@ class StubGenerator: public StubCodeGenerator {
 
     // store result depending on type
     // (everything that is not T_LONG, T_FLOAT or T_DOUBLE is treated as T_INT)
-    __ movl(rdi, result);
+    __ movl(edi, result);
     Label is_long, is_float, is_double, exit;
-    __ movl(rsi, result_type);
-    __ cmpl(rsi, T_LONG);
+    __ movl(esi, result_type);
+    __ cmpl(esi, T_LONG);
     __ jcc(Assembler::equal, is_long);
-    __ cmpl(rsi, T_FLOAT);
+    __ cmpl(esi, T_FLOAT);
     __ jcc(Assembler::equal, is_float);
-    __ cmpl(rsi, T_DOUBLE);
+    __ cmpl(esi, T_DOUBLE);
     __ jcc(Assembler::equal, is_double);
 
     // handle T_INT case
-    __ movl(Address(rdi, 0), rax);
+    __ movl(Address(edi), eax);
     __ BIND(exit);
 
     // check that FPU stack is empty
     __ verify_FPU(0, "generate_call_stub");
 
     // pop parameters
-    __ leal(rsp, rsp_after_call);
+    __ leal(esp, esp_after_call);
 
     // restore %mxcsr
     if (sse_save) {
       __ ldmxcsr(mxcsr_save);
     }
 
-    // restore rdi, rsi and rbx,
-    __ movl(rbx, saved_rbx); 
-    __ movl(rsi, saved_rsi); 
-    __ movl(rdi, saved_rdi); 
-    __ addl(rsp, 4*wordSize); 
+    // restore edi, esi and ebx
+    __ movl(ebx, saved_ebx); 
+    __ movl(esi, saved_esi); 
+    __ movl(edi, saved_edi); 
+    __ addl(esp, 4*wordSize); 
 
     // return
-    __ popl(rbp);
+    __ popl(ebp);
     __ ret(0);
 
     // handle return types different from T_INT
     __ BIND(is_long);
-    __ movl(Address(rdi, 0 * wordSize), rax);
-    __ movl(Address(rdi, 1 * wordSize), rdx);
+    __ movl(Address(edi, 0 * wordSize), eax);
+    __ movl(Address(edi, 1 * wordSize), edx);
     __ jmp(exit);
 
     __ BIND(is_float);
     // interpreter uses xmm0 for return values
     if (UseSSE >= 1) {
-      __ movflt(Address(rdi, 0), xmm0);
+      __ movflt(Address(edi), xmm0);
     } else {
-      __ fstp_s(Address(rdi, 0));
+      __ fstp_s(Address(edi));
     }
     __ jmp(exit);
 
     __ BIND(is_double);
     // interpreter uses xmm0 for return values
     if (UseSSE >= 2) {
-      __ movdbl(Address(rdi, 0), xmm0);
+      __ movdbl(Address(edi), xmm0);
     } else {
-      __ fstp_d(Address(rdi, 0));
+      __ fstp_d(Address(edi));
     }
     __ jmp(exit);
 
@@ -305,12 +305,12 @@ class StubGenerator: public StubCodeGenerator {
       }
 
       // UseSSE <= 1 so double result should be left on TOS
-      __ movl(rsi, result_type);
-      __ cmpl(rsi, T_DOUBLE);
+      __ movl(esi, result_type);
+      __ cmpl(esi, T_DOUBLE);
       __ jcc(Assembler::equal, common_return);
       if (UseSSE == 0) {
         // UseSSE == 0 so float result should be left on TOS
-        __ cmpl(rsi, T_FLOAT);
+        __ cmpl(esi, T_FLOAT);
         __ jcc(Assembler::equal, common_return);
       }
       __ ffree(0);
@@ -329,37 +329,36 @@ class StubGenerator: public StubCodeGenerator {
   //
   // Note: Usually the parameters are removed by the callee. In case of an exception
   //       crossing an activation frame boundary, that is not the case if the callee
-  //       is compiled code => need to setup the rsp.
+  //       is compiled code => need to setup the esp.
   //
-  // rax,: exception oop
+  // eax: exception oop
 
   address generate_catch_exception() {
     StubCodeMark mark(this, "StubRoutines", "catch_exception");
-    const Address rsp_after_call(rbp, -4 * wordSize); // same as in generate_call_stub()!
-    const Address thread        (rbp,  9 * wordSize); // same as in generate_call_stub()!
+    const Address esp_after_call(ebp, -4 * wordSize); // same as in generate_call_stub()!
+    const Address thread        (ebp,  9 * wordSize); // same as in generate_call_stub()!
     address start = __ pc();
 
     // get thread directly
-    __ movl(rcx, thread);
+    __ movl(ecx, thread);
 #ifdef ASSERT
     // verify that threads correspond
     { Label L;
-      __ get_thread(rbx);
-      __ cmpl(rbx, rcx);
+      __ get_thread(ebx);
+      __ cmpl(ebx, ecx);
       __ jcc(Assembler::equal, L);
       __ stop("StubRoutines::catch_exception: threads must correspond");
       __ bind(L);
     }
 #endif
     // set pending exception
-    __ verify_oop(rax);
-    __ movl(Address(rcx, Thread::pending_exception_offset()), rax          );
-    __ lea(Address(rcx, Thread::exception_file_offset   ()),
-           ExternalAddress((address)__FILE__));
-    __ movl(Address(rcx, Thread::exception_line_offset   ()), __LINE__ );
+    __ verify_oop(eax);
+    __ movl(Address(ecx, Thread::pending_exception_offset()), eax          );
+    __ movl(Address(ecx, Thread::exception_file_offset   ()), (int)__FILE__);
+    __ movl(Address(ecx, Thread::exception_line_offset   ()),      __LINE__);
     // complete return to VM
     assert(StubRoutines::_call_stub_return_address != NULL, "_call_stub_return_address must have been generated before");
-    __ jump(RuntimeAddress(StubRoutines::_call_stub_return_address));
+    __ jmp(StubRoutines::_call_stub_return_address, relocInfo::none);
 
     return start;
   }
@@ -371,8 +370,8 @@ class StubGenerator: public StubCodeGenerator {
   // The pending exception in Thread is converted into a Java-level exception.
   //
   // Contract with Java-level exception handlers:
-  // rax,: exception
-  // rdx: throwing pc
+  // eax: exception
+  // edx: throwing pc
   //
   // NOTE: At entry of this stub, exception-pc must be on stack !!
 
@@ -391,30 +390,30 @@ class StubGenerator: public StubCodeGenerator {
 #ifdef ASSERT
     // make sure this code is only executed if there is a pending exception
     { Label L;
-      __ get_thread(rcx);
-      __ cmpl(Address(rcx, Thread::pending_exception_offset()), NULL_WORD);
+      __ get_thread(ecx);
+      __ cmpl(Address(ecx, Thread::pending_exception_offset()), NULL_WORD);
       __ jcc(Assembler::notEqual, L);
       __ stop("StubRoutines::forward exception: no pending exception (1)");
       __ bind(L);
     }
 #endif
 
-    // compute exception handler into rbx,
-    __ movl(rax, Address(rsp, 0));
+    // compute exception handler into ebx
+    __ movl(eax, Address(esp));
     BLOCK_COMMENT("call exception_handler_for_return_address");
-    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::exception_handler_for_return_address), rax);
-    __ movl(rbx, rax);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::exception_handler_for_return_address), eax);
+    __ movl(ebx, eax);
 
-    // setup rax, & rdx, remove return address & clear pending exception
-    __ get_thread(rcx);
-    __ popl(rdx);
-    __ movl(rax, Address(rcx, Thread::pending_exception_offset()));
-    __ movl(Address(rcx, Thread::pending_exception_offset()), NULL_WORD);
+    // setup eax & edx, remove return address & clear pending exception
+    __ get_thread(ecx);
+    __ popl(edx);
+    __ movl(eax, Address(ecx, Thread::pending_exception_offset()));
+    __ movl(Address(ecx, Thread::pending_exception_offset()), NULL_WORD);
 
 #ifdef ASSERT
     // make sure exception is set
     { Label L;
-      __ testl(rax, rax);
+      __ testl(eax, eax);
       __ jcc(Assembler::notEqual, L);
       __ stop("StubRoutines::forward exception: no pending exception (2)");
       __ bind(L);
@@ -422,11 +421,11 @@ class StubGenerator: public StubCodeGenerator {
 #endif
 
     // continue at exception handler (return address removed)
-    // rax,: exception
-    // rbx,: exception handler
-    // rdx: throwing pc
-    __ verify_oop(rax);
-    __ jmp(rbx);
+    // eax: exception
+    // ebx: exception handler
+    // edx: throwing pc
+    __ verify_oop(eax);
+    __ jmp(ebx);
 
     return start;
   }
@@ -438,7 +437,7 @@ class StubGenerator: public StubCodeGenerator {
   // xchg exists as far back as 8086, lock needed for MP only
   // Stack layout immediately after call:
   //
-  // 0 [ret addr ] <--- rsp
+  // 0 [ret addr ] <--- esp
   // 1 [  ex     ]
   // 2 [  dest   ] 
   //
@@ -450,13 +449,13 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", "atomic_xchg");
     address start = __ pc();
 
-    __ pushl(rdx);
-    Address exchange(rsp, 2 * wordSize);
-    Address dest_addr(rsp, 3 * wordSize);
-    __ movl(rax, exchange);
-    __ movl(rdx, dest_addr);    
-    __ xchg(rax, Address(rdx, 0));
-    __ popl(rdx);
+    __ pushl(edx);
+    Address exchange(esp, 2 * wordSize);
+    Address dest_addr(esp, 3 * wordSize);
+    __ movl(eax, exchange);
+    __ movl(edx, dest_addr);    
+    __ xchg(eax, Address(edx, 0));
+    __ popl(edx);
     __ ret(0);
 
     return start;
@@ -474,26 +473,25 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", "verify_mxcsr");
     address start = __ pc();
 
-    const Address mxcsr_save(rsp, 0);
+    const Address mxcsr_save(esp);
 
     if (CheckJNICalls && UseSSE > 0 ) {
       Label ok_ret;
-      ExternalAddress mxcsr_std(StubRoutines::addr_mxcsr_std());
-      __ pushl(rax);
-      __ subl(rsp, wordSize);      // allocate a temp location
+      __ pushl(eax);
+      __ subl(esp, wordSize);      // allocate a temp location
       __ stmxcsr(mxcsr_save);
-      __ movl(rax, mxcsr_save);
-      __ andl(rax, MXCSR_MASK);    
-      __ cmp32(rax, mxcsr_std);
+      __ movl(eax, mxcsr_save);
+      __ andl(eax, MXCSR_MASK);    
+      __ cmpl(eax, *(int *)(StubRoutines::addr_mxcsr_std()));
       __ jcc(Assembler::equal, ok_ret);
    
       __ warn("MXCSR changed by native JNI code.");
 
-      __ ldmxcsr(mxcsr_std);
+      __ ldmxcsr(Address((int) StubRoutines::addr_mxcsr_std(), relocInfo::none));
 
       __ bind(ok_ret);
-      __ addl(rsp, wordSize);
-      __ popl(rax);
+      __ addl(esp, wordSize);
+      __ popl(eax);
     }
 
     __ ret(0);
@@ -513,26 +511,25 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", "verify_spcw");
     address start = __ pc();
 
-    const Address fpu_cntrl_wrd_save(rsp, 0);
+    const Address fpu_cntrl_wrd_save(esp);
 
     if (CheckJNICalls) {
       Label ok_ret;
-      __ pushl(rax);
-      __ subl(rsp, wordSize);      // allocate a temp location
+      __ pushl(eax);
+      __ subl(esp, wordSize);      // allocate a temp location
       __ fnstcw(fpu_cntrl_wrd_save);
-      __ movl(rax, fpu_cntrl_wrd_save);
-      __ andl(rax, FPU_CNTRL_WRD_MASK);
-      ExternalAddress fpu_std(StubRoutines::addr_fpu_cntrl_wrd_std());
-      __ cmp32(rax, fpu_std);
+      __ movl(eax, fpu_cntrl_wrd_save);
+      __ andl(eax, FPU_CNTRL_WRD_MASK);
+      __ cmpl(eax, *(int*)(StubRoutines::addr_fpu_cntrl_wrd_std()));
       __ jcc(Assembler::equal, ok_ret);
 
       __ warn("Floating point control word changed by native JNI code.");
 
-      __ fldcw(fpu_std);
+      __ fldcw(Address((int) StubRoutines::addr_fpu_cntrl_wrd_std(), relocInfo::none));
 
       __ bind(ok_ret);
-      __ addl(rsp, wordSize);
-      __ popl(rax);
+      __ addl(esp, wordSize);
+      __ popl(eax);
     }
 
     __ ret(0);
@@ -545,7 +542,7 @@ class StubGenerator: public StubCodeGenerator {
   // d2i or f2i fast case failed either because it is nan or because
   // of under/overflow.
   // Input:  FPU TOS: float value
-  // Output: rax, (rdx): integer (long) result
+  // Output: eax (edx): integer (long) result
 
   address generate_d2i_wrapper(BasicType t, address fcn) {
     StubCodeMark mark(this, "StubRoutines", "d2i_wrapper");
@@ -553,11 +550,11 @@ class StubGenerator: public StubCodeGenerator {
 
   // Capture info about frame layout
   enum layout { FPUState_off         = 0,
-                rbp_off              = FPUStateSizeInWords,
-                rdi_off,         
-                rsi_off,
-                rcx_off,
-                rbx_off,
+                ebp_off              = FPUStateSizeInWords,
+                edi_off,         
+                esi_off,
+                ecx_off,
+                ebx_off,
                 saved_argument_off,
                 saved_argument_off2, // 2nd half of double
 	        framesize 
@@ -566,23 +563,23 @@ class StubGenerator: public StubCodeGenerator {
   assert(FPUStateSizeInWords == 27, "update stack layout");
 
     // Save outgoing argument to stack across push_FPU_state()
-    __ subl(rsp, wordSize * 2);
-    __ fstp_d(Address(rsp, 0));
+    __ subl(esp, wordSize * 2);
+    __ fstp_d(Address(esp));
 
     // Save CPU & FPU state
-    __ pushl(rbx);
-    __ pushl(rcx);
-    __ pushl(rsi);
-    __ pushl(rdi);
-    __ pushl(rbp);
+    __ pushl(ebx);
+    __ pushl(ecx);
+    __ pushl(esi);
+    __ pushl(edi);
+    __ pushl(ebp);
     __ push_FPU_state();
 
     // push_FPU_state() resets the FP top of stack 
     // Load original double into FP top of stack
-    __ fld_d(Address(rsp, saved_argument_off * wordSize));
+    __ fld_d(Address(esp, saved_argument_off * wordSize));
     // Store double into stack as outgoing argument
-    __ subl(rsp, wordSize*2);
-    __ fst_d(Address(rsp, 0));
+    __ subl(esp, wordSize*2);
+    __ fst_d(Address(esp));
 
     // Prepare FPU for doing math in C-land
     __ empty_FPU_stack();
@@ -595,12 +592,12 @@ class StubGenerator: public StubCodeGenerator {
 
     // Restore CPU & FPU state
     __ pop_FPU_state();
-    __ popl(rbp);
-    __ popl(rdi);
-    __ popl(rsi);
-    __ popl(rcx);
-    __ popl(rbx);
-    __ addl(rsp, wordSize * 2);
+    __ popl(ebp);
+    __ popl(edi);
+    __ popl(esi);
+    __ popl(ecx);
+    __ popl(ebx);
+    __ addl(esp, wordSize * 2);
 
     __ ret(0);
 
@@ -618,10 +615,10 @@ class StubGenerator: public StubCodeGenerator {
 
     __ pushl(0);                      // hole for return address-to-be
     __ pushad();                      // push registers
-    Address next_pc(rsp, RegisterImpl::number_of_registers * BytesPerWord);
+    Address next_pc(esp, RegisterImpl::number_of_registers * BytesPerWord);
     BLOCK_COMMENT("call handle_unsafe_access");
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, handle_unsafe_access)));
-    __ movl(next_pc, rax);            // stuff next address 
+    __ call(CAST_FROM_FN_PTR(address, handle_unsafe_access), relocInfo::runtime_call_type);
+    __ movl(next_pc, eax);            // stuff next address 
     __ popad();
     __ ret(0);                        // jump to next address
 
@@ -636,165 +633,103 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", "verify_oop");
     address start = __ pc();
     
-    // Incoming arguments on stack after saving rax,:
+    // Incoming arguments on stack after saving eax:
     //
-    // [tos    ]: saved rdx
+    // [tos    ]: saved edx
     // [tos + 1]: saved EFLAGS
     // [tos + 2]: return address
     // [tos + 3]: char* error message
     // [tos + 4]: oop   object to verify
-    // [tos + 5]: saved rax, - saved by caller and bashed
+    // [tos + 5]: saved eax - saved by caller and bashed
     
     Label exit, error;
     __ pushfd();
-    __ increment(ExternalAddress((address) StubRoutines::verify_oop_count_addr()));
-    __ pushl(rdx);                               // save rdx
+    __ increment(Address((int)StubRoutines::verify_oop_count_addr(), relocInfo::none));
+    __ pushl(edx);                               // save edx
     // make sure object is 'reasonable'
-    __ movl(rax, Address(rsp, 4 * wordSize));    // get object
-    __ testl(rax, rax);
+    __ movl(eax, Address(esp, 4 * wordSize));    // get object
+    __ testl(eax, eax);
     __ jcc(Assembler::zero, exit);               // if obj is NULL it is ok
     
     // Check if the oop is in the right area of memory
     const int oop_mask = Universe::verify_oop_mask();
     const int oop_bits = Universe::verify_oop_bits();
-    __ movl(rdx, rax);
-    __ andl(rdx, oop_mask);
-    __ cmpl(rdx, oop_bits);
+    __ movl(edx, eax);
+    __ andl(edx, oop_mask);
+    __ cmpl(edx, oop_bits);
     __ jcc(Assembler::notZero, error);
 
     // make sure klass is 'reasonable'
-    __ movl(rax, Address(rax, oopDesc::klass_offset_in_bytes())); // get klass
-    __ testl(rax, rax);
+    __ movl(eax, Address(eax, oopDesc::klass_offset_in_bytes())); // get klass
+    __ testl(eax, eax);
     __ jcc(Assembler::zero, error);              // if klass is NULL it is broken
 
     // Check if the klass is in the right area of memory
     const int klass_mask = Universe::verify_klass_mask();
     const int klass_bits = Universe::verify_klass_bits();
-    __ movl(rdx, rax);
-    __ andl(rdx, klass_mask);
-    __ cmpl(rdx, klass_bits);
+    __ movl(edx, eax);
+    __ andl(edx, klass_mask);
+    __ cmpl(edx, klass_bits);
     __ jcc(Assembler::notZero, error);
 
     // make sure klass' klass is 'reasonable'
-    __ movl(rax, Address(rax, oopDesc::klass_offset_in_bytes())); // get klass' klass
-    __ testl(rax, rax);
+    __ movl(eax, Address(eax, oopDesc::klass_offset_in_bytes())); // get klass' klass
+    __ testl(eax, eax);
     __ jcc(Assembler::zero, error);              // if klass' klass is NULL it is broken
 
-    __ movl(rdx, rax);
-    __ andl(rdx, klass_mask);
-    __ cmpl(rdx, klass_bits);
+    __ movl(edx, eax);
+    __ andl(edx, klass_mask);
+    __ cmpl(edx, klass_bits);
     __ jcc(Assembler::notZero, error);           // if klass not in right area
                                                  // of memory it is broken too.
 
     // return if everything seems ok
     __ bind(exit);
-    __ movl(rax, Address(rsp, 5 * wordSize));    // get saved rax, back
-    __ popl(rdx);                                // restore rdx
+    __ movl(eax, Address(esp, 5 * wordSize));    // get saved eax back
+    __ popl(edx);                                // restore edx
     __ popfd();                                  // restore EFLAGS
     __ ret(3 * wordSize);                        // pop arguments
 
     // handle errors
     __ bind(error);
-    __ movl(rax, Address(rsp, 5 * wordSize));    // get saved rax, back
-    __ popl(rdx);                                // get saved rdx back
+    __ movl(eax, Address(esp, 5 * wordSize));    // get saved eax back
+    __ popl(edx);                                // get saved edx back
     __ popfd();                                  // get saved EFLAGS off stack -- will be ignored
     __ pushad();                                 // push registers (eip = return address & msg are already pushed)
     BLOCK_COMMENT("call MacroAssembler::debug");
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, MacroAssembler::debug)));
+    __ call(CAST_FROM_FN_PTR(address, MacroAssembler::debug), relocInfo::runtime_call_type);
     __ popad();
     __ ret(3 * wordSize);                        // pop arguments
     return start;
   }
 
   //
-  //  Generate pre-barrier for array stores
+  //  Generate store check for array
   //
   //  Input:
   //     start   -  starting address
   //     end     -  element count
-  void  gen_write_ref_array_pre_barrier(Register start, Register count) {
-    assert_different_registers(start, count);
-#if 0 // G1 only
+  //
+  //  The 2 input registers are overwritten
+  //
+  void array_store_check(Register start, Register end) {
     BarrierSet* bs = Universe::heap()->barrier_set();
-    switch (bs->kind()) {
-      case BarrierSet::G1SATBCT:
-      case BarrierSet::G1SATBCTLogging:
-        {
-          __ pushad();                      // push registers
-          __ pushl(count);
-          __ pushl(start);
-          __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre));
-          __ addl(esp, wordSize * 2);
-          __ popad();
-        }
-        break;
-      case BarrierSet::CardTableModRef:
-      case BarrierSet::CardTableExtension:
-      case BarrierSet::ModRef: 
-        break;
-      default      : 
-        ShouldNotReachHere();
-        
-    }
-#endif // 0 - G1 only
-  }
+    assert(bs->kind() == BarrierSet::CardTableModRef, "Wrong barrier set kind");
+    CardTableModRefBS* ct = (CardTableModRefBS*)bs;
+    assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
 
+    Label L_loop;
+    assert_different_registers(start, end);
+    const Register count = end;  // elements count; end == start+count-1
 
-  //
-  // Generate a post-barrier for an array store
-  //
-  //     start    -  starting address
-  //     count    -  element count
-  //
-  //  The two input registers are overwritten.
-  //
-  void  gen_write_ref_array_post_barrier(Register start, Register count) {
-    BarrierSet* bs = Universe::heap()->barrier_set();
-    assert_different_registers(start, count);
-    switch (bs->kind()) {
-#if 0 // G1 only
-      case BarrierSet::G1SATBCT:
-      case BarrierSet::G1SATBCTLogging:
-        {
-          __ pushad();                      // push registers
-          __ pushl(count);
-          __ pushl(start);
-          __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_post));
-          __ addl(esp, wordSize * 2);
-          __ popad();
-
-        }
-        break;
-#endif // 0 G1 only
-
-      case BarrierSet::CardTableModRef:
-      case BarrierSet::CardTableExtension:
-        {
-          CardTableModRefBS* ct = (CardTableModRefBS*)bs;
-          assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
-
-          Label L_loop;
-          const Register end = count;  // elements count; end == start+count-1
-          assert_different_registers(start, end);
-
-          __ leal(end,   Address(start, count, Address::times_4, -4));
-          __ shrl(start, CardTableModRefBS::card_shift);
-          __ shrl(end,   CardTableModRefBS::card_shift);
-          __ subl(end, start); // end --> count
-        __ BIND(L_loop);
-          ExternalAddress base((address)ct->byte_map_base);
-          Address index(start, count, Address::times_1, 0);
-          __ movbyte(ArrayAddress(base, index), 0);
-          __ decrement(count);
-          __ jcc(Assembler::greaterEqual, L_loop);
-        }
-        break;
-      case BarrierSet::ModRef: 
-        break;
-      default      : 
-        ShouldNotReachHere();
-        
-    }
+    __ leal(end,   Address(start, count, Address::times_4, -4));
+    __ shrl(start, CardTableModRefBS::card_shift);
+    __ shrl(end,   CardTableModRefBS::card_shift);
+    __ subl(end, start); // end --> count
+  __ BIND(L_loop);
+    __ movb(Address(start, count, Address::times_1, (int)ct->byte_map_base), 0);
+    __ decrement(count);
+    __ jcc(Assembler::greaterEqual, L_loop);
   }
 
   // Copy 64 bytes chunks
@@ -836,7 +771,7 @@ class StubGenerator: public StubCodeGenerator {
     // length is too short, just copy qwords
     //
   __ BIND(L_copy_8_bytes);
-    __ movq(mmx0, Address(from, 0));
+    __ movq(mmx0, Address(from));
     __ movq(Address(from, to_from, Address::times_1), mmx0);
     __ addl(from, 8);
     __ decrement(qword_count);
@@ -857,22 +792,21 @@ class StubGenerator: public StubCodeGenerator {
 
     int shift = Address::times_4 - sf;
 
-    const Register from     = rsi;  // source array address
-    const Register to       = rdi;  // destination array address
-    const Register count    = rcx;  // elements count
+    const Register from     = esi;  // source array address
+    const Register to       = edi;  // destination array address
+    const Register count    = ecx;  // elements count
     const Register to_from  = to;   // (to - from)
-    const Register saved_to = rdx;  // saved destination array address
+    const Register saved_to = edx;  // saved destination array address
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
-    __ pushl(rsi);
-    __ pushl(rdi);
-    __ movl(from , Address(rsp, 12+ 4));
-    __ movl(to   , Address(rsp, 12+ 8));
-    __ movl(count, Address(rsp, 12+ 12));
+    __ pushl(esi);
+    __ pushl(edi);
+    __ movl(from , Address(esp, 12+ 4));
+    __ movl(to   , Address(esp, 12+ 8));
+    __ movl(count, Address(esp, 12+ 12));
     if (t == T_OBJECT) {
       __ testl(count, count);
       __ jcc(Assembler::zero, L_0_count);
-      gen_write_ref_array_pre_barrier(to, count);
       __ movl(saved_to, to);          // save 'to'
     }
 
@@ -888,8 +822,8 @@ class StubGenerator: public StubCodeGenerator {
         // One byte misalignment happens only for byte arrays
         __ testl(from, 1);
         __ jccb(Assembler::zero, L_skip_align1);
-        __ movb(rax, Address(from, 0));
-        __ movb(Address(from, to_from, Address::times_1, 0), rax);
+        __ movb(eax, Address(from));
+        __ movb(Address(from, to_from, Address::times_1, 0), eax);
         __ increment(from);
         __ decrement(count);
       __ BIND(L_skip_align1);
@@ -897,58 +831,58 @@ class StubGenerator: public StubCodeGenerator {
       // Two bytes misalignment happens only for byte and short (char) arrays
       __ testl(from, 2);
       __ jccb(Assembler::zero, L_skip_align2);
-      __ movw(rax, Address(from, 0));
-      __ movw(Address(from, to_from, Address::times_1, 0), rax);
+      __ movw(eax, Address(from));
+      __ movw(Address(from, to_from, Address::times_1, 0), eax);
       __ addl(from, 2);
       __ subl(count, 1<<(shift-1));
     __ BIND(L_skip_align2);
     }
     if (!VM_Version::supports_mmx()) {
-      __ movl(rax, count);     // save 'count'
+      __ movl(eax, count);     // save 'count'
       __ shrl(count, shift);   // bytes count
       __ addl(to_from, from);  // restore 'to'
       __ rep_movl();
       __ subl(to_from, from);  // restore 'to_from'
-      __ movl(count, rax);     // restore 'count'
+      __ movl(count, eax);     // restore 'count'
       __ jmpb(L_copy_2_bytes); // all dwords were copied
     } else {
       // align to 8 bytes, we know we are 4 byte aligned to start
       __ testl(from, 4);
       __ jccb(Assembler::zero, L_copy_64_bytes);
-      __ movl(rax, Address(from, 0));
-      __ movl(Address(from, to_from, Address::times_1, 0), rax);
+      __ movl(eax, Address(from));
+      __ movl(Address(from, to_from, Address::times_1, 0), eax);
       __ addl(from, 4);
       __ subl(count, 1<<shift);
     __ BIND(L_copy_64_bytes);
-      __ movl(rax, count);
-      __ shrl(rax, shift+1);  // 8 bytes chunk count
+      __ movl(eax, count);
+      __ shrl(eax, shift+1);  // 8 bytes chunk count
       //
       // Copy 8-byte chunks through MMX registers, 8 per iteration of the loop
       //
-      mmx_copy_forward(from, to_from, rax);
+      mmx_copy_forward(from, to_from, eax);
     }
     // copy tailing dword
   __ BIND(L_copy_4_bytes);
     __ testl(count, 1<<shift);
     __ jccb(Assembler::zero, L_copy_2_bytes);
-    __ movl(rax, Address(from, 0));
-    __ movl(Address(from, to_from, Address::times_1, 0), rax);
+    __ movl(eax, Address(from));
+    __ movl(Address(from, to_from, Address::times_1, 0), eax);
     if (t == T_BYTE || t == T_SHORT) {
       __ addl(from, 4);
     __ BIND(L_copy_2_bytes);
       // copy tailing word
       __ testl(count, 1<<(shift-1));
       __ jccb(Assembler::zero, L_copy_byte);
-      __ movw(rax, Address(from, 0));
-      __ movw(Address(from, to_from, Address::times_1, 0), rax);
+      __ movw(eax, Address(from));
+      __ movw(Address(from, to_from, Address::times_1, 0), eax);
       if (t == T_BYTE) {
         __ addl(from, 2);
       __ BIND(L_copy_byte);
         // copy tailing byte
         __ testl(count, 1);
         __ jccb(Assembler::zero, L_exit);
-        __ movb(rax, Address(from, 0));
-        __ movb(Address(from, to_from, Address::times_1, 0), rax);
+        __ movb(eax, Address(from));
+        __ movb(Address(from, to_from, Address::times_1, 0), eax);
       __ BIND(L_exit);
       } else {
       __ BIND(L_copy_byte);
@@ -958,16 +892,16 @@ class StubGenerator: public StubCodeGenerator {
     }
 
     if (t == T_OBJECT) {
-      __ movl(count, Address(rsp, 12+12)); // reread 'count'
+      __ movl(count, Address(esp, 12+12)); // reread 'count'
       __ movl(to, saved_to); // restore 'to'
-      gen_write_ref_array_post_barrier(to, count);
+      array_store_check(to, count);
     __ BIND(L_0_count);
     }
     inc_copy_counter_np(t);
-    __ popl(rdi);
-    __ popl(rsi);
+    __ popl(edi);
+    __ popl(esi);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
-    __ xorl(rax, rax); // return 0
+    __ xorl(eax, eax); // return 0
     __ ret(0);
     return start;
   }
@@ -986,22 +920,19 @@ class StubGenerator: public StubCodeGenerator {
 
     int shift = Address::times_4 - sf;
 
-    const Register src   = rax;  // source array address
-    const Register dst   = rdx;  // destination array address
-    const Register from  = rsi;  // source array address
-    const Register to    = rdi;  // destination array address
-    const Register count = rcx;  // elements count
-    const Register end   = rax;  // array end address
+    const Register src   = eax;  // source array address
+    const Register dst   = edx;  // destination array address
+    const Register from  = esi;  // source array address
+    const Register to    = edi;  // destination array address
+    const Register count = ecx;  // elements count
+    const Register end   = eax;  // array end address
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
-    __ pushl(rsi);
-    __ pushl(rdi);
-    __ movl(src  , Address(rsp, 12+ 4));  // from
-    __ movl(dst  , Address(rsp, 12+ 8));  // to
-    __ movl(count, Address(rsp, 12+12));  // count
-    if (t == T_OBJECT) {
-       gen_write_ref_array_pre_barrier(dst, count);
-    }
+    __ pushl(esi);
+    __ pushl(edi);
+    __ movl(src  , Address(esp, 12+ 4));  // from
+    __ movl(dst  , Address(esp, 12+ 8));  // to
+    __ movl(count, Address(esp, 12+12));  // count
 
     if (entry != NULL) {
       *entry = __ pc(); // Entry point from generic arraycopy stub.
@@ -1016,12 +947,11 @@ class StubGenerator: public StubCodeGenerator {
     __ movl(to  , dst);
 
     // arrays overlap test
-    RuntimeAddress nooverlap(nooverlap_target);
     __ cmpl(dst, src);
     __ leal(end, Address(src, count, sf, 0)); // src + count * elem_size
-    __ jump_cc(Assembler::belowEqual, nooverlap);
+    __ jcc(Assembler::belowEqual, nooverlap_target);
     __ cmpl(dst, end);
-    __ jump_cc(Assembler::aboveEqual, nooverlap);
+    __ jcc(Assembler::aboveEqual, nooverlap_target);
 
     // copy from high to low
     __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
@@ -1034,16 +964,16 @@ class StubGenerator: public StubCodeGenerator {
         __ testl(end, 1);
         __ jccb(Assembler::zero, L_skip_align1);
         __ decrement(count);
-        __ movb(rdx, Address(from, count, sf, 0));
-        __ movb(Address(to, count, sf, 0), rdx);
+        __ movb(edx, Address(from, count, sf, 0));
+        __ movb(Address(to, count, sf, 0), edx);
       __ BIND(L_skip_align1);
       }
       // Two bytes misalignment happens only for byte and short (char) arrays
       __ testl(end, 2);
       __ jccb(Assembler::zero, L_skip_align2);
       __ subl(count, 1<<(shift-1));
-      __ movw(rdx, Address(from, count, sf, 0));
-      __ movw(Address(to, count, sf, 0), rdx);
+      __ movw(edx, Address(from, count, sf, 0));
+      __ movw(Address(to, count, sf, 0), edx);
     __ BIND(L_skip_align2);
       __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
       __ jcc(Assembler::below, L_copy_4_bytes);
@@ -1051,25 +981,25 @@ class StubGenerator: public StubCodeGenerator {
 
     if (!VM_Version::supports_mmx()) {
       __ std();
-      __ movl(rax, count); // Save 'count'
-      __ movl(rdx, to);    // Save 'to'
-      __ leal(rsi, Address(from, count, sf, -4));
-      __ leal(rdi, Address(to  , count, sf, -4));
+      __ movl(eax, count); // Save 'count'
+      __ movl(edx, to);    // Save 'to'
+      __ leal(esi, Address(from, count, sf, -4));
+      __ leal(edi, Address(to  , count, sf, -4));
       __ shrl(count, shift); // bytes count
       __ rep_movl();
       __ cld();
-      __ movl(count, rax); // restore 'count'
+      __ movl(count, eax); // restore 'count'
       __ andl(count, (1<<shift)-1);      // mask the number of rest elements
-      __ movl(from, Address(rsp, 12+4)); // reread 'from'
-      __ movl(to, rdx);   // restore 'to'
+      __ movl(from, Address(esp, 12+4)); // reread 'from'
+      __ movl(to, edx);   // restore 'to'
       __ jmpb(L_copy_2_bytes); // all dword were copied
    } else {
       // Align to 8 bytes the end of array. It is aligned to 4 bytes already.
       __ testl(end, 4);
       __ jccb(Assembler::zero, L_copy_8_bytes);
       __ subl(count, 1<<shift);
-      __ movl(rdx, Address(from, count, sf, 0));
-      __ movl(Address(to, count, sf, 0), rdx);
+      __ movl(edx, Address(from, count, sf, 0));
+      __ movl(Address(to, count, sf, 0), edx);
       __ jmpb(L_copy_8_bytes);
 
       __ align(16);
@@ -1087,8 +1017,8 @@ class StubGenerator: public StubCodeGenerator {
     // copy prefix qword
     __ testl(count, 1<<shift);
     __ jccb(Assembler::zero, L_copy_2_bytes);
-    __ movl(rdx, Address(from, count, sf, -4));
-    __ movl(Address(to, count, sf, -4), rdx);
+    __ movl(edx, Address(from, count, sf, -4));
+    __ movl(Address(to, count, sf, -4), edx);
 
     if (t == T_BYTE || t == T_SHORT) {
         __ subl(count, (1<<shift));
@@ -1096,16 +1026,16 @@ class StubGenerator: public StubCodeGenerator {
         // copy prefix dword
         __ testl(count, 1<<(shift-1));
         __ jccb(Assembler::zero, L_copy_byte);
-        __ movw(rdx, Address(from, count, sf, -2));
-        __ movw(Address(to, count, sf, -2), rdx);
+        __ movw(edx, Address(from, count, sf, -2));
+        __ movw(Address(to, count, sf, -2), edx);
         if (t == T_BYTE) {
           __ subl(count, 1<<(shift-1));
         __ BIND(L_copy_byte);
           // copy prefix byte
           __ testl(count, 1);
           __ jccb(Assembler::zero, L_exit);
-          __ movb(rdx, Address(from, 0));
-          __ movb(Address(to, 0), rdx);
+          __ movb(edx, Address(from));
+          __ movb(Address(to), edx);
         __ BIND(L_exit);
         } else {
         __ BIND(L_copy_byte);
@@ -1114,15 +1044,15 @@ class StubGenerator: public StubCodeGenerator {
     __ BIND(L_copy_2_bytes);
     }
     if (t == T_OBJECT) {
-      __ movl(count, Address(rsp, 12+12)); // reread count
-      gen_write_ref_array_post_barrier(to, count);
+      __ movl(count, Address(esp, 12+12)); // reread count
+      array_store_check(to, count);
     __ BIND(L_0_count);
     }
     inc_copy_counter_np(t);
-    __ popl(rdi);
-    __ popl(rsi);
+    __ popl(edi);
+    __ popl(esi);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
-    __ xorl(rax, rax); // return 0
+    __ xorl(eax, eax); // return 0
     __ ret(0);
     return start;
   }
@@ -1134,15 +1064,15 @@ class StubGenerator: public StubCodeGenerator {
     address start = __ pc();
 
     Label L_copy_8_bytes, L_copy_8_bytes_loop;
-    const Register from       = rax;  // source array address
-    const Register to         = rdx;  // destination array address
-    const Register count      = rcx;  // elements count
-    const Register to_from    = rdx;  // (to - from)
+    const Register from       = eax;  // source array address
+    const Register to         = edx;  // destination array address
+    const Register count      = ecx;  // elements count
+    const Register to_from    = edx;  // (to - from)
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
-    __ movl(from , Address(rsp, 8+0));       // from
-    __ movl(to   , Address(rsp, 8+4));       // to
-    __ movl(count, Address(rsp, 8+8));       // count
+    __ movl(from , Address(esp, 8+0));       // from
+    __ movl(to   , Address(esp, 8+4));       // to
+    __ movl(count, Address(esp, 8+8));       // count
 
     *entry = __ pc(); // Entry point from conjoint arraycopy stub.
     BLOCK_COMMENT("Entry:");
@@ -1154,7 +1084,7 @@ class StubGenerator: public StubCodeGenerator {
       __ jmpb(L_copy_8_bytes);
       __ align(16);
     __ BIND(L_copy_8_bytes_loop);
-      __ fild_d(Address(from, 0));
+      __ fild_d(Address(from));
       __ fistp_d(Address(from, to_from, Address::times_1));
       __ addl(from, 8);
     __ BIND(L_copy_8_bytes);
@@ -1163,7 +1093,7 @@ class StubGenerator: public StubCodeGenerator {
     }
     inc_copy_counter_np(T_LONG);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
-    __ xorl(rax, rax); // return 0
+    __ xorl(eax, eax); // return 0
     __ ret(0);
     return start;
   }
@@ -1175,27 +1105,26 @@ class StubGenerator: public StubCodeGenerator {
     address start = __ pc();
 
     Label L_copy_8_bytes, L_copy_8_bytes_loop;
-    const Register from       = rax;  // source array address
-    const Register to         = rdx;  // destination array address
-    const Register count      = rcx;  // elements count
-    const Register end_from   = rax;  // source array end address
+    const Register from       = eax;  // source array address
+    const Register to         = edx;  // destination array address
+    const Register count      = ecx;  // elements count
+    const Register end_from   = eax;  // source array end address
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
-    __ movl(from , Address(rsp, 8+0));       // from
-    __ movl(to   , Address(rsp, 8+4));       // to
-    __ movl(count, Address(rsp, 8+8));       // count
+    __ movl(from , Address(esp, 8+0));       // from
+    __ movl(to   , Address(esp, 8+4));       // to
+    __ movl(count, Address(esp, 8+8));       // count
 
     *entry = __ pc(); // Entry point from generic arraycopy stub.
     BLOCK_COMMENT("Entry:");
 
     // arrays overlap test
     __ cmpl(to, from);
-    RuntimeAddress nooverlap(nooverlap_target);
-    __ jump_cc(Assembler::belowEqual, nooverlap);
+    __ jcc(Assembler::belowEqual, nooverlap_target);
     __ leal(end_from, Address(from, count, Address::times_8, 0));
     __ cmpl(to, end_from);
-    __ movl(from, Address(rsp, 8));  // from
-    __ jump_cc(Assembler::aboveEqual, nooverlap);
+    __ movl(from, Address(esp, 8));  // from
+    __ jcc(Assembler::aboveEqual, nooverlap_target);
 
     __ jmpb(L_copy_8_bytes);
 
@@ -1217,14 +1146,14 @@ class StubGenerator: public StubCodeGenerator {
     }
     inc_copy_counter_np(T_LONG);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
-    __ xorl(rax, rax); // return 0
+    __ xorl(eax, eax); // return 0
     __ ret(0);
     return start;
   }
 
 
   // Helper for generating a dynamic type check.
-  // The sub_klass must be one of {rbx, rdx, rsi}.
+  // The sub_klass must be one of {ebx, edx, esi}.
   // The temp is killed.
   void generate_type_check(Register sub_klass,
                            Address& super_check_offset_addr,
@@ -1274,30 +1203,30 @@ class StubGenerator: public StubCodeGenerator {
     {
       // The repne_scan instruction uses fixed registers, which we must spill.
       // (We need a couple more temps in any case.)
-      __ pushl(rax);
-      __ pushl(rcx);
-      __ pushl(rdi);
-      assert_different_registers(sub_klass, rax, rcx, rdi);
+      __ pushl(eax);
+      __ pushl(ecx);
+      __ pushl(edi);
+      assert_different_registers(sub_klass, eax, ecx, edi);
 
-      __ movl(rdi, secondary_supers_addr);
+      __ movl(edi, secondary_supers_addr);
       // Load the array length.
-      __ movl(rcx, Address(rdi, arrayOopDesc::length_offset_in_bytes())); 
+      __ movl(ecx, Address(edi, arrayOopDesc::length_offset_in_bytes())); 
       // Skip to start of data.
-      __ addl(rdi, arrayOopDesc::base_offset_in_bytes(T_OBJECT));
-      // Scan rcx words at [edi] for occurance of rax,
+      __ addl(edi, arrayOopDesc::base_offset_in_bytes(T_OBJECT));
+      // Scan ecx words at [edi] for occurance of eax
       // Set NZ/Z based on last compare
-      __ movl(rax, super_klass_addr);
+      __ movl(eax, super_klass_addr);
       __ repne_scan();
 
       // Unspill the temp. registers:
-      __ popl(rdi);
-      __ popl(rcx);
-      __ popl(rax);
+      __ popl(edi);
+      __ popl(ecx);
+      __ popl(eax);
     }
     __ jcc(Assembler::notEqual, L_failure);
 
     // Success.  Cache the super we found and proceed in triumph.
-    __ movl(temp, super_klass_addr); // note: rax, is dead
+    __ movl(temp, super_klass_addr); // note: eax is dead
     __ movl(super_cache_addr, temp);
 
     if (!fall_through_on_success)
@@ -1311,15 +1240,15 @@ class StubGenerator: public StubCodeGenerator {
   //  Generate checkcasting array copy stub
   //
   //  Input:
-  //    4(rsp)   - source array address
-  //    8(rsp)   - destination array address
-  //   12(rsp)   - element count, can be zero
-  //   16(rsp)   - size_t ckoff (super_check_offset)
-  //   20(rsp)   - oop ckval (super_klass)
+  //    4(esp)   - source array address
+  //    8(esp)   - destination array address
+  //   12(esp)   - element count, can be zero
+  //   16(esp)   - size_t ckoff (super_check_offset)
+  //   20(esp)   - oop ckval (super_klass)
   //
   //  Output:
-  //    rax, ==  0  -  success
-  //    rax, == -1^K - failure, where K is partial transfer count
+  //    eax ==  0  -  success
+  //    eax == -1^K - failure, where K is partial transfer count
   //
   address generate_checkcast_copy(const char *name, address* entry) {
     __ align(CodeEntryAlignment);
@@ -1329,27 +1258,27 @@ class StubGenerator: public StubCodeGenerator {
     Label L_load_element, L_store_element, L_do_card_marks, L_done;
 
     // register use:
-    //  rax, rdx, rcx -- loop control (end_from, end_to, count)
-    //  rdi, rsi      -- element access (oop, klass)
-    //  rbx,           -- temp
-    const Register from       = rax;    // source array address
-    const Register to         = rdx;    // destination array address
-    const Register length     = rcx;    // elements count
-    const Register elem       = rdi;    // each oop copied
-    const Register elem_klass = rsi;    // each elem._klass (sub_klass)
-    const Register temp       = rbx;    // lone remaining temp
+    //  eax, edx, ecx -- loop control (end_from, end_to, count)
+    //  edi, esi      -- element access (oop, klass)
+    //  ebx           -- temp
+    const Register from       = eax;    // source array address
+    const Register to         = edx;    // destination array address
+    const Register length     = ecx;    // elements count
+    const Register elem       = edi;    // each oop copied
+    const Register elem_klass = esi;    // each elem._klass (sub_klass)
+    const Register temp       = ebx;    // lone remaining temp
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
 
-    __ pushl(rsi);
-    __ pushl(rdi);
-    __ pushl(rbx);
+    __ pushl(esi);
+    __ pushl(edi);
+    __ pushl(ebx);
 
-    Address   from_arg(rsp, 16+ 4);     // from
-    Address     to_arg(rsp, 16+ 8);     // to
-    Address length_arg(rsp, 16+12);     // elements count
-    Address  ckoff_arg(rsp, 16+16);     // super_check_offset
-    Address  ckval_arg(rsp, 16+20);     // super_klass
+    Address   from_arg(esp, 16+ 4);     // from
+    Address     to_arg(esp, 16+ 8);     // to
+    Address length_arg(esp, 16+12);     // elements count
+    Address  ckoff_arg(esp, 16+16);     // super_check_offset
+    Address  ckval_arg(esp, 16+20);     // super_klass
 
     // Load up:
     __ movl(from,     from_arg);
@@ -1382,13 +1311,12 @@ class StubGenerator: public StubCodeGenerator {
     // Copy from low to high addresses, indexed from the end of each array.
     __ leal(end_from, end_from_addr);
     __ leal(end_to,   end_to_addr);
-    gen_write_ref_array_pre_barrier(to, count);
     assert(length == count, "");        // else fix next line:
     __ negl(count);                     // negate and test the length
     __ jccb(Assembler::notZero, L_load_element);
 
     // Empty array:  Nothing to do.
-    __ xorl(rax, rax);                  // return 0 on (trivial) success
+    __ xorl(eax, eax);                  // return 0 on (trivial) success
     __ jmp(L_done);
 
     // ======== begin loop ========
@@ -1419,28 +1347,29 @@ class StubGenerator: public StubCodeGenerator {
     // ======== end loop ========
 
     // It was a real error; we must depend on the caller to finish the job.
-    // Register rdx = -1 * number of *remaining* oops, r14 = *total* oops.
-    // Emit GC store barriers for the oops we have copied (r14 + rdx),
+    // Register "count" = -1 * number of *remaining* oops, length_arg = *total* oops.
+    // Emit GC store barriers for the oops we have copied (length_arg + count),
     // and report their number to the caller.
     __ addl(count, length_arg);         // transfers = (length - remaining)
-    __ movl(rax, count);                // save the value
-    __ notl(rax);                       // report (-1^K) to caller
+    __ movl(eax, count);                // save the value
+    __ notl(eax);                       // report (-1^K) to caller
     __ movl(to, to_arg);                // reload
-    assert_different_registers(to, count, rax);
-    gen_write_ref_array_post_barrier(to, count);
+    assert_different_registers(to, count, eax);
+    array_store_check(to, count);
     __ jmpb(L_done);
 
     // Come here on success only.
     __ BIND(L_do_card_marks);
     __ movl(count, length_arg);
-    gen_write_ref_array_post_barrier(to, count);
-    __ xorl(rax, rax);                  // return 0 on success
+    __ movl(to, to_arg);                // reload
+    array_store_check(to, count);
+    __ xorl(eax, eax);                  // return 0 on success
 
     // Common exit point (success or failure).
     __ BIND(L_done);
-    __ popl(rbx);
-    __ popl(rdi);
-    __ popl(rsi);
+    __ popl(ebx);
+    __ popl(edi);
+    __ popl(esi);
     inc_counter_np(SharedRuntime::_checkcast_array_copy_ctr);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1454,13 +1383,13 @@ class StubGenerator: public StubCodeGenerator {
   //  size_t argument instead of an element count.
   //
   //  Input:
-  //    4(rsp)   - source array address
-  //    8(rsp)   - destination array address
-  //   12(rsp)   - byte count, can be zero
+  //    4(esp)   - source array address
+  //    8(esp)   - destination array address
+  //   12(esp)   - byte count, can be zero
   //
   //  Output:
-  //    rax, ==  0  -  success
-  //    rax, == -1  -  need to call System.arraycopy
+  //    eax ==  0  -  success
+  //    eax == -1  -  need to call System.arraycopy
   //
   // Examines the alignment of the operands and dispatches
   // to a long, int, short, or byte copy loop.
@@ -1477,16 +1406,16 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    const Register from       = rax;  // source array address
-    const Register to         = rdx;  // destination array address
-    const Register count      = rcx;  // elements count
+    const Register from       = eax;  // source array address
+    const Register to         = edx;  // destination array address
+    const Register count      = ecx;  // elements count
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
-    __ pushl(rsi);
-    __ pushl(rdi);
-    Address  from_arg(rsp, 12+ 4);      // from
-    Address    to_arg(rsp, 12+ 8);      // to
-    Address count_arg(rsp, 12+12);      // byte count
+    __ pushl(esi);
+    __ pushl(edi);
+    Address  from_arg(esp, 12+ 4);      // from
+    Address    to_arg(esp, 12+ 8);      // to
+    Address count_arg(esp, 12+12);      // byte count
 
     // Load up:
     __ movl(from ,  from_arg);
@@ -1496,7 +1425,7 @@ class StubGenerator: public StubCodeGenerator {
     // bump this on entry, not on exit:
     inc_counter_np(SharedRuntime::_unsafe_array_copy_ctr);
 
-    const Register bits = rsi;
+    const Register bits = esi;
     __ movl(bits, from);
     __ orl(bits, to);
     __ orl(bits, count);
@@ -1508,24 +1437,24 @@ class StubGenerator: public StubCodeGenerator {
     __ jccb(Assembler::zero, L_int_aligned);
 
     __ testl(bits, BytesPerShort-1);
-    __ jump_cc(Assembler::notZero, RuntimeAddress(byte_copy_entry));
+    __ jcc(Assembler::notZero, byte_copy_entry, relocInfo::runtime_call_type);
 
     __ BIND(L_short_aligned);
     __ shrl(count, LogBytesPerShort); // size => short_count
     __ movl(count_arg, count);          // update 'count'
-    __ jump(RuntimeAddress(short_copy_entry));
+    __ jmp(short_copy_entry, relocInfo::runtime_call_type);
 
     __ BIND(L_int_aligned);
     __ shrl(count, LogBytesPerInt); // size => int_count
     __ movl(count_arg, count);          // update 'count'
-    __ jump(RuntimeAddress(int_copy_entry));
+    __ jmp(int_copy_entry, relocInfo::runtime_call_type);
 
     __ BIND(L_long_aligned);
     __ shrl(count, LogBytesPerLong); // size => qword_count
     __ movl(count_arg, count);          // update 'count'
-    __ popl(rdi); // Do pops here since jlong_arraycopy stub does not do it.
-    __ popl(rsi);
-    __ jump(RuntimeAddress(long_copy_entry));
+    __ popl(edi); // Do pops here since jlong_arraycopy stub does not do it.
+    __ popl(esi);
+    __ jmp(long_copy_entry, relocInfo::runtime_call_type);
 
     return start;
   }
@@ -1561,15 +1490,15 @@ class StubGenerator: public StubCodeGenerator {
   //  Generate generic array copy stubs
   //
   //  Input:
-  //     4(rsp)    -  src oop
-  //     8(rsp)    -  src_pos
-  //    12(rsp)    -  dst oop
-  //    16(rsp)    -  dst_pos
-  //    20(rsp)    -  element count
+  //     4(esp)    -  src oop
+  //     8(esp)    -  src_pos
+  //    12(esp)    -  dst oop
+  //    16(esp)    -  dst_pos
+  //    20(esp)    -  element count
   //
   //  Output:
-  //    rax, ==  0  -  success
-  //    rax, == -1^K - failure, where K is partial transfer count
+  //    eax ==  0  -  success
+  //    eax == -1^K - failure, where K is partial transfer count
   //
   address generate_generic_copy(const char *name, 
                                 address entry_jbyte_arraycopy,
@@ -1580,35 +1509,28 @@ class StubGenerator: public StubCodeGenerator {
                                 address entry_checkcast_arraycopy) {
     Label L_failed, L_failed_0, L_objArray;
 
-    { int modulus = CodeEntryAlignment;
-      int target  = modulus - 5; // 5 = sizeof jmp(L_failed)
-      int advance = target - (__ offset() % modulus);
-      if (advance < 0)  advance += modulus;
-      if (advance > 0)  __ nop(advance);
-    }
+    __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
 
-    // Short-hop target to L_failed.  Makes for denser prologue code.
+    // Short-hop target to L_failed:
     __ BIND(L_failed_0);
     __ jmp(L_failed);
-    assert(__ offset() % CodeEntryAlignment == 0, "no further alignment needed");
 
-    __ align(CodeEntryAlignment);
     address start = __ pc();
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
-    __ pushl(rsi);
-    __ pushl(rdi);
+    __ pushl(esi);
+    __ pushl(edi);
 
     // bump this on entry, not on exit:
     inc_counter_np(SharedRuntime::_generic_array_copy_ctr);
 
     // Input values
-    Address SRC     (rsp, 12+ 4);
-    Address SRC_POS (rsp, 12+ 8);
-    Address DST     (rsp, 12+12);
-    Address DST_POS (rsp, 12+16);
-    Address LENGTH  (rsp, 12+20);
+    Address SRC     (esp, 12+ 4);
+    Address SRC_POS (esp, 12+ 8);
+    Address DST     (esp, 12+12);
+    Address DST_POS (esp, 12+16);
+    Address LENGTH  (esp, 12+20);
 
     //-----------------------------------------------------------------------
     // Assembler stub will be used for this call to arraycopy 
@@ -1624,11 +1546,11 @@ class StubGenerator: public StubCodeGenerator {
     // (8) dst_pos + length must not exceed length of dst.
     // 
 
-    const Register src     = rax;       // source array oop
-    const Register src_pos = rsi;
-    const Register dst     = rdx;       // destination array oop
-    const Register dst_pos = rdi;
-    const Register length  = rcx;       // transfer count
+    const Register src     = eax;       // source array oop
+    const Register src_pos = esi;
+    const Register dst     = edx;       // destination array oop
+    const Register dst_pos = edi;
+    const Register length  = ecx;       // transfer count
 
     //  if (src == NULL) return -1;
     __ movl(src, SRC);      // src oop
@@ -1658,14 +1580,14 @@ class StubGenerator: public StubCodeGenerator {
     //  if (src->klass() == NULL) return -1;
     Address src_klass_addr(src, oopDesc::klass_offset_in_bytes());
     Address dst_klass_addr(dst, oopDesc::klass_offset_in_bytes());
-    const Register rcx_src_klass = rcx;    // array klass
-    __ movl(rcx_src_klass, Address(src, oopDesc::klass_offset_in_bytes()));
+    const Register ecx_src_klass = ecx;    // array klass
+    __ movl(ecx_src_klass, Address(src, oopDesc::klass_offset_in_bytes()));
 
 #ifdef ASSERT
     //  assert(src->klass() != NULL);
     BLOCK_COMMENT("assert klasses not null");
     { Label L1, L2;
-      __ testl(rcx_src_klass, rcx_src_klass);
+      __ testl(ecx_src_klass, ecx_src_klass);
       __ jccb(Assembler::notZero, L2);   // it is broken if klass is NULL
       __ bind(L1);
       __ stop("broken null klass");
@@ -1686,7 +1608,7 @@ class StubGenerator: public StubCodeGenerator {
 
     int lh_offset = klassOopDesc::header_size() * HeapWordSize +
                     Klass::layout_helper_offset_in_bytes();
-    Address src_klass_lh_addr(rcx_src_klass, lh_offset);
+    Address src_klass_lh_addr(ecx_src_klass, lh_offset);
 
     // Handle objArrays completely differently...
     jint objArray_lh = Klass::array_layout_helper(T_OBJECT);
@@ -1694,28 +1616,28 @@ class StubGenerator: public StubCodeGenerator {
     __ jcc(Assembler::equal, L_objArray);
 
     //  if (src->klass() != dst->klass()) return -1;
-    __ cmpl(rcx_src_klass, dst_klass_addr);
+    __ cmpl(ecx_src_klass, dst_klass_addr);
     __ jccb(Assembler::notEqual, L_failed_0);
 
-    const Register rcx_lh = rcx;  // layout helper
-    assert(rcx_lh == rcx_src_klass, "known alias");
-    __ movl(rcx_lh, src_klass_lh_addr);
+    const Register ecx_lh = ecx;  // layout helper
+    assert(ecx_lh == ecx_src_klass, "known alias");
+    __ movl(ecx_lh, src_klass_lh_addr);
 
     //  if (!src->is_Array()) return -1;
-    __ cmpl(rcx_lh, Klass::_lh_neutral_value);
-    __ jcc(Assembler::greaterEqual, L_failed_0); // signed cmp
+    __ cmpl(ecx_lh, Klass::_lh_neutral_value);
+    __ jccb(Assembler::greaterEqual, L_failed_0); // signed cmp
 
     // At this point, it is known to be a typeArray (array_tag 0x3).
 #ifdef ASSERT
     { Label L;
-      __ cmpl(rcx_lh, (Klass::_lh_array_tag_type_value << Klass::_lh_array_tag_shift));
+      __ cmpl(ecx_lh, (Klass::_lh_array_tag_type_value << Klass::_lh_array_tag_shift));
       __ jcc(Assembler::greaterEqual, L); // signed cmp
       __ stop("must be a primitive array");
       __ bind(L);
     }
 #endif
 
-    assert_different_registers(src, src_pos, dst, dst_pos, rcx_lh);
+    assert_different_registers(src, src_pos, dst, dst_pos, ecx_lh);
     arraycopy_range_checks(src, src_pos, dst, dst_pos, LENGTH, L_failed);
 
     // typeArrayKlass
@@ -1723,75 +1645,74 @@ class StubGenerator: public StubCodeGenerator {
     // src_addr = (src + array_header_in_bytes()) + (src_pos << log2elemsize);
     // dst_addr = (dst + array_header_in_bytes()) + (dst_pos << log2elemsize);
     //
-    const Register rsi_offset = rsi; // array offset
+    const Register esi_offset = esi; // array offset
     const Register src_array  = src; // src array offset
     const Register dst_array  = dst; // dst array offset
-    const Register rdi_elsize = rdi; // log2 element size
+    const Register edi_elsize = edi; // log2 element size
 
-    __ movl(rsi_offset, rcx_lh);
-    __ shrl(rsi_offset, Klass::_lh_header_size_shift);
-    __ andl(rsi_offset, Klass::_lh_header_size_mask);   // array_offset
-    __ addl(src_array, rsi_offset);  // src array offset
-    __ addl(dst_array, rsi_offset);  // dst array offset
-    __ andl(rcx_lh, Klass::_lh_log2_element_size_mask); // log2 elsize
+    __ movl(esi_offset, ecx_lh);
+    __ shrl(esi_offset, Klass::_lh_header_size_shift);
+    __ andl(esi_offset, Klass::_lh_header_size_mask);   // array_offset
+    __ addl(src_array, esi_offset);  // src array offset
+    __ addl(dst_array, esi_offset);  // dst array offset
+    __ andl(ecx_lh, Klass::_lh_log2_element_size_mask); // log2 elsize
 
     // next registers should be set before the jump to corresponding stub
     const Register from       = src; // source array address
     const Register to         = dst; // destination array address
-    const Register count      = rcx; // elements count
+    const Register count      = ecx; // elements count
     // some of them should be duplicated on stack
-#define FROM   Address(rsp, 12+ 4)
-#define TO     Address(rsp, 12+ 8)   // Not used now
-#define COUNT  Address(rsp, 12+12)   // Only for oop arraycopy
+#define FROM   Address(esp, 12+ 4)
+#define TO     Address(esp, 12+ 8)   // Not used now
+#define COUNT  Address(esp, 12+12)   // Only for oop arraycopy
 
     BLOCK_COMMENT("scale indexes to element size");
-    __ movl(rsi, SRC_POS);  // src_pos
-    __ shll(rsi); // src_pos << rcx (log2 elsize)
+    __ movl(esi, SRC_POS);  // src_pos
+    __ shll(esi); // src_pos << ecx (log2 elsize)
     assert(src_array == from, "");
-    __ addl(from, rsi);     // from = src_array + SRC_POS << log2 elsize
-    __ movl(rdi, DST_POS);  // dst_pos
-    __ shll(rdi); // dst_pos << rcx (log2 elsize)
+    __ addl(from, esi);     // from = src_array + SRC_POS << log2 elsize
+    __ movl(edi, DST_POS);  // dst_pos
+    __ shll(edi); // dst_pos << ecx (log2 elsize)
     assert(dst_array == to, "");
-    __ addl(to,  rdi);      // to   = dst_array + DST_POS << log2 elsize
+    __ addl(to,  edi);      // to   = dst_array + DST_POS << log2 elsize
     __ movl(FROM, from);    // src_addr
-    __ movl(rdi_elsize, rcx_lh); // log2 elsize
+    __ movl(edi_elsize, ecx_lh); // log2 elsize
     __ movl(count, LENGTH); // elements count
 
     BLOCK_COMMENT("choose copy loop based on element size");
-    __ cmpl(rdi_elsize, 0);
-
-    __ jump_cc(Assembler::equal, RuntimeAddress(entry_jbyte_arraycopy));
-    __ cmpl(rdi_elsize, LogBytesPerShort);
-    __ jump_cc(Assembler::equal, RuntimeAddress(entry_jshort_arraycopy));
-    __ cmpl(rdi_elsize, LogBytesPerInt);
-    __ jump_cc(Assembler::equal, RuntimeAddress(entry_jint_arraycopy));
+    __ cmpl(edi_elsize, 0);
+    __ jcc(Assembler::equal, entry_jbyte_arraycopy);
+    __ cmpl(edi_elsize, LogBytesPerShort);
+    __ jcc(Assembler::equal, entry_jshort_arraycopy);
+    __ cmpl(edi_elsize, LogBytesPerInt);
+    __ jcc(Assembler::equal, entry_jint_arraycopy);
 #ifdef ASSERT
-    __ cmpl(rdi_elsize, LogBytesPerLong);
+    __ cmpl(edi_elsize, LogBytesPerLong);
     __ jccb(Assembler::notEqual, L_failed);
 #endif
-    __ popl(rdi); // Do pops here since jlong_arraycopy stub does not do it.
-    __ popl(rsi);
-    __ jump(RuntimeAddress(entry_jlong_arraycopy));
+    __ popl(edi); // Do pops here since jlong_arraycopy stub does not do it.
+    __ popl(esi);
+    __ jmp(entry_jlong_arraycopy, relocInfo::runtime_call_type);
 
   __ BIND(L_failed);
-    __ xorl(rax, rax);
-    __ notl(rax); // return -1
-    __ popl(rdi);
-    __ popl(rsi);
+    __ xorl(eax, eax);
+    __ notl(eax); // return -1
+    __ popl(edi);
+    __ popl(esi);
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
     // objArrayKlass
   __ BIND(L_objArray);
-    // live at this point:  rcx_src_klass, src[_pos], dst[_pos]
+    // live at this point:  ecx_src_klass, src[_pos], dst[_pos]
 
     Label L_plain_copy, L_checkcast_copy;
     //  test array classes for subtyping
-    __ cmpl(rcx_src_klass, dst_klass_addr); // usual case is exact equality
+    __ cmpl(ecx_src_klass, dst_klass_addr); // usual case is exact equality
     __ jccb(Assembler::notEqual, L_checkcast_copy);
 
     // Identically typed arrays can be copied without element-wise checks.
-    assert_different_registers(src, src_pos, dst, dst_pos, rcx_src_klass);
+    assert_different_registers(src, src_pos, dst, dst_pos, ecx_src_klass);
     arraycopy_range_checks(src, src_pos, dst, dst_pos, LENGTH, L_failed);
 
   __ BIND(L_plain_copy);
@@ -1805,10 +1726,10 @@ class StubGenerator: public StubCodeGenerator {
     __ movl(FROM,  from);   // src_addr
     __ movl(TO,    to);     // dst_addr
     __ movl(COUNT, count);  // count
-    __ jump(RuntimeAddress(entry_oop_arraycopy));
+    __ jmp(entry_oop_arraycopy, relocInfo::runtime_call_type);
 
   __ BIND(L_checkcast_copy);
-    // live at this point:  rcx_src_klass, dst[_pos], src[_pos]
+    // live at this point:  ecx_src_klass, dst[_pos], src[_pos]
     {
       // Handy offsets:
       int  ek_offset = (klassOopDesc::header_size() * HeapWordSize +
@@ -1816,66 +1737,66 @@ class StubGenerator: public StubCodeGenerator {
       int sco_offset = (klassOopDesc::header_size() * HeapWordSize +
                         Klass::super_check_offset_offset_in_bytes());
 
-      Register rsi_dst_klass = rsi;
-      Register rdi_temp      = rdi;
-      assert(rsi_dst_klass == src_pos, "expected alias w/ src_pos");
-      assert(rdi_temp      == dst_pos, "expected alias w/ dst_pos");
-      Address dst_klass_lh_addr(rsi_dst_klass, lh_offset);
+      Register esi_dst_klass = esi;
+      Register edi_temp      = edi;
+      assert(esi_dst_klass == src_pos, "expected alias w/ src_pos");
+      assert(edi_temp      == dst_pos, "expected alias w/ dst_pos");
+      Address dst_klass_lh_addr(esi_dst_klass, lh_offset);
 
       // Before looking at dst.length, make sure dst is also an objArray.
-      __ movl(rsi_dst_klass, dst_klass_addr);
+      __ movl(esi_dst_klass, dst_klass_addr);
       __ cmpl(dst_klass_lh_addr, objArray_lh);
       __ jccb(Assembler::notEqual, L_failed);
 
       // It is safe to examine both src.length and dst.length.
-      __ movl(src_pos, SRC_POS);        // reload rsi
+      __ movl(src_pos, SRC_POS);        // reload esi
       arraycopy_range_checks(src, src_pos, dst, dst_pos, LENGTH, L_failed);
       // (Now src_pos and dst_pos are killed, but not src and dst.)
 
       // We'll need this temp (don't forget to pop it after the type check).
-      __ pushl(rbx);
-      Register rbx_src_klass = rbx;
+      __ pushl(ebx);
+      Register ebx_src_klass = ebx;
 
-      __ movl(rbx_src_klass, rcx_src_klass); // spill away from rcx
-      __ movl(rsi_dst_klass, dst_klass_addr);
-      Address super_check_offset_addr(rsi_dst_klass, sco_offset);
+      __ movl(ebx_src_klass, ecx_src_klass); // spill away from ecx
+      __ movl(esi_dst_klass, dst_klass_addr);
+      Address super_check_offset_addr(esi_dst_klass, sco_offset);
       Label L_fail_array_check;
-      generate_type_check(rbx_src_klass,
+      generate_type_check(ebx_src_klass,
                           super_check_offset_addr, dst_klass_addr,
-                          rdi_temp, NULL, &L_fail_array_check);
+                          edi_temp, NULL, &L_fail_array_check);
       // (On fall-through, we have passed the array type check.)
-      __ popl(rbx);
+      __ popl(ebx);
       __ jmp(L_plain_copy);
 
       __ BIND(L_fail_array_check);
       // Reshuffle arguments so we can call checkcast_arraycopy:
 
       // match initial saves for checkcast_arraycopy
-      // pushl(rsi);    // already done; see above
-      // pushl(rdi);    // already done; see above
-      // pushl(rbx);    // already done; see above
+      // pushl(esi);    // already done; see above
+      // pushl(edi);    // already done; see above
+      // pushl(ebx);    // already done; see above
 
       // Marshal outgoing arguments now, freeing registers.
-      Address   from_arg(rsp, 16+ 4);   // from
-      Address     to_arg(rsp, 16+ 8);   // to
-      Address length_arg(rsp, 16+12);   // elements count
-      Address  ckoff_arg(rsp, 16+16);   // super_check_offset
-      Address  ckval_arg(rsp, 16+20);   // super_klass
+      Address   from_arg(esp, 16+ 4);   // from
+      Address     to_arg(esp, 16+ 8);   // to
+      Address length_arg(esp, 16+12);   // elements count
+      Address  ckoff_arg(esp, 16+16);   // super_check_offset
+      Address  ckval_arg(esp, 16+20);   // super_klass
 
-      Address SRC_POS_arg(rsp, 16+ 8);
-      Address DST_POS_arg(rsp, 16+16);
-      Address  LENGTH_arg(rsp, 16+20);
-      // push rbx, changed the incoming offsets (why not just use rbp,??)
-      // assert(SRC_POS_arg.disp() == SRC_POS.disp() + 4, "");
+      Address SRC_POS_arg(esp, 16+ 8);
+      Address DST_POS_arg(esp, 16+16);
+      Address  LENGTH_arg(esp, 16+20);
+      // push ebx changed the incoming offsets (why not just use ebp??)
+      assert(SRC_POS_arg.disp() == SRC_POS.disp() + 4, "");
 
-      __ movl(rbx, Address(rsi_dst_klass, ek_offset));
+      __ movl(ebx, Address(esi_dst_klass, ek_offset));
       __ movl(length, LENGTH_arg);    // reload elements count
       __ movl(src_pos, SRC_POS_arg);  // reload src_pos
       __ movl(dst_pos, DST_POS_arg);  // reload dst_pos
 
-      __ movl(ckval_arg, rbx);          // destination element type
-      __ movl(rbx, Address(rbx, sco_offset));
-      __ movl(ckoff_arg, rbx);          // corresponding class check offset
+      __ movl(ckval_arg, ebx);          // destination element type
+      __ movl(ebx, Address(ebx, sco_offset));
+      __ movl(ckoff_arg, ebx);          // corresponding class check offset
 
       __ movl(length_arg, length);      // outgoing length argument
 
@@ -1886,7 +1807,7 @@ class StubGenerator: public StubCodeGenerator {
       __ leal(to, Address(dst, dst_pos, Address::times_4, 
                           arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
       __ movl(to_arg, to);
-      __ jump(RuntimeAddress(entry_checkcast_arraycopy));
+      __ jmp(entry_checkcast_arraycopy, relocInfo::runtime_call_type);
     }
 
     return start;
@@ -1987,7 +1908,7 @@ class StubGenerator: public StubCodeGenerator {
   // if they expect all registers to be preserved.
   enum layout {
     thread_off,    // last_java_sp                
-    rbp_off,       // callee saved register      
+    ebp_off,       // callee saved register      
     ret_pc,
     framesize
   };
@@ -2036,31 +1957,31 @@ class StubGenerator: public StubCodeGenerator {
     // which has the ability to fetch the return PC out of
     // thread-local storage and also sets up last_Java_sp slightly
     // differently than the real call_VM
-    Register java_thread = rbx;
+    Register java_thread = ebx;
     __ get_thread(java_thread);
     if (restore_saved_exception_pc) {
-      __ movl(rax, Address(java_thread, in_bytes(JavaThread::saved_exception_pc_offset())));
-      __ pushl(rax);
+      __ movl(eax, Address(java_thread, in_bytes(JavaThread::saved_exception_pc_offset())));
+      __ pushl(eax);
     }
       
     __ enter(); // required for proper stackwalking of RuntimeStub frame
 
-    // pc and rbp, already pushed
-    __ subl(rsp, (framesize-2) * wordSize); // prolog
+    // pc and ebp already pushed
+    __ subl(esp, (framesize-2) * wordSize); // prolog
 
     // Frame is now completed as far as size and linkage.
 
     int frame_complete = __ pc() - start;
 
     // push java thread (becomes first argument of C function)
-    __ movl(Address(rsp, thread_off * wordSize), java_thread);
+    __ movl(Address(esp, thread_off * wordSize), java_thread);
 
     // Set up last_Java_sp and last_Java_fp
-    __ set_last_Java_frame(java_thread, rsp, rbp, NULL);
+    __ set_last_Java_frame(java_thread, esp, ebp, NULL);
 
     // Call runtime
     BLOCK_COMMENT("call runtime_entry");
-    __ call(RuntimeAddress(runtime_entry));
+    __ call(runtime_entry, relocInfo::runtime_call_type);
     // Generate oop map
     OopMap* map =  new OopMap(framesize, 0);        
     oop_maps->add_gc_map(__ pc() - start, map);
@@ -2082,7 +2003,7 @@ class StubGenerator: public StubCodeGenerator {
     __ should_not_reach_here();
     __ bind(L);
 #endif /* ASSERT */
-    __ jump(RuntimeAddress(StubRoutines::forward_exception_entry()));
+    __ jmp(StubRoutines::forward_exception_entry(), relocInfo::runtime_call_type);
 
 
     RuntimeStub* stub = RuntimeStub::new_runtime_stub(name, &code, frame_complete, framesize, oop_maps, false);
@@ -2154,6 +2075,7 @@ class StubGenerator: public StubCodeGenerator {
     // These entry points require SharedInfo::stack0 to be set up in non-core builds
     // and need to be relocatable, so they each fabricate a RuntimeStub internally.
     StubRoutines::_throw_AbstractMethodError_entry         = generate_throw_exception("AbstractMethodError throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_AbstractMethodError),  false);
+    StubRoutines::_throw_IncompatibleClassChangeError_entry= generate_throw_exception("IncompatibleClassChangeError throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_IncompatibleClassChangeError),  false);
     StubRoutines::_throw_ArithmeticException_entry         = generate_throw_exception("ArithmeticException throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_ArithmeticException),  true);
     StubRoutines::_throw_NullPointerException_entry        = generate_throw_exception("NullPointerException throw_exception",         CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException), true);
     StubRoutines::_throw_NullPointerException_at_call_entry= generate_throw_exception("NullPointerException at call throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException_at_call), false);

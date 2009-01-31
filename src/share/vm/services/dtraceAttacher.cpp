@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM" 
+#pragma ident "@(#)dtraceAttacher.cpp	1.8 07/05/23 10:54:23 JVM" 
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.

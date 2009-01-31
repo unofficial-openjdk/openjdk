@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)stubGenerator_sparc.cpp	1.233 07/07/19 12:19:10 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -185,17 +185,17 @@ class StubGenerator: public StubCodeGenerator {
     // pass parameters if any
     BLOCK_COMMENT("pass parameters if any");
     { const Register src = parameters.as_in().as_register();
-      const Register dst = Lentry_args;
+      const Register dst = Lesp;
       const Register tmp = G3_scratch;
       const Register cnt = G4_scratch;
 
-      // test if any parameters & setup of Lentry_args
+      // test if any parameters & setup of Lesp
       Label exit;
       __ ld_ptr(parameter_size.as_in().as_address(), cnt);      // parameter counter
       __ add( FP, STACK_BIAS, dst );
       __ tst(cnt);
       __ br(Assembler::zero, false, Assembler::pn, exit);
-      __ delayed()->sub(dst, BytesPerWord, dst);                 // setup Lentry_args
+      __ delayed()->sub(dst, BytesPerWord, dst);                 // setup Lesp
 
       // copy parameters if any
       Label loop;
@@ -1075,7 +1075,7 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   //
-  //  Generate pre-write barrier for array.
+  //  Generate store check (i.e., card marks) for array
   //
   //  Input:
   //     addr     - register containing starting address
@@ -1084,97 +1084,30 @@ class StubGenerator: public StubCodeGenerator {
   //
   //  The input registers are overwritten.
   //
-  void gen_write_ref_array_pre_barrier(Register addr, Register count) {
-#if 0 // G1 only
+  void array_store_check(Register addr, Register count, Register tmp) {
     BarrierSet* bs = Universe::heap()->barrier_set();
-    if (bs->has_write_ref_pre_barrier()) {
-      assert(bs->has_write_ref_array_pre_opt(),
-	     "Else unsupported barrier set.");
+    assert(bs->kind() == BarrierSet::CardTableModRef, "Wrong barrier set kind");
+    CardTableModRefBS* ct = (CardTableModRefBS*)bs;
+    assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
 
-      assert(addr->is_global() && count->is_global(),
-	     "If not, then we have to fix this code to handle more "
-	     "general cases.");
-      // Get some new fresh output registers.
-      __ save_frame(0);
-      // Save the necessary global regs... will be used after.
-      __ mov(addr, L0);
-      __ mov(count, L1);
+    assert_different_registers(addr, count, tmp);
 
-      __ mov(addr, O0);
-      // Get the count into O1
-      __ call(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre));
-      __ delayed()->mov(count, O1);
-      __ mov(L0, addr);
-      __ mov(L1, count);
-      __ restore();
-    }
-#endif // 0
-  }
+    Label L_loop;
 
-  //
-  //  Generate post-write barrier for array.
-  //
-  //  Input:
-  //     addr     - register containing starting address
-  //     count    - register containing element count
-  //     tmp      - scratch register
-  //
-  //  The input registers are overwritten.
-  //
-  void gen_write_ref_array_post_barrier(Register addr, Register count,
-				   Register tmp) {
-    BarrierSet* bs = Universe::heap()->barrier_set();
-
-    switch (bs->kind()) {
-#if 0 // G1 - only
-      case BarrierSet::G1SATBCT:
-      case BarrierSet::G1SATBCTLogging:
-        {
-          assert(addr->is_global() && count->is_global(),
-                 "If not, then we have to fix this code to handle more "
-                 "general cases.");
-          // Get some new fresh output registers.
-          __ save_frame(0);
-          __ mov(addr, O0);
-          __ call(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_post));
-          __ delayed()->mov(count, O1);
-          __ restore();
-        }
-        break;
-#endif // 0 G1 - only
-      case BarrierSet::CardTableModRef:
-      case BarrierSet::CardTableExtension:
-        {
-          CardTableModRefBS* ct = (CardTableModRefBS*)bs;
-          assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
-          assert_different_registers(addr, count, tmp);
-
-          Label L_loop;
-
-          __ sll_ptr(count, LogBytesPerOop, count);
-          __ sub(count, BytesPerOop, count);
-          __ add(count, addr, count);
-          // Use two shifts to clear out those low order two bits! (Cannot opt. into 1.)
-          __ srl_ptr(addr, CardTableModRefBS::card_shift, addr);
-          __ srl_ptr(count, CardTableModRefBS::card_shift, count);
-          __ sub(count, addr, count);
-          Address rs(tmp, (address)ct->byte_map_base);
-          __ load_address(rs);
-        __ BIND(L_loop);
-          __ stb(G0, rs.base(), addr);
-          __ subcc(count, 1, count);
-          __ brx(Assembler::greaterEqual, false, Assembler::pt, L_loop);
-          __ delayed()->add(addr, 1, addr);
-
-          }
-        break;
-      case BarrierSet::ModRef: 
-        break;
-      default      : 
-        ShouldNotReachHere();
-        
-    }
-
+      __ sll_ptr(count, LogBytesPerOop, count);
+      __ sub(count, BytesPerOop, count);
+      __ add(count, addr, count);
+  // Use two shifts to clear out those low order two bits! (Cannot opt. into 1.)
+      __ srl_ptr(addr, CardTableModRefBS::card_shift, addr);
+      __ srl_ptr(count, CardTableModRefBS::card_shift, count);
+      __ sub(count, addr, count);
+    Address rs(tmp, (address)ct->byte_map_base);
+      __ load_address(rs);
+    __ BIND(L_loop);
+      __ stb(G0, rs.base(), addr);
+      __ subcc(count, 1, count);
+      __ brx(Assembler::greaterEqual, false, Assembler::pt, L_loop);
+      __ delayed()->add(addr, 1, addr);
   }
 
 
@@ -2227,14 +2160,13 @@ class StubGenerator: public StubCodeGenerator {
     // save arguments for barrier generation
     __ mov(to, G1);
     __ mov(count, G5);
-    gen_write_ref_array_pre_barrier(G1, G5);
   #ifdef _LP64
     generate_disjoint_long_copy_core(aligned);
   #else
     generate_disjoint_int_copy_core(aligned);
   #endif
     // O0 is used as temp register
-    gen_write_ref_array_post_barrier(G1, G5, O0);
+    array_store_check(G1, G5, O0);
 
     // O3, O4 are used as temp registers
     inc_counter_np(SharedRuntime::_oop_array_copy_ctr, O3, O4);
@@ -2271,8 +2203,6 @@ class StubGenerator: public StubCodeGenerator {
     __ mov(to, G1);
     __ mov(count, G5);
 
-    gen_write_ref_array_pre_barrier(G1, G5);
-
     address nooverlap_target = aligned ?
         StubRoutines::arrayof_oop_disjoint_arraycopy() :
         disjoint_oop_copy_entry;
@@ -2286,7 +2216,7 @@ class StubGenerator: public StubCodeGenerator {
   #endif
 
     // O0 is used as temp register
-    gen_write_ref_array_post_barrier(G1, G5, O0);
+    array_store_check(G1, G5, O0);
 
     // O3, O4 are used as temp registers
     inc_counter_np(SharedRuntime::_oop_array_copy_ctr, O3, O4);
@@ -2382,9 +2312,6 @@ class StubGenerator: public StubCodeGenerator {
 
     int klass_off = oopDesc::klass_offset_in_bytes();
 
-    gen_write_ref_array_pre_barrier(G1, G5);
-
-
 #ifdef ASSERT
     // We sometimes save a frame (see partial_subtype_check below).
     // If this will cause trouble, let's fail now instead of later.
@@ -2462,7 +2389,7 @@ class StubGenerator: public StubCodeGenerator {
     __ delayed()->not1(O2_count, O0);   // report (-1^K) to caller
 
     __ bind(do_card_marks);
-    gen_write_ref_array_post_barrier(O1_to, O2_count, O3);   // store check on O1[0..O2]
+    array_store_check(O1_to, O2_count, O3);   // store check on O1[0..O2]
 
     __ bind(done);
     inc_counter_np(SharedRuntime::_checkcast_array_copy_ctr, O3, O4);
@@ -2914,6 +2841,7 @@ class StubGenerator: public StubCodeGenerator {
 
     // These entry points require SharedInfo::stack0 to be set up in non-core builds
     StubRoutines::_throw_AbstractMethodError_entry         = generate_throw_exception("AbstractMethodError throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_AbstractMethodError),  false);
+    StubRoutines::_throw_IncompatibleClassChangeError_entry= generate_throw_exception("IncompatibleClassChangeError throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_IncompatibleClassChangeError),  false);
     StubRoutines::_throw_ArithmeticException_entry         = generate_throw_exception("ArithmeticException throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_ArithmeticException),  true);
     StubRoutines::_throw_NullPointerException_entry        = generate_throw_exception("NullPointerException throw_exception",         CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException), true);
     StubRoutines::_throw_NullPointerException_at_call_entry= generate_throw_exception("NullPointerException at call throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException_at_call), false);

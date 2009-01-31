@@ -36,7 +36,6 @@ GENERATED   = $(TOPDIR)/../generated
 JvmtiOutDir = $(GENERATED)/jvmtifiles
 
 JvmtiSrcDir = $(GAMMADIR)/src/share/vm/prims
-InterpreterSrcDir = $(GAMMADIR)/src/share/vm/interpreter
 Src_Dirs += $(JvmtiSrcDir)
 
 # set VPATH so make knows where to look for source files
@@ -47,8 +46,7 @@ JvmtiGeneratedNames = \
         jvmtiEnv.hpp \
         jvmtiEnter.cpp \
         jvmtiEnterTrace.cpp \
-        jvmtiEnvRecommended.cpp \
-        bytecodeInterpreterWithChecks.cpp \
+        jvmtiEnvRecommended.cpp\
         jvmti.h \
 
 JvmtiEnvFillSource = $(JvmtiSrcDir)/jvmtiEnvFill.java
@@ -78,10 +76,6 @@ $(JvmtiEnvFillClass): $(JvmtiEnvFillSource)
 $(JvmtiOutDir)/jvmtiEnter.cpp: $(both) $(JvmtiSrcDir)/jvmtiEnter.xsl
 	@echo Generating $@
 	$(XSLT) -IN $(JvmtiSrcDir)/jvmti.xml -XSL $(JvmtiSrcDir)/jvmtiEnter.xsl -OUT $(JvmtiOutDir)/jvmtiEnter.cpp -PARAM interface jvmti
-
-$(JvmtiOutDir)/bytecodeInterpreterWithChecks.cpp: $(JvmtiGenClass) $(InterpreterSrcDir)/bytecodeInterpreter.cpp $(InterpreterSrcDir)/bytecodeInterpreterWithChecks.xml $(InterpreterSrcDir)/bytecodeInterpreterWithChecks.xsl
-	@echo Generating $@
-	$(XSLT) -IN $(InterpreterSrcDir)/bytecodeInterpreterWithChecks.xml -XSL $(InterpreterSrcDir)/bytecodeInterpreterWithChecks.xsl -OUT $(JvmtiOutDir)/bytecodeInterpreterWithChecks.cpp 
 
 $(JvmtiOutDir)/jvmtiEnterTrace.cpp: $(both) $(JvmtiSrcDir)/jvmtiEnter.xsl
 	@echo Generating $@

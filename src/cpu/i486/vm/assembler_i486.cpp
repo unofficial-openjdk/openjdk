@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_i486.cpp	1.238 07/07/16 11:23:47 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,79 +28,59 @@
 #include "incls/_precompiled.incl"
 #include "incls/_assembler_i486.cpp.incl"
 
-// Implementation of AddressLiteral
-
-AddressLiteral::AddressLiteral(address target, relocInfo::relocType rtype) {
-  _is_lval = false;
-  _target = target;
-  switch (rtype) {
-  case relocInfo::oop_type:
-    // Oops are a special case. Normally they would be their own section
-    // but in cases like icBuffer they are literals in the code stream that
-    // we don't have a section for. We use none so that we get a literal address
-    // which is always patchable.
-    break;
-  case relocInfo::external_word_type:
-    _rspec = external_word_Relocation::spec(target);
-    break;
-  case relocInfo::internal_word_type:
-    _rspec = internal_word_Relocation::spec(target);
-    break;
-  case relocInfo::opt_virtual_call_type:
-    _rspec = opt_virtual_call_Relocation::spec();
-    break;
-  case relocInfo::static_call_type:
-    _rspec = static_call_Relocation::spec();
-    break;
-  case relocInfo::runtime_call_type:
-    _rspec = runtime_call_Relocation::spec();
-    break;
-  case relocInfo::poll_type:
-  case relocInfo::poll_return_type:
-    _rspec = Relocation::spec_simple(rtype);
-    break;
-  case relocInfo::none:
-    break;
-  default:
-    ShouldNotReachHere();
-    break;
-  }
-}
 
 // Implementation of Address
+//
+// Note: For now an address simply stores all its attributes in individual fields. A better solution would
+//       do the conversion into a byte stream (currently performed by Assembler::emit_operand) when creating
+//       an address. The byte stream & some management information could be easily compressed into a two word
+//       object, making the use of addresses both faster & more lightweight (addresses are used frequently &
+//       often the same address is used several times. Doing the conversion when creating the address saves
+//       repeated conversion by the assembler).
 
-Address Address::make_array(ArrayAddress adr) {
-#ifdef _LP64
-  // Not implementable on 64bit machines
-  // Should have been handled higher up the call chain.
-  ShouldNotReachHere();
-#else
-  AddressLiteral base = adr.base();
-  Address index = adr.index();
-  assert(index._disp == 0, "must not have disp"); // maybe it can?
-  Address array(index._base, index._index, index._scale, (intptr_t) base.target());
-  array._rspec = base._rspec;
-  return array;
-#endif // _LP64
-}
-
-#ifndef _LP64
-
-// exceedingly dangerous constructor
-Address::Address(address loc, RelocationHolder spec) {
+Address::Address(int disp, relocInfo::relocType rtype) {
   _base  = noreg;
   _index = noreg;
   _scale = no_scale;
-  _disp  = (intptr_t) loc;
-  _rspec = spec;
+  _disp  = disp;
+  switch (rtype) {
+    case relocInfo::external_word_type:
+      _rspec = external_word_Relocation::spec((address)disp);
+      break;
+    case relocInfo::internal_word_type:
+      _rspec = internal_word_Relocation::spec((address)disp);
+      break;
+    case relocInfo::none:
+      break;
+    default:
+      ShouldNotReachHere();
+  }
 }
-#endif // _LP64
+
+Address::Address(Register base, Register index, ScaleFactor scale, relocInfo::relocType rtype, int disp) {
+  _base  = base;
+  _index = index;
+  _scale = scale;
+  _disp  = disp;
+  switch (rtype) {
+    case relocInfo::external_word_type:
+      _rspec = external_word_Relocation::spec((address)disp);
+      break;
+    case relocInfo::internal_word_type:
+      _rspec = internal_word_Relocation::spec((address)disp);
+      break;
+    case relocInfo::none:
+      break;
+    default:
+      ShouldNotReachHere();
+  }
+}
 
 // Convert the raw encoding form into the form expected by the constructor for
-// Address.  An index of 4 (rsp) corresponds to having no index, so convert
+// Address.  An index of 4 (esp) corresponds to having no index, so convert
 // that to noreg for the Address constructor.
 Address Address::make_raw(int base, int index, int scale, int disp) {
-  bool valid_index = index != rsp->encoding();
+  bool valid_index = index != 0x4;
   if (valid_index) {
     Address madr(as_Register(base), as_Register(index), (Address::ScaleFactor)scale, in_ByteSize(disp));
     return madr;
@@ -116,7 +96,7 @@ int AbstractAssembler::code_fill_byte() {
   return (u_char)'\xF4'; // hlt
 }
 
-// make this go away someday
+
 void Assembler::emit_data(jint data, relocInfo::relocType rtype, int format) {
   if (rtype == relocInfo::none)
         emit_long(data);
@@ -127,19 +107,12 @@ void Assembler::emit_data(jint data, relocInfo::relocType rtype, int format) {
 void Assembler::emit_data(jint data, RelocationHolder const& rspec, int format) {
   assert(imm32_operand == 0, "default format must be imm32 in this file");
   assert(inst_mark() != NULL, "must be inside InstructionMark");
-  if (rspec.type() !=  relocInfo::none) {
-    #ifdef ASSERT
-      check_relocation(rspec, format);
-    #endif
-    // Do not use AbstractAssembler::relocate, which is not intended for
-    // embedded words.  Instead, relocate to the enclosing instruction.
-
-    // hack. call32 is too wide for mask so use disp32
-    if (format == call32_operand)
-      code_section()->relocate(inst_mark(), rspec, disp32_operand);
-    else
-      code_section()->relocate(inst_mark(), rspec, format);
-  }
+  // Do not use AbstractAssembler::relocate, which is not intended for
+  // embedded words.  Instead, relocate to the enclosing instruction.
+  code_section()->relocate(inst_mark(), rspec, format);
+  #ifdef ASSERT
+    check_relocation(rspec, format);
+  #endif
   emit_long(data);
 }
 
@@ -192,7 +165,7 @@ void Assembler::emit_arith(int op1, int op2, Register dst, jobject obj) {
   InstructionMark im(this);
   emit_byte(op1);
   emit_byte(op2 | dst->encoding());
-  emit_data((int)obj, relocInfo::oop_type, 0);
+  emit_data((int)obj, relocInfo::oop_type);
 }
 
 
@@ -203,40 +176,34 @@ void Assembler::emit_arith(int op1, int op2, Register dst, Register src) {
 }
 
 
-void Assembler::emit_operand(Register reg, 
-                             Register base,
-                             Register index,
-                             Address::ScaleFactor scale,
-                             int disp,
-                             RelocationHolder const& rspec) {
-
+void Assembler::emit_operand(Register reg, Register base, Register index, Address::ScaleFactor scale, int disp, RelocationHolder const& rspec) {
   relocInfo::relocType rtype = (relocInfo::relocType) rspec.type();
   if (base->is_valid()) {
     if (index->is_valid()) {
       assert(scale != Address::no_scale, "inconsistent address");
       // [base + index*scale + disp]
-      if (disp == 0 && rtype == relocInfo::none && base != rbp) {
+      if (disp == 0 && rtype == relocInfo::none && base != ebp) {
         // [base + index*scale]
         // [00 reg 100][ss index base]
-        assert(index != rsp, "illegal addressing mode");
+        assert(index != esp, "illegal addressing mode");
         emit_byte(0x04 | reg->encoding() << 3);
         emit_byte(scale << 6 | index->encoding() << 3 | base->encoding());
       } else if (is8bit(disp) && rtype == relocInfo::none) {
         // [base + index*scale + imm8]
         // [01 reg 100][ss index base] imm8
-	assert(index != rsp, "illegal addressing mode");
+	assert(index != esp, "illegal addressing mode");
         emit_byte(0x44 | reg->encoding() << 3);
         emit_byte(scale << 6 | index->encoding() << 3 | base->encoding());
         emit_byte(disp & 0xFF);
       } else {
         // [base + index*scale + imm32]
         // [10 reg 100][ss index base] imm32
-	assert(index != rsp, "illegal addressing mode");
+	assert(index != esp, "illegal addressing mode");
 	emit_byte(0x84 | reg->encoding() << 3);
         emit_byte(scale << 6 | index->encoding() << 3 | base->encoding());
 	emit_data(disp, rspec, disp32_operand);
       }
-    } else if (base == rsp) {
+    } else if (base == esp) {
       // [esp + disp]
       if (disp == 0 && rtype == relocInfo::none) {
         // [esp]
@@ -258,11 +225,11 @@ void Assembler::emit_operand(Register reg,
       }
     } else {
       // [base + disp]
-      assert(base != rsp, "illegal addressing mode");
-      if (disp == 0 && rtype == relocInfo::none && base != rbp) {
+      assert(base != esp, "illegal addressing mode");
+      if (disp == 0 && rtype == relocInfo::none && base != ebp) {
         // [base]
         // [00 reg base]
-	assert(base != rbp, "illegal addressing mode");
+	assert(base != ebp, "illegal addressing mode");
         emit_byte(0x00 | reg->encoding() << 3 | base->encoding());
       } else if (is8bit(disp) && rtype == relocInfo::none) {
         // [base + imm8]
@@ -281,7 +248,7 @@ void Assembler::emit_operand(Register reg,
       assert(scale != Address::no_scale, "inconsistent address");
       // [index*scale + disp]
       // [00 reg 100][ss index 101] imm32
-      assert(index != rsp, "illegal addressing mode");
+      assert(index != esp, "illegal addressing mode");
       emit_byte(0x04 | reg->encoding() << 3);
       emit_byte(scale << 6 | index->encoding() << 3 | 0x05);
       emit_data(disp, rspec, disp32_operand);
@@ -386,13 +353,8 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
     case 0x57: // xorps
     case 0x6E: // movd
     case 0x7E: // movd
-    case 0xAE: // ldmxcsr   a
-      // amd side says it these have both operands but that doesn't
-      // appear to be true.
-      // debug_only(has_imm32 = true); // has both kinds of operands!
-      break;
-
     case 0xAD: // shrd r, a, %cl
+    case 0xAE: // ldmxcsr   a
     case 0xAF: // imul r, a
     case 0xBE: // movsxb r, a
     case 0xBF: // movsxw r, a
@@ -425,9 +387,6 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
     debug_only(has_imm32 = true); // has both kinds of operands!
     break;
 
-  case 0x85: // test r/m, r
-    break;
-
   case 0x83: // addl a, #8; addl r, #8
     // also: orl, adcl, sbbl, andl, subl, xorl, cmpl
     tail_size = 1;
@@ -453,6 +412,7 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   case 0xF7: // mull a
   case 0x8D: // leal r, a
   case 0x87: // xchg r, a
+  case 0x85: // test r, a
     break;
 
   case 0xC1: // sal a, #8; sar a, #8; shl a, #8; shr a, #8
@@ -509,7 +469,7 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   switch (op2 >> 6) {
   case 0:
     // [00 reg  100][ss index base]
-    // [00 reg  100][00   100  rsp]
+    // [00 reg  100][00   100  esp]
     // [00 reg base]
     // [00 reg  100][ss index  101][disp32]
     // [00 reg  101]               [disp32]
@@ -523,14 +483,14 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
 
   case 1:
     // [01 reg  100][ss index base][disp8]
-    // [01 reg  100][00   100  rsp][disp8]
+    // [01 reg  100][00   100  esp][disp8]
     // [01 reg base]               [disp8]
     ip += 1;			// skip the disp8
     break;
 
   case 2:
     // [10 reg  100][ss index base][disp32]
-    // [10 reg  100][00   100  rsp][disp32]
+    // [10 reg  100][00   100  esp][disp32]
     // [10 reg base]               [disp32]
     if (which == disp32_operand)
       return ip;		// caller wants the disp32
@@ -565,14 +525,14 @@ void Assembler::check_relocation(RelocationHolder const& rspec, int format) {
   Relocation* r = rspec.reloc();
   if (r->type() == relocInfo::none) {
     return;
-  } else if (r->is_call() || format == call32_operand) {
-    // assert(format == imm32_operand, "cannot specify a nonzero format");
+  } else if (r->is_call()) {
+    assert(format == 0, "cannot specify a nonzero format");
     opnd = locate_operand(inst, call32_operand);
   } else if (r->is_data()) {
     assert(format == imm32_operand || format == disp32_operand, "format ok");
     opnd = locate_operand(inst, (WhichOperand)format);
   } else {
-    assert(format == imm32_operand, "cannot specify a format");
+    assert(format == 0, "cannot specify a format");
     return;
   }
   assert(opnd == pc(), "must put operand where relocs can find it");
@@ -615,13 +575,24 @@ void Assembler::pushl(int imm32) {
   emit_long(imm32);  
 }
 
-#ifndef _LP64
-void Assembler::push_literal32(int32_t imm32, RelocationHolder const& rspec) {
+void Assembler::pushl(int imm32, relocInfo::relocType rtype) {
   InstructionMark im(this);
   emit_byte(0x68);
-  emit_data(imm32, rspec, 0);  
+  emit_data(imm32, rtype);  
 }
-#endif // _LP64
+  
+void Assembler::pushl(int imm32, RelocationHolder const& rspec) {
+  InstructionMark im(this);
+  emit_byte(0x68);
+  emit_data(imm32, rspec);  
+}
+  
+void Assembler::pushl(jobject obj) {
+  InstructionMark im(this);
+  emit_byte(0x68);
+  emit_data((int)obj, relocInfo::oop_type);  
+}
+
   
 void Assembler::pushl(Register src) {
   emit_byte(0x50 | src->encoding());  
@@ -631,8 +602,21 @@ void Assembler::pushl(Register src) {
 void Assembler::pushl(Address src) {
   InstructionMark im(this);
   emit_byte(0xFF);
-  emit_operand(rsi, src);  
+  emit_operand(esi, src);  
 }
+
+
+void Assembler::pushl(Label& L, relocInfo::relocType rtype) {
+  if (L.is_bound()) {
+    int offs = (int)target(L);
+    InstructionMark im(this);
+    emit_byte(0x68);
+    emit_data(offs, rtype);
+  } else {
+    ShouldNotReachHere();
+  }  
+}
+
 
 void Assembler::popl(Register dst) {
   emit_byte(0x58 | dst->encoding());  
@@ -642,7 +626,7 @@ void Assembler::popl(Register dst) {
 void Assembler::popl(Address dst) {
   InstructionMark im(this);
   emit_byte(0x8F);
-  emit_operand(rax, dst);
+  emit_operand(eax, dst);
 }
 
 
@@ -662,7 +646,7 @@ void Assembler::movb(Register dst, Address src) {
 void Assembler::movb(Address dst, int imm8) {
   InstructionMark im(this);
   emit_byte(0xC6);
-  emit_operand(rax, dst);
+  emit_operand(eax, dst);
   emit_byte(imm8);
 }
 
@@ -680,7 +664,7 @@ void Assembler::movw(Address dst, int imm16) {
 
   emit_byte(0x66); // switch to 16-bit mode
   emit_byte(0xC7);
-  emit_operand(rax, dst);
+  emit_operand(eax, dst);
   emit_word(imm16);
 }
 
@@ -706,14 +690,19 @@ void Assembler::movl(Register dst, int imm32) {
   emit_long(imm32);
 }
 
-#ifndef _LP64
-void Assembler::mov_literal32(Register dst, int32_t imm32, RelocationHolder const& rspec) {
-
+void Assembler::movl(Register dst, address imm32, relocInfo::relocType rtype) {
   InstructionMark im(this);
   emit_byte(0xB8 | dst->encoding());
-  emit_data((int)imm32, rspec, 0);
+  emit_data((int)imm32, rtype);
 }
-#endif // _LP64
+
+
+void Assembler::movl(Register dst, jobject obj) {
+  InstructionMark im(this);
+  emit_byte(0xB8 | dst->encoding());
+  emit_data((int)obj, relocInfo::oop_type);
+}
+
 
 void Assembler::movl(Register dst, Register src) {
   emit_byte(0x8B);
@@ -731,18 +720,25 @@ void Assembler::movl(Register dst, Address src) {
 void Assembler::movl(Address dst, int imm32) {
   InstructionMark im(this);
   emit_byte(0xC7);
-  emit_operand(rax, dst);
+  emit_operand(eax, dst);
   emit_long(imm32);
 }
 
-#ifndef _LP64
-void Assembler::mov_literal32(Address dst, int32_t imm32,  RelocationHolder const& rspec) {
+void Assembler::movl(Address dst, address imm32, relocInfo::relocType rtype) {
   InstructionMark im(this);
   emit_byte(0xC7);
-  emit_operand(rax, dst);
-  emit_data((int)imm32, rspec, 0);
+  emit_operand(eax, dst);
+  emit_data((int)imm32, rtype);
 }
-#endif // _LP64
+
+
+void Assembler::movl(Address dst, jobject obj) {
+  InstructionMark im(this);	// Note:  This insn might have two relocations.
+  emit_byte(0xC7);
+  emit_operand(eax, dst);
+  emit_data((int)obj, relocInfo::oop_type);
+}
+
 
 void Assembler::movl(Address dst, Register src) {
   InstructionMark im(this);
@@ -750,12 +746,14 @@ void Assembler::movl(Address dst, Register src) {
   emit_operand(src, dst);
 }
 
+
 void Assembler::movsxb(Register dst, Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0xBE);
   emit_operand(dst, src);
 }
+
 
 void Assembler::movsxb(Register dst, Register src) {
   assert(src->has_byte_register(), "must have byte register"); 
@@ -837,7 +835,7 @@ void Assembler::prefetcht0(Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0x18);
-  emit_operand(rcx, src); // 1, src
+  emit_operand(ecx, src); // 1, src
 }
 
 
@@ -846,7 +844,7 @@ void Assembler::prefetcht1(Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0x18);
-  emit_operand(rdx, src); // 2, src
+  emit_operand(edx, src); // 2, src
 }
 
 
@@ -855,7 +853,7 @@ void Assembler::prefetcht2(Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0x18);
-  emit_operand(rbx, src); // 3, src
+  emit_operand(ebx, src); // 3, src
 }
 
 
@@ -864,7 +862,7 @@ void Assembler::prefetchnta(Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0x18);
-  emit_operand(rax, src); // 0, src
+  emit_operand(eax, src); // 0, src
 }
 
 
@@ -873,7 +871,7 @@ void Assembler::prefetchw(Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0x0D);
-  emit_operand(rcx, src); // 1, src
+  emit_operand(ecx, src); // 1, src
 }
 
 
@@ -882,7 +880,7 @@ void Assembler::prefetchr(Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0x0D);
-  emit_operand(rax, src); // 0, src
+  emit_operand(eax, src); // 0, src
 }
 
 
@@ -905,7 +903,7 @@ void Assembler::adcl(Register dst, Register src) {
 
 void Assembler::addl(Address dst, int imm32) {
   InstructionMark im(this);
-  emit_arith_operand(0x81,rax,dst,imm32);
+  emit_arith_operand(0x81,eax,dst,imm32);
 }
 
 
@@ -953,7 +951,7 @@ void Assembler::andl(Register dst, Register src) {
 void Assembler::cmpb(Address dst, int imm8) {
   InstructionMark im(this);
   emit_byte(0x80);
-  emit_operand(rdi, dst);
+  emit_operand(edi, dst);
   emit_byte(imm8);
 }
 
@@ -961,36 +959,33 @@ void Assembler::cmpw(Address dst, int imm16) {
   InstructionMark im(this);
   emit_byte(0x66);
   emit_byte(0x81);
-  emit_operand(rdi, dst);
+  emit_operand(edi, dst);
   emit_word(imm16);
 }
 
 void Assembler::cmpl(Address dst, int imm32) {
   InstructionMark im(this);
   emit_byte(0x81);
-  emit_operand(rdi, dst);
+  emit_operand(edi, dst);
   emit_long(imm32);
 }
 
-#ifndef _LP64
-void Assembler::cmp_literal32(Register src1, int32_t imm32, RelocationHolder const& rspec) {
-  InstructionMark im(this);
-  emit_byte(0x81);
-  emit_byte(0xF8 | src1->encoding());
-  emit_data(imm32, rspec, 0);
-}
 
-void Assembler::cmp_literal32(Address src1, int32_t imm32, RelocationHolder const& rspec) {
-  InstructionMark im(this);
+void Assembler::cmpl(Address dst, jobject obj) {
+  InstructionMark im(this);	// Note:  This insn might have two relocations.
   emit_byte(0x81);
-  emit_operand(rdi, src1);
-  emit_data(imm32, rspec, 0);
+  emit_operand(edi, dst);
+  emit_data((int)obj, relocInfo::oop_type);
 }
-#endif // _LP64
 
 
 void Assembler::cmpl(Register dst, int imm32) {
   emit_arith(0x81, 0xF8, dst, imm32);
+}
+
+
+void Assembler::cmpl(Register dst, jobject obj) {
+  emit_arith(0x81, 0xF8, dst, obj);
 }
 
 
@@ -1016,7 +1011,7 @@ void Assembler::decl(Address dst) {
   // Don't use it directly. Use MacroAssembler::decrement() instead.
   InstructionMark im(this);
   emit_byte(0xFF);
-  emit_operand(rcx, dst);
+  emit_operand(ecx, dst);
 }
 
 
@@ -1061,7 +1056,7 @@ void Assembler::incl(Address dst) {
   // Don't use it directly. Use MacroAssembler::increment() instead.
   InstructionMark im(this);
   emit_byte(0xFF);
-  emit_operand(rax, dst);
+  emit_operand(eax, dst);
 }
 
 
@@ -1071,10 +1066,11 @@ void Assembler::leal(Register dst, Address src) {
   emit_operand(dst, src);
 }
 
+
 void Assembler::mull(Address src) {
   InstructionMark im(this);
   emit_byte(0xF7);
-  emit_operand(rsp, src);
+  emit_operand(esp, src);
 }
 
 
@@ -1099,7 +1095,7 @@ void Assembler::notl(Register dst) {
 void Assembler::orl(Address dst, int imm32) {
   InstructionMark im(this);
   emit_byte(0x81);
-  emit_operand(rcx, dst);
+  emit_operand(ecx, dst);
   emit_long(imm32);
 }
 
@@ -1154,7 +1150,7 @@ void Assembler::sarl(Register dst) {
 
 void Assembler::sbbl(Address dst, int imm32) {
   InstructionMark im(this);
-  emit_arith_operand(0x81,rbx,dst,imm32);
+  emit_arith_operand(0x81,ebx,dst,imm32);
 }
 
 
@@ -1226,12 +1222,12 @@ void Assembler::subl(Address dst, int imm32) {
   if (is8bit(imm32)) {
     InstructionMark im(this);
     emit_byte(0x83);
-    emit_operand(rbp, dst);
+    emit_operand(ebp, dst);
     emit_byte(imm32 & 0xFF);
   } else {
     InstructionMark im(this);
     emit_byte(0x81);
-    emit_operand(rbp, dst);
+    emit_operand(ebp, dst);
     emit_long(imm32);
   }
 }
@@ -1344,18 +1340,18 @@ void Assembler::xchgl(Register dst, Register src) {
 }
 
 
-// The 32-bit cmpxchg compares the value at adr with the contents of rax,
-// and stores reg into adr if so; otherwise, the value at adr is loaded into rax,.
+// The 32-bit cmpxchg compares the value at adr with the contents of eax,
+// and stores reg into adr if so; otherwise, the value at adr is loaded into eax.
 // The ZF is set if the compared values were equal, and cleared otherwise.
 void Assembler::cmpxchg(Register reg, Address adr) {
   if (Atomics & 2) { 
      // caveat: no instructionmark, so this isn't relocatable.  
      // Emit a synthetic, non-atomic, CAS equivalent.
      // Beware.  The synthetic form sets all ICCs, not just ZF.
-     // cmpxchg r,[m] is equivalent to rax, = CAS (m, rax, r)
-     cmpl (rax, adr) ; 
-     movl (rax, adr) ; 
-     if (reg != rax) { 
+     // cmpxchg r,[m] is equivalent to eax = CAS (m, eax, r)
+     cmpl (eax, adr) ; 
+     movl (eax, adr) ; 
+     if (reg != eax) { 
         Label L ; 
         jcc (Assembler::notEqual, L) ; 
         movl (adr, reg) ; 
@@ -1369,14 +1365,14 @@ void Assembler::cmpxchg(Register reg, Address adr) {
   }
 }
 
-// The 64-bit cmpxchg compares the value at adr with the contents of rdx:rax,
-// and stores rcx:rbx into adr if so; otherwise, the value at adr is loaded
-// into rdx:rax.  The ZF is set if the compared values were equal, and cleared otherwise.
+// The 64-bit cmpxchg compares the value at adr with the contents of edx:eax,
+// and stores ecx:ebx into adr if so; otherwise, the value at adr is loaded
+// into edx:eax.  The ZF is set if the compared values were equal, and cleared otherwise.
 void Assembler::cmpxchg8(Address adr) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0xc7);
-  emit_operand(rcx, adr);
+  emit_operand(ecx, adr);
 }
 
 void Assembler::hlt() {
@@ -1546,20 +1542,20 @@ void Assembler::smovl() {
   emit_byte(0xA5);
 }
 
-// copies data from [esi] to [edi] using rcx double words (m32)
+// copies data from [esi] to [edi] using ecx double words (m32)
 void Assembler::rep_movl() {
   emit_byte(0xF3);
   emit_byte(0xA5);
 }
 
 
-// sets rcx double words (m32) with rax, value at [edi]
+// sets ecx double words (m32) with eax value at [edi]
 void Assembler::rep_set() {
   emit_byte(0xF3);
   emit_byte(0xAB);
 }
 
-// scans rcx double words (m32) at [edi] for occurance of rax,
+// scans ecx double words (m32) at [edi] for occurance of eax
 void Assembler::repne_scan() {
   emit_byte(0xF2);
   emit_byte(0xAF);
@@ -1601,7 +1597,7 @@ void Assembler::membar() {
       // flags (which we save and restore.)
       pushfd();                // Save eflags register 
       lock();                   
-      addl(Address(rsp, 0), 0);// Assert the lock# signal here 
+      addl(Address(esp), 0);   // Assert the lock# signal here 
       popfd();                 // Restore eflags register 
     }
   }
@@ -1624,17 +1620,36 @@ void Assembler::call(Label& L, relocInfo::relocType rtype) {
     InstructionMark im(this);
     // 1110 1000 #32-bit disp
     emit_byte(0xE8);
-    emit_data(offs - long_size, rtype, 0);
+    emit_data(offs - long_size, rtype);
   } else {
     InstructionMark im(this);
     // 1110 1000 #32-bit disp
     L.add_patch_at(code(), locator());
     emit_byte(0xE8);
-    emit_data(int(0), rtype, 0);
+    emit_data(int(0), rtype);
   }
 }
 
-void Assembler::call(Register dst) {
+
+void Assembler::call(address entry, relocInfo::relocType rtype) {
+  assert(rtype != relocInfo::virtual_call_type, "must use virtual_call_Relocation::spec");
+  assert(entry != NULL, "call most probably wrong");
+  InstructionMark im(this);
+  emit_byte(0xE8);
+  emit_data((int)entry - ((int)_code_pos + sizeof(long)), rtype);
+}
+
+
+void Assembler::call(address entry, RelocationHolder const& rspec) {
+  assert(entry != NULL, "call most probably wrong");
+  InstructionMark im(this);
+  emit_byte(0xE8);
+  emit_data((int)entry - ((int)_code_pos + sizeof(long)), rspec);
+}
+
+
+void Assembler::call(Register dst, relocInfo::relocType rtype) {
+  relocate(rtype);
   emit_byte(0xFF);
   emit_byte(0xD0 | dst->encoding());
 }
@@ -1642,60 +1657,51 @@ void Assembler::call(Register dst) {
 
 void Assembler::call(Address adr) {
   InstructionMark im(this);
-  relocInfo::relocType rtype = adr.reloc();
-  if (rtype !=  relocInfo::runtime_call_type) {
-    emit_byte(0xFF);
-    emit_operand(rdx, adr);
-  } else {
-    assert(false, "ack");
-  }
-
-}
-
-void Assembler::call_literal(address dest, RelocationHolder const& rspec) {
-  InstructionMark im(this);
-  emit_byte(0xE8);
-  intptr_t disp = dest - (_code_pos + sizeof(int32_t));
-  assert(dest != NULL, "must have a target");
-  emit_data(disp, rspec, call32_operand);
-
-}
-
-void Assembler::jmp(Register entry) {
   emit_byte(0xFF);
-  emit_byte(0xE0 | entry->encoding());
+  emit_operand(edx, adr);
+}
+
+
+void Assembler::jmp(Register reg, relocInfo::relocType rtype) {
+  relocate(rtype);
+  emit_byte(0xFF);
+  emit_byte(0xE0 | reg->encoding());
 }
 
 
 void Assembler::jmp(Address adr) {
   InstructionMark im(this);
   emit_byte(0xFF);
-  emit_operand(rsp, adr);
+  emit_operand(esp, adr);
 }
 
-void Assembler::jmp_literal(address dest, RelocationHolder const& rspec) {
+// relative jump
+void Assembler::jmp(address entry, relocInfo::relocType rtype) {
+  assert(entry != NULL, "jmp most probably wrong");
   InstructionMark im(this);
-  emit_byte(0xE9);
-  assert(dest != NULL, "must have a target");
-  intptr_t disp = dest - (_code_pos + sizeof(int32_t));
-  emit_data(disp, rspec.reloc(), call32_operand);
+  relocate(rtype);
+  const int short_size = 2;
+  const int long_size = 5;
+  int offs = (int)entry - (int)_code_pos;
+  if (rtype == relocInfo::none && is8bit(offs - short_size)) {
+    emit_byte(0xEB);
+    emit_byte((offs - short_size) & 0xFF); 
+  } else {
+    emit_byte(0xE9);
+    emit_long(offs - long_size); 
+  }
+}
+
+void Assembler::jmpb(address entry) {
+  const int short_size = 2;
+  assert(is8bit((intptr_t)entry - ((intptr_t)_code_pos + short_size)), 
+         "Displacement too large for short jmp");
+  jmp(entry, relocInfo::none);
 }
 
 void Assembler::jmp(Label& L, relocInfo::relocType rtype) {
   if (L.is_bound()) {
-    address entry = target(L);
-    assert(entry != NULL, "jmp most probably wrong");
-    InstructionMark im(this);
-    const int short_size = 2;
-    const int long_size = 5;
-    intptr_t offs = entry - _code_pos;
-    if (rtype == relocInfo::none && is8bit(offs - short_size)) {
-      emit_byte(0xEB);
-      emit_byte((offs - short_size) & 0xFF); 
-    } else {
-      emit_byte(0xE9);
-      emit_long(offs - long_size); 
-    }
+    jmp(target(L), rtype);
   } else {
     // By default, forward jumps are always 32-bit displacements, since
     // we can't yet know where the label will be bound.  If you're sure that 
@@ -1711,14 +1717,7 @@ void Assembler::jmp(Label& L, relocInfo::relocType rtype) {
 
 void Assembler::jmpb(Label& L) {
   if (L.is_bound()) {
-    const int short_size = 2;
-    address entry = target(L);
-    assert(is8bit((entry - _code_pos) + short_size),
-           "Dispacement too large for a short jmp");
-    assert(entry != NULL, "jmp most probably wrong");
-    intptr_t offs = entry - _code_pos;
-    emit_byte(0xEB);
-    emit_byte((offs - short_size) & 0xFF); 
+    jmpb(target(L));
   } else {
     InstructionMark im(this);
     L.add_patch_at(code(), locator());
@@ -1727,32 +1726,39 @@ void Assembler::jmpb(Label& L) {
   }
 }
 
-void Assembler::jcc(Condition cc, Label& L, relocInfo::relocType rtype) {
+void Assembler::jcc(Condition cc, address dst, relocInfo::relocType rtype) {
+  assert((0 <= cc) && (cc < 16), "illegal cc");
+  assert(dst != NULL, "jcc most probably wrong");
+
   InstructionMark im(this);
   relocate(rtype);
+  const int short_size = 2;
+  const int long_size = 6;
+  int offs = (int)dst - ((int)_code_pos);
+  if (rtype == relocInfo::none && is8bit(offs - short_size)) {
+    // 0111 tttn #8-bit disp
+    emit_byte(0x70 | cc);
+    emit_byte((offs - short_size) & 0xFF); 
+  } else {
+    // 0000 1111 1000 tttn #32-bit disp
+    emit_byte(0x0F);
+    emit_byte(0x80 | cc);
+    emit_long(offs - long_size);
+  }
+}
+
+
+void Assembler::jcc(Condition cc, Label& L, relocInfo::relocType rtype) {
   assert((0 <= cc) && (cc < 16), "illegal cc");
   if (L.is_bound()) {
-    address dst = target(L);
-    assert(dst != NULL, "jcc most probably wrong");
-
-    const int short_size = 2;
-    const int long_size = 6;
-    int offs = (int)dst - ((int)_code_pos);
-    if (rtype == relocInfo::none && is8bit(offs - short_size)) {
-      // 0111 tttn #8-bit disp
-      emit_byte(0x70 | cc);
-      emit_byte((offs - short_size) & 0xFF); 
-    } else {
-      // 0000 1111 1000 tttn #32-bit disp
-      emit_byte(0x0F);
-      emit_byte(0x80 | cc);
-      emit_long(offs - long_size);
-    }
+    jcc(cc, target(L), rtype);
   } else {
     // Note: could eliminate cond. jumps to this jump if condition
     //       is the same however, seems to be rather unlikely case.
     // Note: use jccb() if label to be bound is very close to get 
     //       an 8-bit displacement
+    InstructionMark im(this);
+    relocate(rtype);
     L.add_patch_at(code(), locator());
     emit_byte(0x0F);
     emit_byte(0x80 | cc);
@@ -1762,15 +1768,7 @@ void Assembler::jcc(Condition cc, Label& L, relocInfo::relocType rtype) {
 
 void Assembler::jccb(Condition cc, Label& L) {
   if (L.is_bound()) {
-    const int short_size = 2;
-    address entry = target(L);
-    assert(is8bit((intptr_t)entry - ((intptr_t)_code_pos + short_size)),
-           "Dispacement too large for a short jmp");
-    intptr_t offs = (intptr_t)entry - (intptr_t)_code_pos;
-    // 0111 tttn #8-bit disp
-    emit_byte(0x70 | cc);
-    emit_byte((offs - short_size) & 0xFF); 
-    jcc(cc, L);
+    jccb(cc, target(L));
   } else {
     InstructionMark im(this);
     L.add_patch_at(code(), locator());
@@ -1778,6 +1776,14 @@ void Assembler::jccb(Condition cc, Label& L) {
     emit_byte(0);
   }
 }
+
+void Assembler::jccb(Condition cc, address dst) {
+  const int short_size = 2;
+  assert(is8bit((intptr_t)dst - ((intptr_t)_code_pos + short_size)), 
+         "Distance too far for short jmp");
+  jcc(cc, dst, relocInfo::none); 
+}
+
 
 // FPU instructions
 
@@ -1796,7 +1802,7 @@ void Assembler::fldz() {
 void Assembler::fld_s(Address adr) {
   InstructionMark im(this);
   emit_byte(0xD9);
-  emit_operand(rax, adr);
+  emit_operand(eax, adr);
 }
 
 
@@ -1808,49 +1814,49 @@ void Assembler::fld_s (int index) {
 void Assembler::fld_d(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDD);
-  emit_operand(rax, adr);
+  emit_operand(eax, adr);
 }
 
 
 void Assembler::fld_x(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDB);
-  emit_operand(rbp, adr);
+  emit_operand(ebp, adr);
 }
 
 
 void Assembler::fst_s(Address adr) {
   InstructionMark im(this);
   emit_byte(0xD9);
-  emit_operand(rdx, adr);
+  emit_operand(edx, adr);
 }
 
 
 void Assembler::fst_d(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDD);
-  emit_operand(rdx, adr);
+  emit_operand(edx, adr);
 }
 
 
 void Assembler::fstp_s(Address adr) {
   InstructionMark im(this);
   emit_byte(0xD9);
-  emit_operand(rbx, adr);
+  emit_operand(ebx, adr);
 }
 
 
 void Assembler::fstp_d(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDD);
-  emit_operand(rbx, adr);
+  emit_operand(ebx, adr);
 }
 
 
 void Assembler::fstp_x(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDB);
-  emit_operand(rdi, adr);
+  emit_operand(edi, adr);
 }
 
 
@@ -1862,35 +1868,35 @@ void Assembler::fstp_d(int index) {
 void Assembler::fild_s(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDB);
-  emit_operand(rax, adr);
+  emit_operand(eax, adr);
 }
 
 
 void Assembler::fild_d(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDF);
-  emit_operand(rbp, adr);
+  emit_operand(ebp, adr);
 }
 
 
 void Assembler::fistp_s(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDB);
-  emit_operand(rbx, adr);
+  emit_operand(ebx, adr);
 }
 
 
 void Assembler::fistp_d(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDF);
-  emit_operand(rdi, adr);
+  emit_operand(edi, adr);
 }
 
 
 void Assembler::fist_s(Address adr) {
   InstructionMark im(this);
   emit_byte(0xDB);
-  emit_operand(rdx, adr);
+  emit_operand(edx, adr);
 }
 
 
@@ -1964,14 +1970,14 @@ void Assembler::fchs() {
 void Assembler::fadd_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rax, src);
+  emit_operand(eax, src);
 }
 
 
 void Assembler::fadd_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rax, src);
+  emit_operand(eax, src);
 }
 
 
@@ -1988,42 +1994,42 @@ void Assembler::fadda(int i) {
 void Assembler::fsub_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rsp, src);
+  emit_operand(esp, src);
 }
 
 
 void Assembler::fsub_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rsp, src);
+  emit_operand(esp, src);
 }
 
 
 void Assembler::fsubr_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rbp, src);
+  emit_operand(ebp, src);
 }
 
 
 void Assembler::fsubr_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rbp, src);
+  emit_operand(ebp, src);
 }
 
 
 void Assembler::fmul_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rcx, src);
+  emit_operand(ecx, src);
 }
 
 
 void Assembler::fmul_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rcx, src);
+  emit_operand(ecx, src);
 }
 
 
@@ -2040,28 +2046,28 @@ void Assembler::fmula(int i) {
 void Assembler::fdiv_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rsi, src);
+  emit_operand(esi, src);
 }
 
 
 void Assembler::fdiv_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rsi, src);
+  emit_operand(esi, src);
 }
 
 
 void Assembler::fdivr_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rdi, src);
+  emit_operand(edi, src);
 }
 
 
 void Assembler::fdivr_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rdi, src);
+  emit_operand(edi, src);
 }
 
 
@@ -2175,14 +2181,14 @@ void Assembler::ffree(int i) {
 void Assembler::fcomp_s(Address src) {
   InstructionMark im(this);
   emit_byte(0xD8);
-  emit_operand(rbx, src);
+  emit_operand(ebx, src);
 }
 
 
 void Assembler::fcomp_d(Address src) {
   InstructionMark im(this);
   emit_byte(0xDC);
-  emit_operand(rbx, src);
+  emit_operand(ebx, src);
 }
 
 
@@ -2243,7 +2249,7 @@ void Assembler::finit() {
 void Assembler::fldcw(Address src) {
   InstructionMark im(this);
   emit_byte(0xd9);
-  emit_operand(rbp, src);  
+  emit_operand(ebp, src);  
 }
 
 
@@ -2251,27 +2257,27 @@ void Assembler::fnstcw(Address src) {
   InstructionMark im(this);
   emit_byte(0x9B);
   emit_byte(0xD9);
-  emit_operand(rdi, src);
+  emit_operand(edi, src);
 }
 
 void Assembler::fnsave(Address dst) {
   InstructionMark im(this);
   emit_byte(0xDD);
-  emit_operand(rsi, dst);
+  emit_operand(esi, dst);
 }
 
 
 void Assembler::frstor(Address src) {
   InstructionMark im(this);
   emit_byte(0xDD);
-  emit_operand(rsp, src);
+  emit_operand(esp, src);
 }
 
 
 void Assembler::fldenv(Address src) {
   InstructionMark im(this);
   emit_byte(0xD9);
-  emit_operand(rsp, src);
+  emit_operand(esp, src);
 }
 
 
@@ -2559,30 +2565,17 @@ void Assembler::ldmxcsr( Address src) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0xAE);
-  emit_operand(rdx /* 2 */, src);
+  emit_operand(edx /* 2 */, src);
 }
 
 void Assembler::stmxcsr( Address dst) {
   InstructionMark im(this);
   emit_byte(0x0F);
   emit_byte(0xAE);
-  emit_operand(rbx /* 3 */, dst);
+  emit_operand(ebx /* 3 */, dst);
 }
 
 // Implementation of MacroAssembler
-
-Address MacroAssembler::as_Address(AddressLiteral adr) {
-  // amd64 always does this as a pc-rel
-  // we can be absolute or disp based on the instruction type
-  // jmp/call are displacements others are absolute
-  assert(!adr.is_lval(), "must be rval");
-
-  return Address(adr.target(), adr.rspec());
-}
-
-Address MacroAssembler::as_Address(ArrayAddress adr) {
-  return Address::make_array(adr);
-}
 
 void MacroAssembler::fat_nop() {
   // A 5 byte nop that is safe for patching (see patch_verified_entry)
@@ -2593,254 +2586,12 @@ void MacroAssembler::fat_nop() {
   emit_byte(0x90);
 }
 
-// 32bit can do a case table jump in one instruction but we no longer allow the base
-// to be installed in the Address class
-void MacroAssembler::jump(ArrayAddress entry) {
-  jmp(as_Address(entry));
-}
-
-void MacroAssembler::jump(AddressLiteral dst) {
-  jmp_literal(dst.target(), dst.rspec());
-}
-
-void MacroAssembler::jump_cc(Condition cc, AddressLiteral dst) {
-  assert((0 <= cc) && (cc < 16), "illegal cc");
-
-  InstructionMark im(this);
-  
-  relocInfo::relocType rtype = dst.reloc();
-  relocate(rtype);
-  const int short_size = 2;
-  const int long_size = 6;
-  int offs = (int)dst.target() - ((int)_code_pos);
-  if (rtype == relocInfo::none && is8bit(offs - short_size)) {
-    // 0111 tttn #8-bit disp
-    emit_byte(0x70 | cc);
-    emit_byte((offs - short_size) & 0xFF); 
-  } else {
-    // 0000 1111 1000 tttn #32-bit disp
-    emit_byte(0x0F);
-    emit_byte(0x80 | cc);
-    emit_long(offs - long_size);
-  }
-}
-
-// Calls
-void MacroAssembler::call(Label& L, relocInfo::relocType rtype) {
-  Assembler::call(L, rtype);
-}
-
-void MacroAssembler::call(Register entry) {
-  Assembler::call(entry);
-}
-
-void MacroAssembler::call(AddressLiteral entry) {
-  Assembler::call_literal(entry.target(), entry.rspec());
-}
-
-
-void MacroAssembler::cmp8(AddressLiteral src1, int8_t imm) {
-  Assembler::cmpb(as_Address(src1), imm);
-}
-
-void MacroAssembler::cmp32(AddressLiteral src1, int32_t imm) {
-  Assembler::cmpl(as_Address(src1), imm);
-}
-
-void MacroAssembler::cmp32(Register src1, AddressLiteral src2) {
-  if (src2.is_lval()) {
-    cmp_literal32(src1, (int32_t) src2.target(), src2.rspec());
-  } else {
-    Assembler::cmpl(src1, as_Address(src2));
-  }
-}
-
-void MacroAssembler::cmp32(Register src1, int32_t imm) {
-  Assembler::cmpl(src1, imm);
-}
-
-void MacroAssembler::cmp32(Register src1, Address src2) {
-  Assembler::cmpl(src1, src2);
-}
-
-void MacroAssembler::cmpoop(Address src1, jobject obj) {
-  cmp_literal32(src1, (int32_t)obj, oop_Relocation::spec_for_immediate());
-}
-
-void MacroAssembler::cmpoop(Register src1, jobject obj) {
-  cmp_literal32(src1, (int32_t)obj, oop_Relocation::spec_for_immediate());
-}
-
-void MacroAssembler::cmpptr(Register src1, AddressLiteral src2) {
-  if (src2.is_lval()) {
-    // compare the effect address of src2 to src1
-    cmp_literal32(src1, (int32_t)src2.target(), src2.rspec());
-  } else {
-    Assembler::cmpl(src1, as_Address(src2));
-  }
-}
-
-void MacroAssembler::cmpptr(Address src1, AddressLiteral src2) {
-  assert(src2.is_lval(), "not a mem-mem compare");
-  cmp_literal32(src1, (int32_t) src2.target(), src2.rspec());
-}
-
-
-void MacroAssembler::cmpxchgptr(Register reg, AddressLiteral adr) {
-  cmpxchg(reg, as_Address(adr));
-}
-
-void MacroAssembler::increment(AddressLiteral dst) {
-  increment(as_Address(dst));
-}
-
-void MacroAssembler::increment(ArrayAddress dst) {
-  increment(as_Address(dst));
-}
-
-void MacroAssembler::lea(Register dst, AddressLiteral adr) {
-  // leal(dst, as_Address(adr));
-  // see note in movl as to why we musr use a move
-  mov_literal32(dst, (int32_t) adr.target(), adr.rspec());
-}
-
-void MacroAssembler::lea(Address dst, AddressLiteral adr) {
-  // leal(dst, as_Address(adr));
-  // see note in movl as to why we musr use a move
-  mov_literal32(dst, (int32_t) adr.target(), adr.rspec());
-}
-
-void MacroAssembler::mov32(AddressLiteral dst, Register src) {
-  Assembler::movl(as_Address(dst), src);
-}
-
-void MacroAssembler::mov32(Register dst, AddressLiteral src) {
-  Assembler::movl(dst, as_Address(src));
-}
-
-void MacroAssembler::movbyte(ArrayAddress dst, int src) {
-  movb(as_Address(dst), src);
-}
-
-void MacroAssembler::movoop(Address dst, jobject obj) {
-  mov_literal32(dst, (int32_t)obj, oop_Relocation::spec_for_immediate());
-}
-
-void MacroAssembler::movoop(Register dst, jobject obj) {
-  mov_literal32(dst, (int32_t)obj, oop_Relocation::spec_for_immediate());
-}
-
-void MacroAssembler::movptr(Register dst, AddressLiteral src) {
-  if (src.is_lval()) {
-    // essentially an lea
-    mov_literal32(dst, (int32_t) src.target(), src.rspec());
-  } else {
-    // mov 32bits from an absolute address
-    movl(dst, as_Address(src));
-  }
-}
-
-void MacroAssembler::movptr(ArrayAddress dst, Register src) {
-  movl(as_Address(dst), src);
-}
-
-void MacroAssembler::movptr(Register dst, ArrayAddress src) {
-  movl(dst, as_Address(src));
-}
-
-void MacroAssembler::movflt(XMMRegister dst, AddressLiteral src) { 
-  movss(dst, as_Address(src));
-}
-
-void MacroAssembler::movdbl(XMMRegister dst, AddressLiteral src) {
-  if (UseXmmLoadAndClearUpper) { movsd (dst, as_Address(src)); return; }
-  else                         { movlpd(dst, as_Address(src)); return; }
-}
-
-void Assembler::pushoop(jobject obj) {
-  push_literal32((int32_t)obj, oop_Relocation::spec_for_immediate());
-}
-
-
-void MacroAssembler::pushptr(AddressLiteral src) {
-  if (src.is_lval()) {
-    push_literal32((int32_t)src.target(), src.rspec());
-  } else {
-    pushl(as_Address(src));
-  }
-}
-
-void MacroAssembler::test32(Register src1, AddressLiteral src2) {
-  // src2 must be rval
-  testl(src1, as_Address(src2));
-}
-
-// FPU
-
-void MacroAssembler::fld_x(AddressLiteral src) {
-  Assembler::fld_x(as_Address(src));
-}
-
-void MacroAssembler::fld_d(AddressLiteral src) {
-  fld_d(as_Address(src));
-}
-
-void MacroAssembler::fld_s(AddressLiteral src) {
-  fld_s(as_Address(src));
-}
-
-void MacroAssembler::fldcw(AddressLiteral src) {
-  Assembler::fldcw(as_Address(src));
-}
-
-void MacroAssembler::ldmxcsr(AddressLiteral src) {
-  Assembler::ldmxcsr(as_Address(src));
-}
-
-// SSE
-
-void MacroAssembler::andpd(XMMRegister dst, AddressLiteral src) {
-  andpd(dst, as_Address(src));
-}
-
-void MacroAssembler::comisd(XMMRegister dst, AddressLiteral src) {
-  comisd(dst, as_Address(src));
-}
-
-void MacroAssembler::comiss(XMMRegister dst, AddressLiteral src) {
-  comiss(dst, as_Address(src));
-}
-
-void MacroAssembler::movsd(XMMRegister dst, AddressLiteral src) {
-  movsd(dst, as_Address(src));
-}
-
-void MacroAssembler::movss(XMMRegister dst, AddressLiteral src) {
-  movss(dst, as_Address(src));
-}
-
-void MacroAssembler::xorpd(XMMRegister dst, AddressLiteral src) {
-  xorpd(dst, as_Address(src));
-}
-
-void MacroAssembler::xorps(XMMRegister dst, AddressLiteral src) {
-  xorps(dst, as_Address(src));
-}
-
-void MacroAssembler::ucomisd(XMMRegister dst, AddressLiteral src) {
-  ucomisd(dst, as_Address(src));
-}
-
-void MacroAssembler::ucomiss(XMMRegister dst, AddressLiteral src) {
-  ucomiss(dst, as_Address(src));
-}
-
 void MacroAssembler::null_check(Register reg, int offset) {
   if (needs_explicit_null_check(offset)) {
     // provoke OS NULL exception if reg = NULL by
     // accessing M[reg] w/o changing any (non-CC) registers
-    cmpl(rax, Address(reg, 0));
-    // Note: should probably use testl(rax, Address(reg, 0));
+    cmpl(eax, Address(reg));
+    // Note: should probably use testl(eax, Address(reg));
     //       may be shorter code (however, this version of
     //       testl needs to be implemented first)
   } else {
@@ -2912,7 +2663,7 @@ int MacroAssembler::load_signed_word(Register dst, Address src) {
 
 void MacroAssembler::extend_sign(Register hi, Register lo) {
   // According to Intel Doc. AP-526, "Integer Divide", p.18.
-  if (VM_Version::is_P6() && hi == rdx && lo == rax) {
+  if (VM_Version::is_P6() && hi == edx && lo == eax) {
     cdql();
   } else {
     movl(hi, lo);
@@ -2959,14 +2710,14 @@ void MacroAssembler::align(int modulus) {
 
 
 void MacroAssembler::enter() {
-  pushl(rbp);
-  movl(rbp, rsp);
+  pushl(ebp);
+  movl(ebp, esp);
 }
 
 
 void MacroAssembler::leave() {
-  movl(rsp, rbp);
-  popl(rbp);
+  movl(esp, ebp);
+  popl(ebp);
 }
 
 void MacroAssembler::set_last_Java_frame(Register java_thread, 
@@ -2975,12 +2726,12 @@ void MacroAssembler::set_last_Java_frame(Register java_thread,
 					 address  last_java_pc) {
   // determine java_thread register
   if (!java_thread->is_valid()) {
-    java_thread = rdi;
+    java_thread = edi;
     get_thread(java_thread);
   }
   // determine last_java_sp register
   if (!last_java_sp->is_valid()) {
-    last_java_sp = rsp;
+    last_java_sp = esp;
   }
 
   // last_java_fp is optional
@@ -2992,9 +2743,10 @@ void MacroAssembler::set_last_Java_frame(Register java_thread,
   // last_java_pc is optional
 
   if (last_java_pc != NULL) {
-    lea(Address(java_thread,
+    movl(Address(java_thread,
 		 JavaThread::frame_anchor_offset() + JavaFrameAnchor::last_Java_pc_offset()),
-        InternalAddress(last_java_pc));
+		 last_java_pc,
+                 relocInfo::internal_word_type);
 
   }
   movl(Address(java_thread, JavaThread::last_Java_sp_offset()), last_java_sp);
@@ -3003,7 +2755,7 @@ void MacroAssembler::set_last_Java_frame(Register java_thread,
 void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp, bool clear_pc) {
   // determine java_thread register
   if (!java_thread->is_valid()) {
-    java_thread = rdi;
+    java_thread = edi;
     get_thread(java_thread);
   }
   // we must set sp to zero to clear frame
@@ -3025,8 +2777,8 @@ void MacroAssembler::call_VM_leaf_base(
   address entry_point,
   int     number_of_arguments
 ) {
-  call(RuntimeAddress(entry_point));
-  increment(rsp, number_of_arguments * wordSize);
+  call(entry_point, relocInfo::runtime_call_type);
+  increment(esp, number_of_arguments * wordSize);
 }
 
 
@@ -3040,12 +2792,12 @@ void MacroAssembler::call_VM_base(
 ) {
   // determine java_thread register
   if (!java_thread->is_valid()) {
-    java_thread = rdi;
+    java_thread = edi;
     get_thread(java_thread);
   }
   // determine last_java_sp register
   if (!last_java_sp->is_valid()) {
-    last_java_sp = rsp;
+    last_java_sp = esp;
   }
   // debugging support
   assert(number_of_arguments >= 0   , "cannot have negative number of arguments");
@@ -3054,27 +2806,27 @@ void MacroAssembler::call_VM_base(
   // push java thread (becomes first argument of C function)
   pushl(java_thread);
   // set last Java frame before call
-  assert(last_java_sp != rbp, "this code doesn't work for last_java_sp == rbp, which currently can't portably work anyway since C2 doesn't save rbp,");
+  assert(last_java_sp != ebp, "this code doesn't work for last_java_sp == ebp, which currently can't portably work anyway since C2 doesn't save ebp");
   // Only interpreter should have to set fp
-  set_last_Java_frame(java_thread, last_java_sp, rbp, NULL);
+  set_last_Java_frame(java_thread, last_java_sp, ebp, NULL);
   // do the call
-  call(RuntimeAddress(entry_point));
+  call(entry_point, relocInfo::runtime_call_type);
   // restore the thread (cannot use the pushed argument since arguments
   // may be overwritten by C code generated by an optimizing compiler);
   // however can use the register value directly if it is callee saved.
-  if (java_thread == rdi || java_thread == rsi) {
-    // rdi & rsi are callee saved -> nothing to do
+  if (java_thread == edi || java_thread == esi) {
+    // edi & esi are callee saved -> nothing to do
 #ifdef ASSERT
-    guarantee(java_thread != rax, "change this code");
-    pushl(rax);
+    guarantee(java_thread != eax, "change this code");
+    pushl(eax);
     { Label L;
-      get_thread(rax);
-      cmpl(java_thread, rax);
+      get_thread(eax);
+      cmpl(java_thread, eax);
       jcc(Assembler::equal, L);
-      stop("MacroAssembler::call_VM_base: rdi not callee saved?");
+      stop("MacroAssembler::call_VM_base: edi not callee saved?");
       bind(L);
     }
-    popl(rax);
+    popl(eax);
 #endif
   } else {
     get_thread(java_thread);
@@ -3083,19 +2835,15 @@ void MacroAssembler::call_VM_base(
   // Only interpreter should have to clear fp
   reset_last_Java_frame(java_thread, true, false);
   // discard thread and arguments
-  addl(rsp, (1 + number_of_arguments)*wordSize);
+  addl(esp, (1 + number_of_arguments)*wordSize);
 
-#ifndef CC_INTERP
-   // C++ interp handles this in the interpreter
   check_and_handle_popframe(java_thread);
   check_and_handle_earlyret(java_thread);
-#endif /* CC_INTERP */
 
   if (check_exceptions) {
     // check for pending exceptions (java_thread is set upon return)
     cmpl(Address(java_thread, Thread::pending_exception_offset()), NULL_WORD);
-    jump_cc(Assembler::notEqual,
-            RuntimeAddress(StubRoutines::forward_exception_entry()));
+    jcc(Assembler::notEqual, StubRoutines::forward_exception_entry(), relocInfo::runtime_call_type);
   }
 
   // get oop result if there is one and reset the value in the thread
@@ -3114,8 +2862,8 @@ void MacroAssembler::check_and_handle_earlyret(Register java_thread) {
 }
 
 void MacroAssembler::call_VM_helper(Register oop_result, address entry_point, int number_of_arguments, bool check_exceptions) {
-  leal(rax, Address(rsp, (1 + number_of_arguments) * wordSize));
-  call_VM_base(oop_result, noreg, rax, entry_point, number_of_arguments, check_exceptions);
+  leal(eax, Address(esp, (1 + number_of_arguments) * wordSize));
+  call_VM_base(oop_result, noreg, eax, entry_point, number_of_arguments, check_exceptions);
 }
 
 
@@ -3231,7 +2979,7 @@ void MacroAssembler::call_VM_leaf(address entry_point, Register arg_1, Register 
 
 // Calls to C land
 //
-// When entering C land, the rbp, & rsp of the last Java frame have to be recorded
+// When entering C land, the ebp & esp of the last Java frame have to be recorded
 // in the (thread-local) JavaThread object. When leaving C land, the last Java fp
 // has to be reset to 0. This is required to allow proper stack traversal.
 
@@ -3261,10 +3009,7 @@ void MacroAssembler::store_check_part_2(Register obj) {
   assert(bs->kind() == BarrierSet::CardTableModRef, "Wrong barrier set kind");
   CardTableModRefBS* ct = (CardTableModRefBS*)bs;
   assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
-  ExternalAddress cardtable((address)ct->byte_map_base);
-  Address index(noreg, obj, Address::times_1);
-
-  movb(as_Address(ArrayAddress(cardtable, index)), 0);
+  movb(Address(noreg, obj, Address::times_1, (int)ct->byte_map_base), 0);
 }
 
 
@@ -3286,19 +3031,19 @@ int MacroAssembler::corrected_idivl(Register reg) {
   //
   //         normal case                           special case
   //
-  // input : rax,: dividend                         min_int
-  //         reg: divisor   (may not be rax,/rdx)   -1
+  // input : eax: dividend                         min_int
+  //         reg: divisor   (may not be eax/edx)   -1
   //
-  // output: rax,: quotient  (= rax, idiv reg)       min_int
-  //         rdx: remainder (= rax, irem reg)       0
-  assert(reg != rax && reg != rdx, "reg cannot be rax, or rdx register");
+  // output: eax: quotient  (= eax idiv reg)       min_int
+  //         edx: remainder (= eax irem reg)       0
+  assert(reg != eax && reg != edx, "reg cannot be eax or edx register");
   const int min_int = 0x80000000;
   Label normal_case, special_case;
   
   // check for special case
-  cmpl(rax, min_int);
+  cmpl(eax, min_int);
   jcc(Assembler::notEqual, normal_case);
-  xorl(rdx, rdx); // prepare rdx for possible special case (where remainder = 0)
+  xorl(edx, edx); // prepare edx for possible special case (where remainder = 0)
   cmpl(reg, -1);
   jcc(Assembler::equal, special_case);
 
@@ -3322,13 +3067,13 @@ void MacroAssembler::lneg(Register hi, Register lo) {
 }
 
 
-void MacroAssembler::lmul(int x_rsp_offset, int y_rsp_offset) {
+void MacroAssembler::lmul(int x_esp_offset, int y_esp_offset) {
   // Multiplication of two Java long values stored on the stack
-  // as illustrated below. Result is in rdx:rax.
+  // as illustrated below. Result is in edx:eax.
   //
-  // rsp ---> [  ??  ] \               \
-  //            ....    | y_rsp_offset  |
-  //          [ y_lo ] /  (in bytes)    | x_rsp_offset
+  // esp ---> [  ??  ] \               \
+  //            ....    | y_esp_offset  |
+  //          [ y_lo ] /  (in bytes)    | x_esp_offset
   //          [ y_hi ]                  | (in bytes)
   //            ....                    |
   //          [ x_lo ]                 /
@@ -3337,39 +3082,39 @@ void MacroAssembler::lmul(int x_rsp_offset, int y_rsp_offset) {
   //
   // Basic idea: lo(result) = lo(x_lo * y_lo)
   //             hi(result) = hi(x_lo * y_lo) + lo(x_hi * y_lo) + lo(x_lo * y_hi)
-  Address x_hi(rsp, x_rsp_offset + wordSize); Address x_lo(rsp, x_rsp_offset);
-  Address y_hi(rsp, y_rsp_offset + wordSize); Address y_lo(rsp, y_rsp_offset);
+  Address x_hi(esp, x_esp_offset + wordSize); Address x_lo(esp, x_esp_offset);
+  Address y_hi(esp, y_esp_offset + wordSize); Address y_lo(esp, y_esp_offset);
   Label quick;
   // load x_hi, y_hi and check if quick
   // multiplication is possible
-  movl(rbx, x_hi);
-  movl(rcx, y_hi);
-  movl(rax, rbx);
-  orl(rbx, rcx);                                 // rbx, = 0 <=> x_hi = 0 and y_hi = 0
-  jcc(Assembler::zero, quick);                   // if rbx, = 0 do quick multiply
+  movl(ebx, x_hi);
+  movl(ecx, y_hi);
+  movl(eax, ebx);
+  orl(ebx, ecx);                                 // ebx = 0 <=> x_hi = 0 and y_hi = 0
+  jcc(Assembler::zero, quick);                   // if ebx = 0 do quick multiply
   // do full multiplication
   // 1st step
   mull(y_lo);                                    // x_hi * y_lo
-  movl(rbx, rax);                                // save lo(x_hi * y_lo) in rbx,
+  movl(ebx, eax);                                // save lo(x_hi * y_lo) in ebx
   // 2nd step
-  movl(rax, x_lo);
-  mull(rcx);                                     // x_lo * y_hi
-  addl(rbx, rax);                                // add lo(x_lo * y_hi) to rbx,
+  movl(eax, x_lo);
+  mull(ecx);                                     // x_lo * y_hi
+  addl(ebx, eax);                                // add lo(x_lo * y_hi) to ebx
   // 3rd step
-  bind(quick);                                   // note: rbx, = 0 if quick multiply!
-  movl(rax, x_lo);
+  bind(quick);                                   // note: ebx = 0 if quick multiply!
+  movl(eax, x_lo);
   mull(y_lo);                                    // x_lo * y_lo
-  addl(rdx, rbx);                                // correct hi(x_lo * y_lo)
+  addl(edx, ebx);                                // correct hi(x_lo * y_lo)
 }
 
 
 void MacroAssembler::lshl(Register hi, Register lo) {
   // Java shift left long support (semantics as described in JVM spec., p.305)
   // (basic idea for shift counts s >= n: x << s == (x << n) << (s - n))
-  // shift value is in rcx !
-  assert(hi != rcx, "must not use rcx");
-  assert(lo != rcx, "must not use rcx");
-  const Register s = rcx;                        // shift count
+  // shift value is in ecx !
+  assert(hi != ecx, "must not use ecx");
+  assert(lo != ecx, "must not use ecx");
+  const Register s = ecx;                        // shift count
   const int      n = BitsPerWord;
   Label L;
   andl(s, 0x3f);                                 // s := s & 0x3f (s < 0x40)
@@ -3377,7 +3122,7 @@ void MacroAssembler::lshl(Register hi, Register lo) {
   jcc(Assembler::less, L);                       // else (s >= n)
   movl(hi, lo);                                  // x := x << n
   xorl(lo, lo);
-  // Note: subl(s, n) is not needed since the Intel shift instructions work rcx mod n!
+  // Note: subl(s, n) is not needed since the Intel shift instructions work ecx mod n!
   bind(L);                                       // s (mod n) < n
   shldl(hi, lo);                                 // x := x << s
   shll(lo);
@@ -3387,9 +3132,9 @@ void MacroAssembler::lshl(Register hi, Register lo) {
 void MacroAssembler::lshr(Register hi, Register lo, bool sign_extension) {
   // Java shift right long support (semantics as described in JVM spec., p.306 & p.310)
   // (basic idea for shift counts s >= n: x >> s == (x >> n) >> (s - n))
-  assert(hi != rcx, "must not use rcx");
-  assert(lo != rcx, "must not use rcx");
-  const Register s = rcx;                        // shift count
+  assert(hi != ecx, "must not use ecx");
+  assert(lo != ecx, "must not use ecx");
+  const Register s = ecx;                        // shift count
   const int      n = BitsPerWord;
   Label L;
   andl(s, 0x3f);                                 // s := s & 0x3f (s < 0x40)
@@ -3398,7 +3143,7 @@ void MacroAssembler::lshr(Register hi, Register lo, bool sign_extension) {
   movl(lo, hi);                                  // x := x >> n
   if (sign_extension) sarl(hi, 31);
   else                xorl(hi, hi);
-  // Note: subl(s, n) is not needed since the Intel shift instructions work rcx mod n!
+  // Note: subl(s, n) is not needed since the Intel shift instructions work ecx mod n!
   bind(L);                                       // s (mod n) < n
   shrdl(lo, hi);                                 // x := x >> s
   if (sign_extension) sarl(hi);
@@ -3433,20 +3178,20 @@ void MacroAssembler::lcmp2int(Register x_hi, Register x_lo, Register y_hi, Regis
 }
 
 
-void MacroAssembler::save_rax(Register tmp) {
-  if (tmp == noreg) pushl(rax);
-  else if (tmp != rax) movl(tmp, rax);
+void MacroAssembler::save_eax(Register tmp) {
+  if (tmp == noreg) pushl(eax);
+  else if (tmp != eax) movl(tmp, eax);
 }
 
 
-void MacroAssembler::restore_rax(Register tmp) {
-  if (tmp == noreg) popl(rax);
-  else if (tmp != rax) movl(rax, tmp);
+void MacroAssembler::restore_eax(Register tmp) {
+  if (tmp == noreg) popl(eax);
+  else if (tmp != eax) movl(eax, tmp);
 }
 
 
 void MacroAssembler::fremr(Register tmp) {
-  save_rax(tmp);
+  save_eax(tmp);
   { Label L;
     bind(L);
     fprem();
@@ -3454,7 +3199,7 @@ void MacroAssembler::fremr(Register tmp) {
     sahf();
     jcc(Assembler::parity, L);
   }
-  restore_rax(tmp);
+  restore_eax(tmp);
   // Result is in ST0.
   // Note: fxch & fpop to get rid of ST1
   // (otherwise FPU stack could overflow eventually)
@@ -3474,15 +3219,15 @@ void MacroAssembler::trigfunc(char trig, int num_fpu_regs_in_use) {
 
   Register tmp = noreg;
   if (!VM_Version::supports_cmov()) {
-    // fcmp needs a temporary so preserve rbx,
-    tmp = rbx;
+    // fcmp needs a temporary so preserve ebx
+    tmp = ebx;
     pushl(tmp);
   }
 
   Label slow_case, done;
 
   // x ?<= pi/4
-  fld_d(ExternalAddress((address)&pi_4));
+  fld_d(Address(int(&pi_4), relocInfo::none));
   fld_s(1);                // Stack:  X  PI/4  X
   fabs();                  // Stack: |X| PI/4  X
   fcmp(tmp);
@@ -3519,14 +3264,14 @@ void MacroAssembler::trigfunc(char trig, int num_fpu_regs_in_use) {
     // the stack and restore it later; we also use this stack slot to
     // hold the return value from dsin or dcos.
     for (int i = 0; i < num_fpu_regs_in_use; i++) {
-      subl(rsp, wordSize*2);
-      fstp_d(Address(rsp, 0));
+      subl(esp, wordSize*2);
+      fstp_d(Address(esp));
     }
     incoming_argument_and_return_value_offset = 2*wordSize*(num_fpu_regs_in_use-1);
-    fld_d(Address(rsp, incoming_argument_and_return_value_offset));
+    fld_d(Address(esp, incoming_argument_and_return_value_offset));
   }
-  subl(rsp, wordSize*2);
-  fstp_d(Address(rsp, 0));
+  subl(esp, wordSize*2);
+  fstp_d(Address(esp));
   // NOTE: we must not use call_VM_leaf here because that requires a
   // complete interpreter frame in debug mode -- same bug as 4387334
   NEEDS_CLEANUP;
@@ -3535,31 +3280,25 @@ void MacroAssembler::trigfunc(char trig, int num_fpu_regs_in_use) {
   // the MacroAssembler level
   switch(trig) {
   case 's':
-    {
-      call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dsin)));
-    }
+    call( CAST_FROM_FN_PTR(address, SharedRuntime::dsin), relocInfo::runtime_call_type );
     break;
   case 'c':
-    {
-      call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dcos)));
-    }
+    call( CAST_FROM_FN_PTR(address, SharedRuntime::dcos), relocInfo::runtime_call_type );
     break;
   case 't':
-    {
-      call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dtan)));
-    }
+    call( CAST_FROM_FN_PTR(address, SharedRuntime::dtan), relocInfo::runtime_call_type );
     break;
   default:
     assert(false, "bad intrinsic");
     break;
   }
-  addl(rsp, wordSize * 2);
+  addl(esp, wordSize * 2);
   if (num_fpu_regs_in_use > 1) {
     // Must save return value to stack and then restore entire FPU stack
-    fstp_d(Address(rsp, incoming_argument_and_return_value_offset));
+    fstp_d(Address(esp, incoming_argument_and_return_value_offset));
     for (int i = 0; i < num_fpu_regs_in_use; i++) {
-      fld_d(Address(rsp, 0));
-      addl(rsp, wordSize*2);
+      fld_d(Address(esp));
+      addl(esp, wordSize*2);
     }
   }
   popad();
@@ -3573,22 +3312,22 @@ void MacroAssembler::trigfunc(char trig, int num_fpu_regs_in_use) {
 }
 
 void MacroAssembler::jC2(Register tmp, Label& L) {
-  // set parity bit if FPU flag C2 is set (via rax)
-  save_rax(tmp);
+  // set parity bit if FPU flag C2 is set (via eax)
+  save_eax(tmp);
   fwait(); fnstsw_ax();
   sahf();
-  restore_rax(tmp);
+  restore_eax(tmp);
   // branch
   jcc(Assembler::parity, L);
 }
 
 
 void MacroAssembler::jnC2(Register tmp, Label& L) {
-  // set parity bit if FPU flag C2 is set (via rax)
-  save_rax(tmp);
+  // set parity bit if FPU flag C2 is set (via eax)
+  save_eax(tmp);
   fwait(); fnstsw_ax();
   sahf();
-  restore_rax(tmp);
+  restore_eax(tmp);
   // branch
   jcc(Assembler::noParity, L);
 }
@@ -3622,11 +3361,11 @@ void MacroAssembler::fcmp(Register tmp, int index, bool pop_left, bool pop_right
     } else {
       fcom(index);
     }
-    // convert FPU condition into eflags condition via rax,
-    save_rax(tmp);
+    // convert FPU condition into eflags condition via eax
+    save_eax(tmp);
     fwait(); fnstsw_ax();
     sahf();
-    restore_rax(tmp);
+    restore_eax(tmp);
   }
   // condition codes set as follows:
   //
@@ -3809,67 +3548,50 @@ void MacroAssembler::verify_oop(Register reg, const char* s) {
   // Pass register number to verify_oop_subroutine
   char* b = new char[strlen(s) + 50];
   sprintf(b, "verify_oop: %s: %s", reg->name(), s);
-  pushl(rax);                          // save rax,
+  pushl(eax);                          // save eax
   pushl(reg);                          // pass register argument
-  ExternalAddress buffer((address) b);
-  pushptr(buffer.addr());
+  pushl((int)b);                       // pass msg argument
   // call indirectly to solve generation ordering problem
-  movptr(rax, ExternalAddress(StubRoutines::verify_oop_subroutine_entry_address()));
-  call(rax);
+  movl(eax, Address((int)StubRoutines::verify_oop_subroutine_entry_address(), relocInfo::none));
+  call(eax, relocInfo::none);
 }
 
 
 void MacroAssembler::verify_oop_addr(Address addr, const char* s) {
   if (!VerifyOops) return;
-  // QQQ fix this
-  // Address adjust(addr.base(), addr.index(), addr.scale(), addr.disp() + BytesPerWord);
+  Address adjust(addr.base(), addr.index(), addr.scale(), addr.disp() + BytesPerWord);
   // Pass register number to verify_oop_subroutine
   char* b = new char[strlen(s) + 50];
   sprintf(b, "verify_oop_addr: %s", s);
-  pushl(rax);                          // save rax,
-  // addr may contain rsp so we will have to adjust it based on the push
-  // we just did
-  if (addr.uses(rsp)) {
-    leal(rax, addr);
-    pushl(Address(rax, BytesPerWord));
-  } else {
-    pushl(addr);
-  }
-  ExternalAddress buffer((address) b);
-  // pass msg argument
-  pushptr(buffer.addr());
+  pushl(eax);                          // save eax
+  movl(eax, adjust);
+  pushl(eax);                          // pass register argument
+  pushl((int)b);                       // pass msg argument
   // call indirectly to solve generation ordering problem
-  movptr(rax, ExternalAddress(StubRoutines::verify_oop_subroutine_entry_address()));
-  call(rax);
-  // Caller pops the arguments and restores rax, from the stack
+  movl(eax, Address((int)StubRoutines::verify_oop_subroutine_entry_address(), relocInfo::none));
+  call(eax, relocInfo::none);
 }
 
 
 void MacroAssembler::stop(const char* msg) {
-  ExternalAddress message((address)msg);
-  // push address of message
-  pushptr(message.addr());
+  pushl((int)msg);                                    // push msg
   { Label L; call(L, relocInfo::none); bind(L); }     // push eip
   pushad();                                           // push registers
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, MacroAssembler::debug)));
+  call(CAST_FROM_FN_PTR(address, MacroAssembler::debug), relocInfo::runtime_call_type);
   hlt();
 }
 
 
 void MacroAssembler::warn(const char* msg) {
   push_CPU_state();
-
-  ExternalAddress message((address) msg);
-  // push address of message
-  pushptr(message.addr());
-
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, warning)));
-  addl(rsp, wordSize);       // discard argument
+  pushl((int)msg);                                    // push msg
+  call(CAST_FROM_FN_PTR(address, warning), relocInfo::runtime_call_type);
+  addl(esp, wordSize);       // discard argument
   pop_CPU_state();
 }
 
 
-void MacroAssembler::debug(int rdi, int rsi, int rbp, int rsp, int rbx, int rdx, int rcx, int rax, int eip, char* msg) {
+void MacroAssembler::debug(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax, int eip, char* msg) {
   // In order to get locks to work, we need to fake a in_VM state
   JavaThread* thread = JavaThread::current();
   JavaThreadState saved_state = thread->thread_state();
@@ -3886,14 +3608,14 @@ void MacroAssembler::debug(int rdi, int rsi, int rbp, int rsp, int rbx, int rdx,
     // This is the value of eip which points to where verify_oop will return.
     if (os::message_box(msg, "Execution stopped, print registers?")) {
       tty->print_cr("eip = 0x%08x", eip);
-      tty->print_cr("rax, = 0x%08x", rax);
-      tty->print_cr("rbx, = 0x%08x", rbx);
-      tty->print_cr("rcx = 0x%08x", rcx);
-      tty->print_cr("rdx = 0x%08x", rdx);
-      tty->print_cr("rdi = 0x%08x", rdi);
-      tty->print_cr("rsi = 0x%08x", rsi);
-      tty->print_cr("rbp, = 0x%08x", rbp);
-      tty->print_cr("rsp = 0x%08x", rsp);
+      tty->print_cr("eax = 0x%08x", eax);
+      tty->print_cr("ebx = 0x%08x", ebx);
+      tty->print_cr("ecx = 0x%08x", ecx);
+      tty->print_cr("edx = 0x%08x", edx);
+      tty->print_cr("edi = 0x%08x", edi);
+      tty->print_cr("esi = 0x%08x", esi);
+      tty->print_cr("ebp = 0x%08x", ebp);
+      tty->print_cr("esp = 0x%08x", esp);
       BREAKPOINT;
     }
   } else {
@@ -3908,19 +3630,19 @@ void MacroAssembler::debug(int rdi, int rsi, int rbp, int rsp, int rbx, int rdx,
 void MacroAssembler::os_breakpoint() {
   // instead of directly emitting a breakpoint, call os:breakpoint for better debugability
   // (e.g., MSVC can't call ps() otherwise)
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+  call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
 }
 
 
 void MacroAssembler::push_fTOS() {
-  subl(rsp, 2 * wordSize);
-  fstp_d(Address(rsp, 0));
+  subl(esp, 2 * wordSize);
+  fstp_d(Address(esp));
 }
 
 
 void MacroAssembler::pop_fTOS() {
-  fld_d(Address(rsp, 0));
-  addl(rsp, 2 * wordSize);
+  fld_d(Address(esp));
+  addl(esp, 2 * wordSize);
 }
 
 
@@ -4153,25 +3875,25 @@ class IU_Register {
 class IU_State {
  public:
   Flag_Register _eflags;
-  IU_Register   _rdi;
-  IU_Register   _rsi;
-  IU_Register   _rbp;
-  IU_Register   _rsp;
-  IU_Register   _rbx;
-  IU_Register   _rdx;
-  IU_Register   _rcx;
-  IU_Register   _rax;
+  IU_Register   _edi;
+  IU_Register   _esi;
+  IU_Register   _ebp;
+  IU_Register   _esp;
+  IU_Register   _ebx;
+  IU_Register   _edx;
+  IU_Register   _ecx;
+  IU_Register   _eax;
 
   void print() const {
     // computation registers
-    printf("rax,  = "); _rax.print(); printf("\n");
-    printf("rbx,  = "); _rbx.print(); printf("\n");
-    printf("rcx  = "); _rcx.print(); printf("\n");
-    printf("rdx  = "); _rdx.print(); printf("\n");
-    printf("rdi  = "); _rdi.print(); printf("\n");
-    printf("rsi  = "); _rsi.print(); printf("\n");
-    printf("rbp,  = "); _rbp.print(); printf("\n");
-    printf("rsp  = "); _rsp.print(); printf("\n");
+    printf("eax  = "); _eax.print(); printf("\n");
+    printf("ebx  = "); _ebx.print(); printf("\n");
+    printf("ecx  = "); _ecx.print(); printf("\n");
+    printf("edx  = "); _edx.print(); printf("\n");
+    printf("edi  = "); _edi.print(); printf("\n");
+    printf("esi  = "); _esi.print(); printf("\n");
+    printf("ebp  = "); _ebp.print(); printf("\n");
+    printf("esp  = "); _esp.print(); printf("\n");
     printf("\n");
     // control registers
     printf("flgs = "); _eflags.print(); printf("\n");
@@ -4202,9 +3924,9 @@ static void _print_CPU_state(CPU_State* state) {
 
 void MacroAssembler::print_CPU_state() {
   push_CPU_state();
-  pushl(rsp);                // pass CPU state
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, _print_CPU_state)));
-  addl(rsp, wordSize);       // discard argument
+  pushl(esp);                // pass CPU state
+  call(CAST_FROM_FN_PTR(address, _print_CPU_state), relocInfo::runtime_call_type);
+  addl(esp, wordSize);       // discard argument
   pop_CPU_state();
 }
 
@@ -4269,16 +3991,14 @@ static bool _verify_FPU(int stack_depth, char* s, CPU_State* state) {
 void MacroAssembler::verify_FPU(int stack_depth, const char* s) {
   if (!VerifyFPU) return;
   push_CPU_state();
-  pushl(rsp);                // pass CPU state
-  ExternalAddress msg((address) s);
-  // pass message string s
-  pushptr(msg.addr());
+  pushl(esp);                // pass CPU state
+  pushl((int)s);             // pass message string s
   pushl(stack_depth);        // pass stack depth
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, _verify_FPU)));
-  addl(rsp, 3 * wordSize);   // discard arguments
+  call(CAST_FROM_FN_PTR(address, _verify_FPU), relocInfo::runtime_call_type);
+  addl(esp, 3 * wordSize);   // discard arguments
   // check for error
   { Label L;
-    testl(rax, rax);
+    testl(eax, eax);
     jcc(Assembler::notZero, L);    
     int3();                  // break if error condition
     bind(L);
@@ -4300,15 +4020,15 @@ void MacroAssembler::pop_IU_state() {
 
 
 void MacroAssembler::push_FPU_state() {
-  subl(rsp, FPUStateSizeInWords * wordSize);
-  fnsave(Address(rsp, 0));
+  subl(esp, FPUStateSizeInWords * wordSize);
+  fnsave(Address(esp));
   fwait();
 }
 
 
 void MacroAssembler::pop_FPU_state() {
-  frstor(Address(rsp, 0));
-  addl(rsp, FPUStateSizeInWords * wordSize);
+  frstor(Address(esp));
+  addl(esp, FPUStateSizeInWords * wordSize);
 }
 
 
@@ -4325,18 +4045,18 @@ void MacroAssembler::pop_CPU_state() {
 
 
 void MacroAssembler::push_callee_saved_registers() {
-  pushl(rsi);
-  pushl(rdi);
-  pushl(rdx);
-  pushl(rcx);
+  pushl(esi);
+  pushl(edi);
+  pushl(edx);
+  pushl(ecx);
 }
 
 
 void MacroAssembler::pop_callee_saved_registers() {
-  popl(rcx);
-  popl(rdx);
-  popl(rdi);
-  popl(rsi);
+  popl(ecx);
+  popl(edx);
+  popl(edi);
+  popl(esi);
 }
 
 
@@ -4353,11 +4073,7 @@ void MacroAssembler::serialize_memory(Register thread, Register tmp) {
   movl(tmp, thread);
   shrl(tmp, os::get_serialize_page_shift_count());
   andl(tmp, (os::vm_page_size() - sizeof(int)));
-
-  Address index(noreg, tmp, Address::times_1);
-  ExternalAddress page(os::get_memory_serialize_page());
-
-  movptr(ArrayAddress(page, index), tmp);
+  movl(Address(tmp, (int)os::get_memory_serialize_page()), tmp);
 }
 
 
@@ -4365,8 +4081,8 @@ void MacroAssembler::verify_tlab() {
 #ifdef ASSERT
   if (UseTLAB && VerifyOops) {
     Label next, ok;
-    Register t1 = rsi;
-    Register thread_reg = rbx;
+    Register t1 = esi;
+    Register thread_reg = ebx;
     
     pushl(t1);
     pushl(thread_reg);
@@ -4396,13 +4112,12 @@ void MacroAssembler::verify_tlab() {
 // Defines obj, preserves var_size_in_bytes
 void MacroAssembler::eden_allocate(Register obj, Register var_size_in_bytes, int con_size_in_bytes,
                                    Register t1, Label& slow_case) {
-  assert(obj == rax, "obj must be in rax, for cmpxchg");
+  assert(obj == eax, "obj must be in eax for cmpxchg");
   assert_different_registers(obj, var_size_in_bytes, t1);
   Register end = t1;
   Label retry;
   bind(retry);
-  ExternalAddress heap_top((address) Universe::heap()->top_addr());
-  movptr(obj, heap_top);
+  movl(obj, Address((int)Universe::heap()->top_addr(), relocInfo::none));
   if (var_size_in_bytes == noreg) {
     leal(end, Address(obj, con_size_in_bytes));
   } else {
@@ -4411,7 +4126,7 @@ void MacroAssembler::eden_allocate(Register obj, Register var_size_in_bytes, int
   // if end < obj then we wrapped around => object too long => slow case
   cmpl(end, obj);
   jcc(Assembler::below, slow_case);
-  cmpptr(end, ExternalAddress((address) Universe::heap()->end_addr()));
+  cmpl(end, Address((int)Universe::heap()->end_addr(), relocInfo::none));
   jcc(Assembler::above, slow_case);
   // Compare obj with the top addr, and if still equal, store the new top addr in
   // end at the address of the top addr pointer. Sets ZF if was equal, and clears
@@ -4419,7 +4134,7 @@ void MacroAssembler::eden_allocate(Register obj, Register var_size_in_bytes, int
   if (os::is_MP()) {
     lock();
   }
-  cmpxchgptr(end, heap_top);
+  cmpxchg(end, Address((int)Universe::heap()->top_addr(), relocInfo::none));
   jcc(Assembler::notEqual, retry);
 }
 
@@ -4455,13 +4170,13 @@ void MacroAssembler::tlab_allocate(Register obj, Register var_size_in_bytes, int
   verify_tlab();
 }
 
-// Preserves rbx, and rdx.
+// Preserves ebx and edx.
 void MacroAssembler::tlab_refill(Label& retry, Label& try_eden, Label& slow_case) {
-  Register top = rax;
-  Register t1  = rcx;
-  Register t2  = rsi;
-  Register thread_reg = rdi;
-  assert_different_registers(top, thread_reg, t1, t2, /* preserve: */ rbx, rdx);
+  Register top = eax;
+  Register t1  = ecx;
+  Register t2  = esi;
+  Register thread_reg = edi;
+  assert_different_registers(top, thread_reg, t1, t2, /* preserve: */ ebx, edx);
   Label do_refill, discard_tlab;
 
   if (CMSIncrementalMode || !Universe::heap()->supports_inline_contig_alloc()) {
@@ -4513,8 +4228,7 @@ void MacroAssembler::tlab_refill(Label& retry, Label& try_eden, Label& slow_case
   shll(t1, log2_intptr(HeapWordSize/sizeof(jint)));
   movl(Address(top, arrayOopDesc::length_offset_in_bytes()), t1);
   // set klass to intArrayKlass
-  // dubious reloc why not an oop reloc?
-  movptr(t1, ExternalAddress((address) Universe::intArrayKlassObj_addr()));
+  movl(t1, Address((intptr_t)Universe::intArrayKlassObj_addr(), relocInfo::none));
   movl(Address(top, oopDesc::klass_offset_in_bytes()), t1);
 
   // refill the tlab with an eden allocation
@@ -4528,7 +4242,7 @@ void MacroAssembler::tlab_refill(Label& retry, Label& try_eden, Label& slow_case
 #ifdef ASSERT
   if (UseTLAB) {
     Label ok;
-    Register tsize = rsi;
+    Register tsize = esi;
     assert_different_registers(tsize, thread_reg, t1);
     pushl(tsize);
     movl(tsize, Address(thread_reg, in_bytes(JavaThread::tlab_size_offset())));
@@ -4557,7 +4271,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
                                          Label& done, Label* slow_case,
                                          BiasedLockingCounters* counters) {
   assert(UseBiasedLocking, "why call this otherwise?");
-  assert(swap_reg == rax, "swap_reg must be rax, for cmpxchg");
+  assert(swap_reg == eax, "swap_reg must be eax for cmpxchg");
   assert_different_registers(lock_reg, obj_reg, swap_reg);
 
   if (PrintBiasedLockingStatistics && counters == NULL)
@@ -4573,7 +4287,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   assert(markOopDesc::age_shift == markOopDesc::lock_bits + markOopDesc::biased_lock_bits, "biased locking makes assumptions about bit layout");
   Address mark_addr      (obj_reg, oopDesc::mark_offset_in_bytes());
   Address klass_addr     (obj_reg, oopDesc::klass_offset_in_bytes());
-  Address saved_mark_addr(lock_reg, 0);
+  Address saved_mark_addr(lock_reg);
 
   // Biased locking
   // See whether the lock is currently biased toward our thread and
@@ -4620,8 +4334,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
     popl(tmp_reg);
   }
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address)counters->biased_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((int) counters->biased_lock_entry_count_addr(), relocInfo::none));
   }
   jcc(Assembler::equal, done);
 
@@ -4669,7 +4382,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   if (os::is_MP()) {
     lock();
   }    
-  cmpxchg(tmp_reg, Address(obj_reg, 0));
+  cmpxchg(tmp_reg, Address(obj_reg));
   if (need_tmp_reg) {
     popl(tmp_reg);
   }
@@ -4678,8 +4391,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   // need to revoke that bias. The revocation will occur in the
   // interpreter runtime in the slow case.
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address)counters->anonymously_biased_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((int) counters->anonymously_biased_lock_entry_count_addr(), relocInfo::none));
   }
   if (slow_case != NULL) {
     jcc(Assembler::notZero, *slow_case);
@@ -4706,7 +4418,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   if (os::is_MP()) {
     lock();
   }    
-  cmpxchg(tmp_reg, Address(obj_reg, 0));
+  cmpxchg(tmp_reg, Address(obj_reg));
   if (need_tmp_reg) {
     popl(tmp_reg);
   }
@@ -4714,8 +4426,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   // succeeded in biasing it toward itself and we need to revoke that
   // bias. The revocation will occur in the runtime in the slow case.
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address)counters->rebiased_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((int) counters->rebiased_lock_entry_count_addr(), relocInfo::none));
   }
   if (slow_case != NULL) {
     jcc(Assembler::notZero, *slow_case);
@@ -4743,7 +4454,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   if (os::is_MP()) {
     lock();
   }    
-  cmpxchg(tmp_reg, Address(obj_reg, 0));
+  cmpxchg(tmp_reg, Address(obj_reg));
   if (need_tmp_reg) {
     popl(tmp_reg);
   }
@@ -4751,8 +4462,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   // the result of the above CAS, some thread must have succeeded in
   // removing the bias bit from the object's header.
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address)counters->revoked_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((int) counters->revoked_lock_entry_count_addr(), relocInfo::none));
   }
 
   bind(cas_label);
@@ -4801,7 +4511,7 @@ Assembler::Condition MacroAssembler::negate_condition(Assembler::Condition cond)
 }
 
 
-void MacroAssembler::cond_inc32(Condition cond, AddressLiteral counter_addr) {
+void MacroAssembler::cond_incl(Condition cond, Address counter_addr) {
   Condition negated_cond = negate_condition(cond);
   Label L;
   jcc(negated_cond, L);
@@ -4809,7 +4519,7 @@ void MacroAssembler::cond_inc32(Condition cond, AddressLiteral counter_addr) {
   bind(L);
 }
 
-void MacroAssembler::atomic_incl(AddressLiteral counter_addr) {
+void MacroAssembler::atomic_incl(Address counter_addr) {
   pushfd();
   if (os::is_MP())
     lock();
@@ -4820,7 +4530,8 @@ void MacroAssembler::atomic_incl(AddressLiteral counter_addr) {
 SkipIfEqual::SkipIfEqual(
     MacroAssembler* masm, const bool* flag_addr, bool value) {
   _masm = masm;
-  _masm->cmp8(ExternalAddress((address)flag_addr), value);
+  _masm->cmpb(
+    Address((int32_t)flag_addr, relocInfo::none), value);
   _masm->jcc(Assembler::equal, _label);
 }
 
@@ -4832,7 +4543,7 @@ SkipIfEqual::~SkipIfEqual() {
 // Writes to stack successive pages until offset reached to check for
 // stack overflow + shadow pages.  This clobbers tmp.
 void MacroAssembler::bang_stack_size(Register size, Register tmp) {
-  movl(tmp, rsp);
+  movl(tmp, esp);
   // Bang stack for total size given plus shadow page size.
   // Bang one page at a time because large size can bang beyond yellow and
   // red zones.

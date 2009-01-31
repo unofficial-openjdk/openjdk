@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)globals_linux_amd64.hpp	1.11 07/05/05 17:04:47 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.

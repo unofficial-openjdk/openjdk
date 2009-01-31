@@ -23,7 +23,7 @@
  */
 
 /**
- *  @test %W% %E%
+ *  @test @(#)sagtest.java	1.10 07/05/05
  *  @bug 0000000
  *  @summary This is just an exercise of various JDI elements for use in 
  *           testing the SA/JDI client

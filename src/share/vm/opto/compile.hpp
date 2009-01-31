@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)compile.hpp	1.230 07/05/17 15:57:38 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -184,9 +184,6 @@ class Compile : public Phase {
   Node*                 _top;                   // Unique top node.  (Reset by various phases.)
 
   Node*                 _immutable_memory;      // Initial memory state
-
-  Node*                 _recent_alloc_obj;
-  Node*                 _recent_alloc_ctl;
 
   // Blocked array of debugging and profiling information,
   // tracked per node.
@@ -375,13 +372,6 @@ class Compile : public Phase {
   StartNode*        start() const;              // (Derived from root.)
   void         init_start(StartNode* s);
   Node*             immutable_memory();
-
-  Node*             recent_alloc_ctl() const    { return _recent_alloc_ctl; }
-  Node*             recent_alloc_obj() const    { return _recent_alloc_obj; }
-  void          set_recent_alloc(Node* ctl, Node* obj) {
-                                                  _recent_alloc_ctl = ctl;
-                                                  _recent_alloc_obj = obj;
-                                                }
 
   // Handy undefined Node
   Node*             top() const                 { return _top; }

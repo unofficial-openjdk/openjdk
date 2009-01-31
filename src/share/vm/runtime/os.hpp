@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)os.hpp	1.220 07/06/19 03:53:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -257,7 +257,7 @@ class os: AllStatic {
                 get_serialize_page_mask()) + (uintptr_t)_mem_serialize_page; 
     return  (thr_addr == addr);
   }
-  
+
   static void block_on_serialize_page_trap();
 
   // threads
@@ -292,15 +292,7 @@ class os: AllStatic {
   static int naked_sleep();
   static void infinite_sleep(); // never returns, use with CAUTION
   static void yield();        // Yields to all threads with same priority
-  enum YieldResult {
-    YIELD_SWITCHED = 1,         // caller descheduled, other ready threads exist & ran
-    YIELD_NONEREADY = 0,        // No other runnable/ready threads. 
-                                // platform-specific yield return immediately
-    YIELD_UNKNOWN = -1          // Unknown: platform doesn't support _SWITCHED or _NONEREADY
-    // YIELD_SWITCHED and YIELD_NONREADY imply the platform supports a "strong" 
-    // yield that can be used in lieu of blocking.  
-  } ; 
-  static YieldResult NakedYield () ; 
+  static void NakedYield () ; 
   static void yield_all(int attempts = 0); // Yields to all other threads including lower priority
   static void loop_breaker(int attempts);  // called from within tight loops to possibly influence time-sharing
   static OSReturn set_priority(Thread* thread, ThreadPriority priority);
@@ -323,9 +315,6 @@ class os: AllStatic {
 
   static int message_box(const char* title, const char* message);
   static char* do_you_want_to_debug(const char* message);
-
-  // run cmd in a separate process and return its exit code; or -1 on failures
-  static int fork_and_exec(char *cmd);
 
   // Set file to send error reports.
   static void set_error_file(const char *logfile);

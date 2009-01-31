@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LinearScan_i486.hpp	1.9 07/05/05 17:04:13 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -26,9 +26,9 @@
  */
 
 inline bool LinearScan::is_processed_reg_num(int reg_num) {
-  // rsp and rbp (numbers 6 ancd 7) are ignored
-  assert(FrameMap::rsp_opr->cpu_regnr() == 6, "wrong assumption below");
-  assert(FrameMap::rbp_opr->cpu_regnr() == 7, "wrong assumption below");
+  // esp and ebp (numbers 6 ancd 7) are ignored
+  assert(FrameMap::esp_opr->cpu_regnr() == 6, "wrong assumption below");
+  assert(FrameMap::ebp_opr->cpu_regnr() == 7, "wrong assumption below");
   assert(reg_num >= 0, "invalid reg_num");
 
   return reg_num < 6 || reg_num > 7;

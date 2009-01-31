@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)relocInfo.hpp	1.86 07/05/05 17:05:22 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1201,12 +1201,10 @@ class section_word_Relocation : public internal_word_Relocation {
 
 
 class poll_Relocation : public Relocation {
-  bool          is_data()                      { return true; }
   relocInfo::relocType type() { return relocInfo::poll_type; }
 };
 
 class poll_return_Relocation : public Relocation {
-  bool          is_data()                      { return true; }
   relocInfo::relocType type() { return relocInfo::poll_return_type; }
 };
 

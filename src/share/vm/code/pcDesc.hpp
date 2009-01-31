@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)pcDesc.hpp	1.36 07/05/05 17:05:20 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,20 +35,17 @@ class PcDesc VALUE_OBJ_CLASS_SPEC {
  private:
   int _pc_offset;           // offset from start of nmethod
   int _scope_decode_offset; // offset for scope in nmethod
-  int _obj_decode_offset;
 
  public:
   int pc_offset() const           { return _pc_offset;   }
   int scope_decode_offset() const { return _scope_decode_offset; }
-  int obj_decode_offset() const   { return _obj_decode_offset; }
 
   void set_pc_offset(int x)           { _pc_offset           = x; }
   void set_scope_decode_offset(int x) { _scope_decode_offset = x; }
-  void set_obj_decode_offset(int x)   { _obj_decode_offset   = x; }
 
   // Constructor (only used for static in nmethod.cpp)
   // Also used by ScopeDesc::sender()]
-  PcDesc(int pc_offset, int scope_decode_offset, int obj_decode_offset);
+  PcDesc(int pc_offset, int scope_decode_offset);
 
   enum {
     // upper and lower exclusive limits real offsets:

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)generation.cpp	1.245 07/05/05 17:05:51 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.

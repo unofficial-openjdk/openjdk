@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmreg_i486.inline.hpp	1.6 07/05/05 17:04:21 JVM"
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -27,11 +27,7 @@
 
 inline VMReg RegisterImpl::as_VMReg() {
   if( this==noreg ) return VMRegImpl::Bad();
-#ifdef AMD64
-  return VMRegImpl::as_VMReg(encoding() << 1 );
-#else
   return VMRegImpl::as_VMReg(encoding() );
-#endif // AMD64
 }
 
 inline VMReg FloatRegisterImpl::as_VMReg() {
@@ -59,11 +55,7 @@ inline Register VMRegImpl::as_Register() {
 
   assert( is_Register(), "must be");
   // Yuk
-#ifdef AMD64
-  return ::as_Register(value() >> 1);
-#else
   return ::as_Register(value());
-#endif // AMD64
 }
 
 inline FloatRegister VMRegImpl::as_FloatRegister() {
@@ -80,9 +72,7 @@ inline XMMRegister VMRegImpl::as_XMMRegister() {
 
 inline   bool VMRegImpl::is_concrete() {
   assert(is_reg(), "must be");
-#ifndef AMD64
   if (is_Register()) return true;
-#endif // AMD64
   return is_even(value());
 }
 

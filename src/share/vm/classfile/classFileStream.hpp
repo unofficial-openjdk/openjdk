@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)classFileStream.hpp	1.33 07/05/31 14:29:25 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.

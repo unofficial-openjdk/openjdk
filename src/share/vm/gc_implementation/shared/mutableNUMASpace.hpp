@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)mutableNUMASpace.hpp	1.8 07/05/05 17:05:34 JVM"
 #endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.

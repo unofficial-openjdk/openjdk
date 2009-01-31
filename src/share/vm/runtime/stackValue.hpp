@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)stackValue.hpp	1.36 07/05/05 17:06:58 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -92,9 +92,6 @@ class StackValue : public ResourceObj {
       return (*(int *)&_i == *(int *)&value->_i);    
     }
   }
-
-  static StackValue* create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv);
-  static BasicLock*  resolve_monitor_lock(const frame* fr, Location location);
 
 #ifndef PRODUCT
  public:

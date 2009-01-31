@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c2_globals_i486.hpp	1.57 07/05/05 17:04:14 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -36,12 +36,8 @@ define_pd_global(bool, CICompileOSR,                 true);
 define_pd_global(bool, InlineIntrinsics,             true);
 define_pd_global(bool, PreferInterpreterNativeStubs, false);
 define_pd_global(bool, ProfileTraps,                 true);
-#ifdef CC_INTERP
-define_pd_global(bool, ProfileInterpreter,           false);
-#else
-define_pd_global(bool, ProfileInterpreter,           true);
-#endif // CC_INTERP
 define_pd_global(bool, UseOnStackReplacement,        true);
+define_pd_global(bool, ProfileInterpreter,           true);
 define_pd_global(bool, TieredCompilation,            false);
 #ifdef TIERED
 define_pd_global(intx, CompileThreshold,             1000);
@@ -86,4 +82,3 @@ define_pd_global(uintx, PermSize,    ScaleForWordSize(16*M));
 define_pd_global(uintx, MaxPermSize, ScaleForWordSize(64*M));
 
 define_pd_global(bool, NeverActAsServerClassMachine, false);
-define_pd_global(uintx, DefaultMaxRAM,		     1*G);

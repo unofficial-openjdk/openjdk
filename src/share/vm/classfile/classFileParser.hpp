@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)classFileParser.hpp	1.84 07/05/05 17:06:45 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -42,7 +42,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   bool _has_vanilla_constructor;
 
   enum { fixed_buffer_size = 128 };
-  u_char linenumbertable_buffer[fixed_buffer_size];
+  u_char _fixed_buffer[fixed_buffer_size];
 
   ClassFileStream* _stream;              // Actual input stream
 
@@ -98,9 +98,8 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                 TRAPS);
   typeArrayHandle parse_exception_table(u4 code_length, u4 exception_table_length, 
                                         constantPoolHandle cp, TRAPS);
-  void parse_linenumber_table(
-      u4 code_attribute_length, u4 code_length,
-      CompressedLineNumberWriteStream** write_stream, TRAPS);
+  u_char* parse_linenumber_table(u4 code_attribute_length, u4 code_length,
+                                 int* compressed_linenumber_table_size, TRAPS);
   u2* parse_localvariable_table(u4 code_length, u2 max_locals, u4 code_attribute_length,
                                 constantPoolHandle cp, u2* localvariable_table_length,
                                 bool isLVTT, TRAPS);
@@ -170,15 +169,6 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
       assert_property(property, msg, CHECK);
     }
   }
-
-  inline void check_property(bool property, const char* msg, TRAPS) {
-    if (_need_verify) {
-      guarantee_property(property, msg, CHECK);
-    } else {
-      assert_property(property, msg, CHECK);
-    }
-  }
-
   inline void guarantee_property(bool b, const char* msg, int index, TRAPS) {
     if (!b) { classfile_parse_error(msg, index, CHECK); }
   }

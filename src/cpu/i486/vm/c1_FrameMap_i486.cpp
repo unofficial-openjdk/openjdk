@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_FrameMap_i486.cpp	1.84 07/05/05 17:04:13 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -39,7 +39,7 @@ LIR_Opr FrameMap::map_to_opr(BasicType type, VMRegPair* reg, bool) {
     // The calling convention does not count the SharedRuntime::out_preserve_stack_slots() value
     // so we must add it in here.
     int st_off = (r_1->reg2stack() + SharedRuntime::out_preserve_stack_slots()) * VMRegImpl::stack_slot_size;
-    opr = LIR_OprFact::address(new LIR_Address(rsp_opr, st_off, type));
+    opr = LIR_OprFact::address(new LIR_Address(esp_opr, st_off, type));
   } else if (r_1->is_Register()) {
     Register reg = r_1->as_Register();
     if (r_2->is_Register()) {
@@ -73,26 +73,26 @@ LIR_Opr FrameMap::map_to_opr(BasicType type, VMRegPair* reg, bool) {
 }
 
 
-LIR_Opr FrameMap::rsi_opr;
-LIR_Opr FrameMap::rdi_opr;
-LIR_Opr FrameMap::rbx_opr;
-LIR_Opr FrameMap::rax_opr;
-LIR_Opr FrameMap::rdx_opr;
-LIR_Opr FrameMap::rcx_opr;
-LIR_Opr FrameMap::rsp_opr;
-LIR_Opr FrameMap::rbp_opr;
+LIR_Opr FrameMap::esi_opr;
+LIR_Opr FrameMap::edi_opr;
+LIR_Opr FrameMap::ebx_opr;
+LIR_Opr FrameMap::eax_opr;
+LIR_Opr FrameMap::edx_opr;
+LIR_Opr FrameMap::ecx_opr;
+LIR_Opr FrameMap::esp_opr;
+LIR_Opr FrameMap::ebp_opr;
 
 LIR_Opr FrameMap::receiver_opr;
 
-LIR_Opr FrameMap::rsi_oop_opr;
-LIR_Opr FrameMap::rdi_oop_opr;
-LIR_Opr FrameMap::rbx_oop_opr;
-LIR_Opr FrameMap::rax_oop_opr;
-LIR_Opr FrameMap::rdx_oop_opr;
-LIR_Opr FrameMap::rcx_oop_opr;
+LIR_Opr FrameMap::esi_oop_opr;
+LIR_Opr FrameMap::edi_oop_opr;
+LIR_Opr FrameMap::ebx_oop_opr;
+LIR_Opr FrameMap::eax_oop_opr;
+LIR_Opr FrameMap::edx_oop_opr;
+LIR_Opr FrameMap::ecx_oop_opr;
 
-LIR_Opr FrameMap::rax_rdx_long_opr;
-LIR_Opr FrameMap::rbx_rcx_long_opr;
+LIR_Opr FrameMap::eax_edx_long_opr;
+LIR_Opr FrameMap::ebx_ecx_long_opr;
 LIR_Opr FrameMap::fpu0_float_opr;
 LIR_Opr FrameMap::fpu0_double_opr;
 LIR_Opr FrameMap::xmm0_float_opr;
@@ -117,28 +117,28 @@ void FrameMap::init() {
   if (_init_done) return;
 
   assert(nof_cpu_regs == 8, "wrong number of CPU registers");
-  map_register(0, rsi);  rsi_opr = LIR_OprFact::single_cpu(0);  rsi_oop_opr = LIR_OprFact::single_cpu_oop(0);
-  map_register(1, rdi);  rdi_opr = LIR_OprFact::single_cpu(1);  rdi_oop_opr = LIR_OprFact::single_cpu_oop(1);
-  map_register(2, rbx);  rbx_opr = LIR_OprFact::single_cpu(2);  rbx_oop_opr = LIR_OprFact::single_cpu_oop(2);
-  map_register(3, rax);  rax_opr = LIR_OprFact::single_cpu(3);  rax_oop_opr = LIR_OprFact::single_cpu_oop(3);
-  map_register(4, rdx);  rdx_opr = LIR_OprFact::single_cpu(4);  rdx_oop_opr = LIR_OprFact::single_cpu_oop(4);
-  map_register(5, rcx);  rcx_opr = LIR_OprFact::single_cpu(5);  rcx_oop_opr = LIR_OprFact::single_cpu_oop(5);
-  map_register(6, rsp);  rsp_opr = LIR_OprFact::single_cpu(6);
-  map_register(7, rbp);  rbp_opr = LIR_OprFact::single_cpu(7);
+  map_register(0, esi);  esi_opr = LIR_OprFact::single_cpu(0);  esi_oop_opr = LIR_OprFact::single_cpu_oop(0);
+  map_register(1, edi);  edi_opr = LIR_OprFact::single_cpu(1);  edi_oop_opr = LIR_OprFact::single_cpu_oop(1);
+  map_register(2, ebx);  ebx_opr = LIR_OprFact::single_cpu(2);  ebx_oop_opr = LIR_OprFact::single_cpu_oop(2);
+  map_register(3, eax);  eax_opr = LIR_OprFact::single_cpu(3);  eax_oop_opr = LIR_OprFact::single_cpu_oop(3);
+  map_register(4, edx);  edx_opr = LIR_OprFact::single_cpu(4);  edx_oop_opr = LIR_OprFact::single_cpu_oop(4);
+  map_register(5, ecx);  ecx_opr = LIR_OprFact::single_cpu(5);  ecx_oop_opr = LIR_OprFact::single_cpu_oop(5);
+  map_register(6, esp);  esp_opr = LIR_OprFact::single_cpu(6);
+  map_register(7, ebp);  ebp_opr = LIR_OprFact::single_cpu(7);
 
-  rax_rdx_long_opr = LIR_OprFact::double_cpu(3 /*eax*/, 4 /*edx*/);
-  rbx_rcx_long_opr = LIR_OprFact::double_cpu(2 /*ebx*/, 5 /*ecx*/);
+  eax_edx_long_opr = LIR_OprFact::double_cpu(3 /*eax*/, 4 /*edx*/);
+  ebx_ecx_long_opr = LIR_OprFact::double_cpu(2 /*ebx*/, 5 /*ecx*/);
   fpu0_float_opr   = LIR_OprFact::single_fpu(0);
   fpu0_double_opr  = LIR_OprFact::double_fpu(0);
   xmm0_float_opr   = LIR_OprFact::single_xmm(0);
   xmm0_double_opr  = LIR_OprFact::double_xmm(0);
 
-  _caller_save_cpu_regs[0] = rsi_opr;
-  _caller_save_cpu_regs[1] = rdi_opr;
-  _caller_save_cpu_regs[2] = rbx_opr;
-  _caller_save_cpu_regs[3] = rax_opr;
-  _caller_save_cpu_regs[4] = rdx_opr;
-  _caller_save_cpu_regs[5] = rcx_opr;
+  _caller_save_cpu_regs[0] = esi_opr;
+  _caller_save_cpu_regs[1] = edi_opr;
+  _caller_save_cpu_regs[2] = ebx_opr;
+  _caller_save_cpu_regs[3] = eax_opr;
+  _caller_save_cpu_regs[4] = edx_opr;
+  _caller_save_cpu_regs[5] = ecx_opr;
 
 
   _xmm_regs[0] = xmm0;
@@ -161,20 +161,20 @@ void FrameMap::init() {
   BasicType sig_bt = T_OBJECT;
   SharedRuntime::java_calling_convention(&sig_bt, &regs, 1, true);
   receiver_opr = as_oop_opr(regs.first()->as_Register());
-  assert(receiver_opr == rcx_oop_opr, "rcvr ought to be rcx");
+  assert(receiver_opr == ecx_oop_opr, "rcvr ought to be ecx");
 }
 
 
 Address FrameMap::make_new_address(ByteSize sp_offset) const {
-  // for rbp, based address use this:
-  // return Address(rbp, in_bytes(sp_offset) - (framesize() - 2) * 4);
-  return Address(rsp, in_bytes(sp_offset));
+  // for ebp based address use this:
+  // return Address(ebp, in_bytes(sp_offset) - (framesize() - 2) * 4);
+  return Address(esp, in_bytes(sp_offset));
 }
 
 
 // ----------------mapping-----------------------
-// all mapping is based on rbp, addressing, except for simple leaf methods where we access 
-// the locals rsp based (and no frame is built)
+// all mapping is based on ebp addressing, except for simple leaf methods where we access 
+// the locals esp based (and no frame is built)
 
 
 // Frame for simple leaf methods (quick entries)
@@ -190,7 +190,7 @@ Address FrameMap::make_new_address(ByteSize sp_offset) const {
 //   | .........|  <- TOS
 //   | locals   |
 //   +----------+
-//   | old rbp,  |  <- EBP
+//   | old ebp  |  <- EBP
 //   +----------+
 //   | ret addr |
 //   +----------+
@@ -219,7 +219,7 @@ VMReg FrameMap::fpu_regname (int n) {
 }
 
 LIR_Opr FrameMap::stack_pointer() {
-  return FrameMap::rsp_opr;
+  return FrameMap::esp_opr;
 }
 
 

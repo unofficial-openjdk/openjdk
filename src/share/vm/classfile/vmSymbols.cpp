@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmSymbols.cpp	1.28 07/05/17 15:50:36 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,8 +35,7 @@ symbolOop vmSymbols::_type_signatures[T_VOID+1] = { NULL /*, NULL...*/ };
 
 inline int compare_symbol(symbolOop a, symbolOop b) {
   if (a == b)  return 0;
-  // follow the natural address order:
-  return (address)a > (address)b ? +1 : -1;
+  return (intptr_t)a > (intptr_t)b ? +1 : -1;
 }
 
 static vmSymbols::SID vm_symbol_index[vmSymbols::SID_LIMIT];

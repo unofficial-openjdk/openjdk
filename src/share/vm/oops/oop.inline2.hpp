@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)oop.inline2.hpp	1.12 07/05/05 17:06:07 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -31,11 +31,6 @@
 // Separate this out to break dependency.
 inline bool oopDesc::is_perm() const {
   return Universe::heap()->is_in_permanent(this);
-}
-
-// Check for NULL also.
-inline bool oopDesc::is_perm_or_null() const {
-  return this == NULL || is_perm();
 }
 
 // is_perm only verifies that oop is in the reserved space for

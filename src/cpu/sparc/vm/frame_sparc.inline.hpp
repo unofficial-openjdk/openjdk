@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame_sparc.inline.hpp	1.78 07/05/05 17:04:28 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,7 +35,10 @@ inline frame::frame() {
   _younger_sp = NULL;
   _cb = NULL;
   _deopt_state = unknown;
-  _sp_adjustment_by_callee = 0;
+  _interpreter_sp_adjustment = 0;}
+
+inline bool frame::is_interpreted_frame() const  {
+  return AbstractInterpreter::contains(pc());
 }
 
 // Accessors:
@@ -68,7 +71,13 @@ inline intptr_t* frame::link() const { return (intptr_t *)(fp()[FP->sp_offset_in
 
 inline void frame::set_link(intptr_t* addr) { assert(link()==addr, "frame nesting is controlled by hardware"); }
 
-inline intptr_t* frame::unextended_sp() const { return sp() + _sp_adjustment_by_callee; }
+inline intptr_t* frame::unextended_sp() const { return sp() + _interpreter_sp_adjustment; }
+
+inline intptr_t* frame::entry_frame_argument_at(int offset) const {
+  // Since an entry frame always calls the interpreter first,
+  // the format of the call is always compatible with the interpreter.
+  return interpreter_frame_tos_at(offset);
+}
 
 // return address:
 
@@ -85,77 +94,8 @@ inline intptr_t*    frame::sender_sp() const  { return fp(); }
 // Used only in frame::oopmapreg_to_location
 // This return a value in VMRegImpl::slot_size
 inline int frame::pd_oop_map_offset_adjustment() const {
-  return _sp_adjustment_by_callee * VMRegImpl::slots_per_word;
+  return _interpreter_sp_adjustment * VMRegImpl::slots_per_word;
 }
-
-#ifdef CC_INTERP
-inline intptr_t** frame::interpreter_frame_locals_addr() const { 
-  interpreterState istate = get_interpreterState();
-  return (intptr_t**) &istate->_locals;
-}
-
-inline intptr_t* frame::interpreter_frame_bcx_addr() const {
-  interpreterState istate = get_interpreterState();
-  return (intptr_t*) &istate->_bcp;
-}
-
-inline intptr_t* frame::interpreter_frame_mdx_addr() const {
-  interpreterState istate = get_interpreterState();
-  return (intptr_t*) &istate->_mdx;
-}
-
-inline jint frame::interpreter_frame_expression_stack_direction() { return -1; }
-
-// bottom(base) of the expression stack (highest address)
-inline intptr_t* frame::interpreter_frame_expression_stack() const {
-  return (intptr_t*)interpreter_frame_monitor_end() - 1;
-}
-
-// top of expression stack (lowest address)
-inline intptr_t* frame::interpreter_frame_tos_address() const {
-  interpreterState istate = get_interpreterState();
-  return istate->_stack + 1; // Is this off by one? QQQ
-} 
-
-// monitor elements
-
-// in keeping with Intel side: end is lower in memory than begin;
-// and beginning element is oldest element
-// Also begin is one past last monitor.
-
-inline BasicObjectLock* frame::interpreter_frame_monitor_begin()       const  { 
-  return get_interpreterState()->monitor_base();
-}
-
-inline BasicObjectLock* frame::interpreter_frame_monitor_end()         const  { 
-  return (BasicObjectLock*) get_interpreterState()->stack_base();
-}
-
-
-inline int frame::interpreter_frame_monitor_size() {
-  return round_to(BasicObjectLock::size(), WordsPerLong);
-}
-
-inline methodOop* frame::interpreter_frame_method_addr() const { 
-  interpreterState istate = get_interpreterState();
-  return &istate->_method;
-}
-
-
-// Constant pool cache
-
-// where LcpoolCache is saved:
-inline constantPoolCacheOop* frame::interpreter_frame_cpoolcache_addr() const { 
-  interpreterState istate = get_interpreterState();
-  return &istate->_constants; // should really use accessor
-  }
-
-inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
-  interpreterState istate = get_interpreterState();
-  return &istate->_constants;
-}
-
-#else // !CC_INTERP
 
 inline intptr_t** frame::interpreter_frame_locals_addr() const { 
   return (intptr_t**) sp_addr_at( Llocals->sp_offset_in_saved_window());
@@ -182,10 +122,10 @@ inline intptr_t* frame::interpreter_frame_expression_stack() const {
 inline intptr_t* frame::interpreter_frame_tos_address() const {
   return *interpreter_frame_esp_addr() + 1;
 } 
-
 inline void frame::interpreter_frame_set_tos_address( intptr_t* x ) { 
   *interpreter_frame_esp_addr() = x - 1; 
 }
+
 
 // monitor elements
 
@@ -207,6 +147,7 @@ inline void frame::interpreter_frame_set_monitor_end(BasicObjectLock* value) {
   interpreter_frame_set_monitors(value);
 }
 
+
 inline int frame::interpreter_frame_monitor_size() {
   return round_to(BasicObjectLock::size(), WordsPerLong);
 }
@@ -216,17 +157,12 @@ inline methodOop* frame::interpreter_frame_method_addr() const {
 }
 
 
-// Constant pool cache
 
-// where LcpoolCache is saved:
-inline constantPoolCacheOop* frame::interpreter_frame_cpoolcache_addr() const { 
-    return (constantPoolCacheOop*)sp_addr_at(LcpoolCache->sp_offset_in_saved_window());
-  }
+// Constant pool cache
 
 inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
   return (constantPoolCacheOop*)sp_addr_at( LcpoolCache->sp_offset_in_saved_window());
 }
-#endif // CC_INTERP
 
 
 inline JavaCallWrapper* frame::entry_frame_call_wrapper() const {

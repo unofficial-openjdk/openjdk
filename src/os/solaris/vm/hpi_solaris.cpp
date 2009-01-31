@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)hpi_solaris.cpp	1.23 07/05/05 17:04:40 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,6 @@
 # include "incls/_hpi_solaris.cpp.incl"
 
 # include <sys/param.h>
-# include <dlfcn.h>
 
 typedef jint (JNICALL *init_t)(GetInterfaceFunc *, void *);
 

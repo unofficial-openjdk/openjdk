@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interpreter.cpp	1.246 07/06/08 15:21:43 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -63,19 +63,57 @@ void InterpreterCodelet::print() {
 
 
 //------------------------------------------------------------------------------------------------------------------------
-// Implementation of  platform independent aspects of Interpreter
+// Implementation of AbstractInterpreter
+
+
+// Define a prototype interface
+DEF_STUB_INTERFACE(InterpreterCodelet);
+
 
 void AbstractInterpreter::initialize() {
   if (_code != NULL) return;
+
+  // assertions
+#ifndef CC_INTERP
+  assert((int)Bytecodes::number_of_codes <= (int)DispatchTable::length, 
+         "dispatch table too small");
+#endif /* !CC_INTERP */
 
   // make sure 'imported' classes are initialized
   if (CountBytecodes || TraceBytecodes || StopInterpreterAt) BytecodeCounter::reset();
   if (PrintBytecodeHistogram)                                BytecodeHistogram::reset();
   if (PrintBytecodePairHistogram)                            BytecodePairHistogram::reset();
-
+#ifndef CC_INTERP
+  TemplateTable::initialize();
+#endif /* !CC_INTERP */
   InvocationCounter::reinitialize(DelayCompilationDuringStartup);
 
+  // generate interpreter
+  { ResourceMark rm;
+    TraceTime timer("Interpreter generation", TraceStartupTime);    
+    int code_size = Interpreter::InterpreterCodeSize;
+    NOT_PRODUCT(code_size *= 4;)  // debug uses extra interpreter code space
+    _code = new StubQueue(new InterpreterCodeletInterface, code_size, NULL,
+                          "Interpreter");
+    InterpreterGenerator g(_code);
+    if (PrintInterpreter) print();
+  }
+
+#ifdef CC_INTERP
+  {
+    // Allow c++ interpreter to do one initialization now that switches are set, etc.
+    cInterpreter start_msg(cInterpreter::initialize);
+    if (JvmtiExport::can_post_interpreter_events())
+      cInterpreter::InterpretMethodWithChecks(&start_msg);
+    else
+      cInterpreter::InterpretMethod(&start_msg);
+  }
+#else
+  // initialize dispatch table
+  _active_table = _normal_table;
+#endif // CC_INTERP
 }
+
 
 void AbstractInterpreter::print() {
   tty->cr();
@@ -121,48 +159,613 @@ void interpreter_init() {
   }
 }
 
+
+#ifndef CC_INTERP
+//------------------------------------------------------------------------------------------------------------------------
+// Implementation of EntryPoint
+
+EntryPoint::EntryPoint() {
+  assert(number_of_states == 9, "check the code below");
+  _entry[btos] = NULL;
+  _entry[ctos] = NULL;
+  _entry[stos] = NULL;
+  _entry[atos] = NULL;
+  _entry[itos] = NULL;
+  _entry[ltos] = NULL;
+  _entry[ftos] = NULL;
+  _entry[dtos] = NULL;
+  _entry[vtos] = NULL;
+}
+
+
+EntryPoint::EntryPoint(address bentry, address centry, address sentry, address aentry, address ientry, address lentry, address fentry, address dentry, address ventry) {
+  assert(number_of_states == 9, "check the code below");
+  _entry[btos] = bentry;
+  _entry[ctos] = centry;
+  _entry[stos] = sentry;
+  _entry[atos] = aentry;
+  _entry[itos] = ientry;
+  _entry[ltos] = lentry;
+  _entry[ftos] = fentry;
+  _entry[dtos] = dentry;
+  _entry[vtos] = ventry;
+}
+
+
+void EntryPoint::set_entry(TosState state, address entry) {
+  assert(0 <= state && state < number_of_states, "state out of bounds");
+  _entry[state] = entry;
+}
+
+
+address EntryPoint::entry(TosState state) const {
+  assert(0 <= state && state < number_of_states, "state out of bounds");
+  return _entry[state];
+}
+
+
+void EntryPoint::print() {
+  tty->print("[");
+  for (int i = 0; i < number_of_states; i++) {
+    if (i > 0) tty->print(", ");
+    tty->print(INTPTR_FORMAT, _entry[i]);
+  }
+  tty->print("]");
+}
+
+
+bool EntryPoint::operator == (const EntryPoint& y) {
+  int i = number_of_states;
+  while (i-- > 0) {
+    if (_entry[i] != y._entry[i]) return false;
+  }
+  return true;
+}
+
+
+//------------------------------------------------------------------------------------------------------------------------
+// Implementation of DispatchTable
+
+EntryPoint DispatchTable::entry(int i) const {
+  assert(0 <= i && i < length, "index out of bounds");
+  return
+    EntryPoint(
+      _table[btos][i],
+      _table[ctos][i],
+      _table[stos][i],
+      _table[atos][i],
+      _table[itos][i],
+      _table[ltos][i],
+      _table[ftos][i],
+      _table[dtos][i],
+      _table[vtos][i]
+    );
+}
+
+
+void DispatchTable::set_entry(int i, EntryPoint& entry) {
+  assert(0 <= i && i < length, "index out of bounds");
+  assert(number_of_states == 9, "check the code below");
+  _table[btos][i] = entry.entry(btos);
+  _table[ctos][i] = entry.entry(ctos);
+  _table[stos][i] = entry.entry(stos);
+  _table[atos][i] = entry.entry(atos);
+  _table[itos][i] = entry.entry(itos);
+  _table[ltos][i] = entry.entry(ltos);
+  _table[ftos][i] = entry.entry(ftos);
+  _table[dtos][i] = entry.entry(dtos);
+  _table[vtos][i] = entry.entry(vtos);
+}
+
+
+bool DispatchTable::operator == (DispatchTable& y) {
+  int i = length;
+  while (i-- > 0) {
+    EntryPoint t = y.entry(i); // for compiler compatibility (BugId 4150096)
+    if (!(entry(i) == t)) return false;
+  }
+  return true;
+}
+#endif // CC_INTERP
+
+
 //------------------------------------------------------------------------------------------------------------------------
 // Implementation of interpreter
 
 StubQueue* AbstractInterpreter::_code                                       = NULL;
 bool       AbstractInterpreter::_notice_safepoints                          = false;
+
 address    AbstractInterpreter::_rethrow_exception_entry                    = NULL;
+#ifndef CC_INTERP
+address    AbstractInterpreter::_remove_activation_entry                    = NULL;
+address    AbstractInterpreter::_remove_activation_preserving_args_entry    = NULL;
+
+
+address    AbstractInterpreter::_throw_ArrayIndexOutOfBoundsException_entry = NULL;
+address    AbstractInterpreter::_throw_ArrayStoreException_entry            = NULL;
+address    AbstractInterpreter::_throw_ArithmeticException_entry            = NULL;
+address    AbstractInterpreter::_throw_ClassCastException_entry             = NULL;
+address    AbstractInterpreter::_throw_NullPointerException_entry           = NULL;
+address    AbstractInterpreter::_throw_StackOverflowError_entry             = NULL;
+address    AbstractInterpreter::_throw_exception_entry                      = NULL;
+
+#ifndef PRODUCT
+EntryPoint AbstractInterpreter::_trace_code;
+#endif // !PRODUCT
+EntryPoint AbstractInterpreter::_return_entry[AbstractInterpreter::number_of_return_entries];
+EntryPoint AbstractInterpreter::_earlyret_entry;
+EntryPoint AbstractInterpreter::_deopt_entry [AbstractInterpreter::number_of_deopt_entries ];
+EntryPoint AbstractInterpreter::_continuation_entry;
+EntryPoint AbstractInterpreter::_safept_entry;
+
+address    AbstractInterpreter::_return_3_addrs_by_index[AbstractInterpreter::number_of_return_addrs];
+address    AbstractInterpreter::_return_5_addrs_by_index[AbstractInterpreter::number_of_return_addrs];
+
+DispatchTable AbstractInterpreter::_active_table;
+DispatchTable AbstractInterpreter::_normal_table;
+DispatchTable AbstractInterpreter::_safept_table;
+address    AbstractInterpreter::_wentry_point[DispatchTable::length];
+#endif // CC_INTERP
 
 address    AbstractInterpreter::_native_entry_begin                         = NULL;
 address    AbstractInterpreter::_native_entry_end                           = NULL;
 address    AbstractInterpreter::_slow_signature_handler;
 address    AbstractInterpreter::_entry_table            [AbstractInterpreter::number_of_method_entries];
 address    AbstractInterpreter::_native_abi_to_tosca    [AbstractInterpreter::number_of_result_handlers];
+#ifdef CC_INTERP
+address    AbstractInterpreter::_tosca_to_stack         [AbstractInterpreter::number_of_result_handlers];
+address    AbstractInterpreter::_stack_to_stack         [AbstractInterpreter::number_of_result_handlers];
+address    AbstractInterpreter::_stack_to_native_abi    [AbstractInterpreter::number_of_result_handlers];
+#endif
+
+
+//------------------------------------------------------------------------------------------------------------------------
+// A CodeletMark serves as an automatic creator/initializer for Codelets
+// (As a subclass of ResourceMark it automatically GC's the allocated
+// code buffer and assemblers).
+
+class CodeletMark: ResourceMark {
+ private:
+  InterpreterCodelet*         _clet;
+  InterpreterMacroAssembler** _masm;
+  CodeBuffer                  _cb;
+
+  int codelet_size() {
+    // Request the whole code buffer (minus a little for alignment).
+    // The commit call below trims it back for each codelet.
+    int codelet_size = AbstractInterpreter::code()->available_space() - 2*K;
+
+    // Guarantee there's a little bit of code space left.
+    guarantee (codelet_size > 0 && (size_t)codelet_size >  2*K,
+               "not enough space for interpreter generation");
+
+    return codelet_size;
+  }
+
+ public:
+  CodeletMark(
+    InterpreterMacroAssembler*& masm,
+    const char* description,
+    Bytecodes::Code bytecode = Bytecodes::_illegal):
+    _clet((InterpreterCodelet*)AbstractInterpreter::code()->request(codelet_size())),
+    _cb(_clet->code_begin(), _clet->code_size())
+
+  { // request all space (add some slack for Codelet data)
+    assert (_clet != NULL, "we checked not enough space already");
+
+    // initialize Codelet attributes
+    _clet->initialize(description, bytecode);
+    // create assembler for code generation
+    masm  = new InterpreterMacroAssembler(&_cb);
+    _masm = &masm;
+  }  
+  
+  ~CodeletMark() {
+    // align so printing shows nop's instead of random code at the end (Codelets are aligned)
+    (*_masm)->align(wordSize);
+    // make sure all code is in code buffer
+    (*_masm)->flush();
+
+
+    // commit Codelet
+    AbstractInterpreter::code()->commit((*_masm)->code()->pure_code_size());
+    // make sure nobody can use _masm outside a CodeletMark lifespan
+    *_masm = NULL;
+  }
+};
+
 
 //------------------------------------------------------------------------------------------------------------------------
 // Generation of complete interpreter
 
 AbstractInterpreterGenerator::AbstractInterpreterGenerator(StubQueue* _code) {
   _masm                      = NULL;
+#ifndef CC_INTERP
+  _unimplemented_bytecode    = NULL;
+  _illegal_bytecode_sequence = NULL;
+#endif // CC_INTERP
 }
 
 
-static const BasicType types[Interpreter::number_of_result_handlers] = {
-  T_BOOLEAN,
-  T_CHAR   ,
-  T_BYTE   ,
-  T_SHORT  ,
-  T_INT    ,
-  T_LONG   ,
-  T_VOID   ,
-  T_FLOAT  ,
-  T_DOUBLE ,
-  T_OBJECT
-};
-
 void AbstractInterpreterGenerator::generate_all() {
+#ifndef CC_INTERP
+  { CodeletMark cm(_masm, "error exits");
+    _unimplemented_bytecode    = generate_error_exit("unimplemented bytecode");
+    _illegal_bytecode_sequence = generate_error_exit("illegal bytecode sequence - method not verified");
+  }
 
+#ifndef PRODUCT
+  if (TraceBytecodes) {
+    CodeletMark cm(_masm, "bytecode tracing support");
+    Interpreter::_trace_code =
+      EntryPoint(
+        generate_trace_code(btos),
+        generate_trace_code(ctos),
+        generate_trace_code(stos),
+        generate_trace_code(atos),
+        generate_trace_code(itos),
+        generate_trace_code(ltos),
+        generate_trace_code(ftos),
+        generate_trace_code(dtos),
+        generate_trace_code(vtos)
+      );
+  }
+#endif // !PRODUCT
+
+  { CodeletMark cm(_masm, "return entry points");
+    for (int i = 0; i < Interpreter::number_of_return_entries; i++) {
+      Interpreter::_return_entry[i] =
+        EntryPoint(
+          generate_return_entry_for(itos, i),
+          generate_return_entry_for(itos, i),
+          generate_return_entry_for(itos, i),
+          generate_return_entry_for(atos, i),
+          generate_return_entry_for(itos, i),
+          generate_return_entry_for(ltos, i),
+          generate_return_entry_for(ftos, i),
+          generate_return_entry_for(dtos, i),
+          generate_return_entry_for(vtos, i)
+        );
+    }
+  }
+
+  { CodeletMark cm(_masm, "earlyret entry points");
+    Interpreter::_earlyret_entry =
+      EntryPoint(
+        generate_earlyret_entry_for(btos),
+        generate_earlyret_entry_for(ctos),
+        generate_earlyret_entry_for(stos),
+        generate_earlyret_entry_for(atos),
+        generate_earlyret_entry_for(itos),
+        generate_earlyret_entry_for(ltos),
+        generate_earlyret_entry_for(ftos),
+        generate_earlyret_entry_for(dtos),
+        generate_earlyret_entry_for(vtos)
+      );
+  }
+
+  { CodeletMark cm(_masm, "deoptimization entry points");
+    for (int i = 0; i < Interpreter::number_of_deopt_entries; i++) {
+      Interpreter::_deopt_entry[i] =
+        EntryPoint(
+          generate_deopt_entry_for(itos, i),
+          generate_deopt_entry_for(itos, i),
+          generate_deopt_entry_for(itos, i),
+          generate_deopt_entry_for(atos, i),
+          generate_deopt_entry_for(itos, i),
+          generate_deopt_entry_for(ltos, i),
+          generate_deopt_entry_for(ftos, i),
+          generate_deopt_entry_for(dtos, i),
+          generate_deopt_entry_for(vtos, i)
+        );
+    }
+  }
+
+#endif // !CC_INTERP
+
+  { CodeletMark cm(_masm, "result handlers for native calls");
+    const BasicType types[Interpreter::number_of_result_handlers] = {
+      T_BOOLEAN,
+      T_CHAR   ,
+      T_BYTE   ,
+      T_SHORT  ,
+      T_INT    ,
+      T_LONG   ,
+      T_VOID   ,
+      T_FLOAT  ,
+      T_DOUBLE ,
+      T_OBJECT
+    };
+    // The various result converter stublets.
+    int is_generated[Interpreter::number_of_result_handlers];
+    memset(is_generated, 0, sizeof(is_generated));
+#ifdef CC_INTERP
+    int _tosca_to_stack_is_generated[Interpreter::number_of_result_handlers];
+    int _stack_to_stack_is_generated[Interpreter::number_of_result_handlers];
+    int _stack_to_native_abi_is_generated[Interpreter::number_of_result_handlers];
+
+    memset(_tosca_to_stack_is_generated, 0, sizeof(_tosca_to_stack_is_generated));
+    memset(_stack_to_stack_is_generated, 0, sizeof(_stack_to_stack_is_generated));
+    memset(_stack_to_native_abi_is_generated, 0, sizeof(_stack_to_native_abi_is_generated));
+#endif
+    for (int i = 0; i < Interpreter::number_of_result_handlers; i++) {
+      BasicType type = types[i];
+      if (!is_generated[Interpreter::BasicType_as_index(type)]++) {
+	Interpreter::_native_abi_to_tosca[Interpreter::BasicType_as_index(type)] = generate_result_handler_for(type);
+      }
+#ifdef CC_INTERP
+      if (!_tosca_to_stack_is_generated[Interpreter::BasicType_as_index(type)]++) {
+	Interpreter::_tosca_to_stack[Interpreter::BasicType_as_index(type)] = generate_tosca_to_stack_converter(type);
+      }
+      if (!_stack_to_stack_is_generated[Interpreter::BasicType_as_index(type)]++) {
+	Interpreter::_stack_to_stack[Interpreter::BasicType_as_index(type)] = generate_stack_to_stack_converter(type);
+      }
+      if (!_stack_to_native_abi_is_generated[Interpreter::BasicType_as_index(type)]++) {
+	Interpreter::_stack_to_native_abi[Interpreter::BasicType_as_index(type)] = generate_stack_to_native_abi_converter(type);
+      }
+#endif
+    }
+  }
 
   { CodeletMark cm(_masm, "slow signature handler");
     Interpreter::_slow_signature_handler = generate_slow_signature_handler();
   }
 
+#ifndef CC_INTERP
+  for (int j = 0; j < number_of_states; j++) {
+    const TosState states[] = {btos, ctos, stos, itos, ltos, ftos, dtos, atos, vtos};
+    Interpreter::_return_3_addrs_by_index[Interpreter::TosState_as_index(states[j])] = Interpreter::return_entry(states[j], 3);
+    Interpreter::_return_5_addrs_by_index[Interpreter::TosState_as_index(states[j])] = Interpreter::return_entry(states[j], 5);
+  }
+
+  { CodeletMark cm(_masm, "continuation entry points");
+    Interpreter::_continuation_entry =
+      EntryPoint(
+        generate_continuation_for(btos),
+        generate_continuation_for(ctos),
+        generate_continuation_for(stos),
+        generate_continuation_for(atos),
+        generate_continuation_for(itos),
+        generate_continuation_for(ltos),
+        generate_continuation_for(ftos),
+        generate_continuation_for(dtos),
+        generate_continuation_for(vtos)
+      );
+  }
+
+  { CodeletMark cm(_masm, "safepoint entry points");
+    Interpreter::_safept_entry =
+      EntryPoint(
+	generate_safept_entry_for(btos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+	generate_safept_entry_for(ctos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+	generate_safept_entry_for(stos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+	generate_safept_entry_for(atos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(itos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(ltos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(ftos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(dtos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(vtos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint))
+      );
+  }
+
+  { CodeletMark cm(_masm, "exception handling");
+    // (Note: this is not safepoint safe because thread may return to compiled code)
+    generate_throw_exception();
+  }
+
+  { CodeletMark cm(_masm, "throw exception entrypoints");
+    Interpreter::_throw_ArrayIndexOutOfBoundsException_entry = generate_ArrayIndexOutOfBounds_handler("java/lang/ArrayIndexOutOfBoundsException");
+    Interpreter::_throw_ArrayStoreException_entry            = generate_klass_exception_handler("java/lang/ArrayStoreException"                 );
+    Interpreter::_throw_ArithmeticException_entry            = generate_exception_handler("java/lang/ArithmeticException"           , "/ by zero");
+    Interpreter::_throw_ClassCastException_entry             = generate_ClassCastException_handler();
+    Interpreter::_throw_NullPointerException_entry           = generate_exception_handler("java/lang/NullPointerException"          , NULL       );
+    Interpreter::_throw_StackOverflowError_entry             = generate_StackOverflowError_handler();
+  }
+#endif // !CC_INTERP
+
+
+#ifdef CC_INTERP
+
+#define method_entry(kind) Interpreter::_entry_table[Interpreter::kind] = generate_method_entry(Interpreter::kind)
+
+  { CodeletMark cm(_masm, "(kind = frame_manager)");
+    // all non-native method kinds  
+    method_entry(zerolocals);
+    method_entry(zerolocals_synchronized);
+    method_entry(empty);
+    method_entry(accessor);
+    method_entry(abstract);
+    method_entry(java_lang_math_sin   );
+    method_entry(java_lang_math_cos   );
+    method_entry(java_lang_math_tan   );
+    method_entry(java_lang_math_abs   );
+    method_entry(java_lang_math_sqrt  );
+    method_entry(java_lang_math_log   );
+    method_entry(java_lang_math_log10 );
+    Interpreter::_native_entry_begin = Interpreter::code()->code_end();
+    method_entry(native);
+    method_entry(native_synchronized);
+    Interpreter::_native_entry_end = Interpreter::code()->code_end();
+  }
+
+#else
+
+#define method_entry(kind)                                                                    \
+  { CodeletMark cm(_masm, "method entry point (kind = " #kind ")");                    \
+    Interpreter::_entry_table[Interpreter::kind] = generate_method_entry(Interpreter::kind);  \
+  }
+
+  // all non-native method kinds  
+  method_entry(zerolocals)
+  method_entry(zerolocals_synchronized)
+  method_entry(empty)
+  method_entry(accessor)
+  method_entry(abstract)
+  method_entry(java_lang_math_sin  )
+  method_entry(java_lang_math_cos  )
+  method_entry(java_lang_math_tan  )
+  method_entry(java_lang_math_abs  )
+  method_entry(java_lang_math_sqrt )
+  method_entry(java_lang_math_log  )
+  method_entry(java_lang_math_log10)
+
+  // all native method kinds (must be one contiguous block)
+  Interpreter::_native_entry_begin = Interpreter::code()->code_end();
+  method_entry(native)
+  method_entry(native_synchronized)
+  Interpreter::_native_entry_end = Interpreter::code()->code_end();
+
+#endif // !CC_INTERP
+
+#undef method_entry
+
+#ifndef CC_INTERP
+  // Bytecodes
+  set_entry_points_for_all_bytes();
+  set_safepoints_for_all_bytes();
+#endif // !CC_INTERP
 }
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+#ifndef CC_INTERP
+address AbstractInterpreterGenerator::generate_error_exit(const char* msg) {
+  address entry = __ pc();
+  __ stop(msg);
+  return entry;
+}
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+void AbstractInterpreterGenerator::set_entry_points_for_all_bytes() {
+  for (int i = 0; i < DispatchTable::length; i++) {
+    Bytecodes::Code code = (Bytecodes::Code)i;
+    if (Bytecodes::is_defined(code)) {
+      set_entry_points(code);
+    } else {
+      set_unimplemented(i);
+    }
+  }
+}
+
+
+void AbstractInterpreterGenerator::set_safepoints_for_all_bytes() {
+  for (int i = 0; i < DispatchTable::length; i++) {
+    Bytecodes::Code code = (Bytecodes::Code)i;
+    if (Bytecodes::is_defined(code)) Interpreter::_safept_table.set_entry(code, Interpreter::_safept_entry);
+  }
+}
+
+
+void AbstractInterpreterGenerator::set_unimplemented(int i) {
+  address e = _unimplemented_bytecode;
+  EntryPoint entry(e, e, e, e, e, e, e, e, e);
+  Interpreter::_normal_table.set_entry(i, entry);
+  Interpreter::_wentry_point[i] = _unimplemented_bytecode;
+}
+
+
+void AbstractInterpreterGenerator::set_entry_points(Bytecodes::Code code) {
+  CodeletMark cm(_masm, Bytecodes::name(code), code);
+  // initialize entry points
+  assert(_unimplemented_bytecode    != NULL, "should have been generated before");
+  assert(_illegal_bytecode_sequence != NULL, "should have been generated before");
+  address bep = _illegal_bytecode_sequence;
+  address cep = _illegal_bytecode_sequence;
+  address sep = _illegal_bytecode_sequence;
+  address aep = _illegal_bytecode_sequence;
+  address iep = _illegal_bytecode_sequence;
+  address lep = _illegal_bytecode_sequence;
+  address fep = _illegal_bytecode_sequence;
+  address dep = _illegal_bytecode_sequence;
+  address vep = _unimplemented_bytecode;
+  address wep = _unimplemented_bytecode;
+  // code for short & wide version of bytecode
+  if (Bytecodes::is_defined(code)) {
+    Template* t = TemplateTable::template_for(code);
+    assert(t->is_valid(), "just checking");
+    set_short_entry_points(t, bep, cep, sep, aep, iep, lep, fep, dep, vep);
+  }
+  if (Bytecodes::wide_is_defined(code)) {
+    Template* t = TemplateTable::template_for_wide(code);
+    assert(t->is_valid(), "just checking");
+    set_wide_entry_point(t, wep);
+  }
+  // set entry points
+  EntryPoint entry(bep, cep, sep, aep, iep, lep, fep, dep, vep);
+  Interpreter::_normal_table.set_entry(code, entry);
+  Interpreter::_wentry_point[code] = wep;
+}
+
+
+void AbstractInterpreterGenerator::set_wide_entry_point(Template* t, address& wep) {
+  assert(t->is_valid(), "template must exist");
+  assert(t->tos_in() == vtos, "only vtos tos_in supported for wide instructions")
+  wep = __ pc(); generate_and_dispatch(t);
+}
+
+
+void AbstractInterpreterGenerator::set_short_entry_points(Template* t, address& bep, address& cep, address& sep, address& aep, address& iep, address& lep, address& fep, address& dep, address& vep) {
+  assert(t->is_valid(), "template must exist");
+  switch (t->tos_in()) {
+    case btos: vep = __ pc(); __ pop(btos); bep = __ pc(); generate_and_dispatch(t); break;
+    case ctos: vep = __ pc(); __ pop(ctos); sep = __ pc(); generate_and_dispatch(t); break;
+    case stos: vep = __ pc(); __ pop(stos); sep = __ pc(); generate_and_dispatch(t); break;
+    case atos: vep = __ pc(); __ pop(atos); aep = __ pc(); generate_and_dispatch(t); break;
+    case itos: vep = __ pc(); __ pop(itos); iep = __ pc(); generate_and_dispatch(t); break;
+    case ltos: vep = __ pc(); __ pop(ltos); lep = __ pc(); generate_and_dispatch(t); break;
+    case ftos: vep = __ pc(); __ pop(ftos); fep = __ pc(); generate_and_dispatch(t); break;
+    case dtos: vep = __ pc(); __ pop(dtos); dep = __ pc(); generate_and_dispatch(t); break;
+    case vtos: set_vtos_entry_points(t, bep, cep, sep, aep, iep, lep, fep, dep, vep);     break;
+    default  : ShouldNotReachHere();                                                 break;
+  }
+}
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+void AbstractInterpreterGenerator::generate_and_dispatch(Template* t, TosState tos_out) {
+#ifndef CC_INTERP
+  if (PrintBytecodeHistogram)                                    histogram_bytecode(t);
+#ifndef PRODUCT
+  // debugging code
+  if (CountBytecodes || TraceBytecodes || StopInterpreterAt > 0) count_bytecode();
+  if (PrintBytecodePairHistogram)                                histogram_bytecode_pair(t);
+  if (TraceBytecodes)                                            trace_bytecode(t);
+  if (StopInterpreterAt > 0)                                     stop_interpreter_at();
+  __ verify_FPU(1, t->tos_in());
+#endif // !PRODUCT
+  int step;
+  if (!t->does_dispatch()) { 
+    step = t->is_wide() ? Bytecodes::wide_length_for(t->bytecode()) : Bytecodes::length_for(t->bytecode());
+    if (tos_out == ilgl) tos_out = t->tos_out();
+    // compute bytecode size
+    assert(step > 0, "just checkin'");    
+    // setup stuff for dispatching next bytecode 
+    if (ProfileInterpreter && VerifyDataPointer
+        && methodDataOopDesc::bytecode_has_profile(t->bytecode())) {
+      __ verify_method_data_pointer();
+    }
+    __ dispatch_prolog(tos_out, step);
+  }
+  // generate template
+  t->generate(_masm);
+  // advance
+  if (t->does_dispatch()) {
+#ifdef ASSERT
+    // make sure execution doesn't go beyond this point if code is broken
+    __ should_not_reach_here();
+#endif // ASSERT
+  } else {
+    // dispatch to next bytecode
+    __ dispatch_epilog(tos_out, step);
+  }
+#endif
+}
+#endif /* !CC_INTERP */
+
 
 //------------------------------------------------------------------------------------------------------------------------
 // Entry points
@@ -264,6 +867,21 @@ void AbstractInterpreter::print_method_kind(MethodKind kind) {
 }
 #endif // PRODUCT
 
+
+#ifndef CC_INTERP
+address AbstractInterpreter::return_entry(TosState state, int length) {
+  guarantee(0 <= length && length < Interpreter::number_of_return_entries, "illegal length");
+  return _return_entry[length].entry(state);
+}
+
+
+address AbstractInterpreter::deopt_entry(TosState state, int length) {
+  guarantee(0 <= length && length < Interpreter::number_of_deopt_entries, "illegal length");
+  return _deopt_entry[length].entry(state);
+}
+
+#endif /* CC_INTERP */
+
 static BasicType constant_pool_type(methodOop method, int index) {
   constantTag tag = method->constants()->tag_at(index);
        if (tag.is_int              ()) return T_INT;
@@ -341,7 +959,7 @@ address AbstractInterpreter::continuation_for(methodOop method, address bcp, int
       // reexecute the operation and TOS value is on stack
       assert(is_top_frame, "must be top frame");
       use_next_mdp = false;
-      return Interpreter::deopt_entry(vtos, 0);
+      return deopt_entry(vtos, 0);
       break;
 
 #ifdef COMPILER1
@@ -378,6 +996,18 @@ address AbstractInterpreter::continuation_for(methodOop method, address bcp, int
       type = constant_pool_type( method, Bytes::get_Java_u2(bcp+1) ); 
       break;
 
+    case Bytecodes::_return: {
+      // This is used for deopt during registration of finalizers
+      // during Object.<init>.  We simply need to resume execution at
+      // the standard return vtos bytecode to pop the frame normally.
+      // reexecuting the real bytecode would cause double registration
+      // of the finalizable object.
+#ifndef CC_INTERP
+      assert(is_top_frame, "must be on top");
+      return _normal_table.entry(Bytecodes::_return).entry(vtos);
+#endif // CC_INTERP
+    }
+
     default:
       type = Bytecodes::result_type(code);
       break;
@@ -386,8 +1016,60 @@ address AbstractInterpreter::continuation_for(methodOop method, address bcp, int
   // return entry point for computed continuation state & bytecode length
   return
     is_top_frame
-    ? Interpreter::deopt_entry (as_TosState(type), length)
-    : Interpreter::return_entry(as_TosState(type), length);
+    ? deopt_entry (as_TosState(type), length)
+    : return_entry(as_TosState(type), length);
+}
+
+
+#ifndef CC_INTERP
+
+//------------------------------------------------------------------------------------------------------------------------
+// Suport for invokes
+
+int AbstractInterpreter::TosState_as_index(TosState state) {
+  assert( state < number_of_states , "Invalid state in TosState_as_index");
+  assert(0 <= (int)state && (int)state < AbstractInterpreter::number_of_return_addrs, "index out of bounds");
+  return (int)state;
+}
+
+#endif // CC_INTERP
+
+//------------------------------------------------------------------------------------------------------------------------
+// Safepoint suppport
+
+#ifndef CC_INTERP
+static inline void copy_table(address* from, address* to, int size) {
+  // Copy non-overlapping tables. The copy has to occur word wise for MT safety.
+  while (size-- > 0) *to++ = *from++;
+}
+#endif
+
+void AbstractInterpreter::notice_safepoints() {
+  if (!_notice_safepoints) {
+    // switch to safepoint dispatch table
+    _notice_safepoints = true;
+#ifndef CC_INTERP
+    copy_table((address*)&_safept_table, (address*)&_active_table, sizeof(_active_table) / sizeof(address));
+#endif
+  }
+}
+
+
+// switch from the dispatch table which notices safepoints back to the
+// normal dispatch table.  So that we can notice single stepping points,
+// keep the safepoint dispatch table if we are single stepping in JVMTI.
+// Note that the should_post_single_step test is exactly as fast as the 
+// JvmtiExport::_enabled test and covers both cases.
+void AbstractInterpreter::ignore_safepoints() {
+  if (_notice_safepoints) {
+    if (!JvmtiExport::should_post_single_step()) {
+      // switch to normal dispatch table
+      _notice_safepoints = false;
+#ifndef CC_INTERP
+      copy_table((address*)&_normal_table, (address*)&_active_table, sizeof(_active_table) / sizeof(address));
+#endif
+    }
+  }
 }
 
 void AbstractInterpreterGenerator::bang_stack_shadow_pages(bool native_call) {

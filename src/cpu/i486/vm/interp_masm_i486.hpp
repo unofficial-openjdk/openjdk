@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interp_masm_i486.hpp	1.86 07/05/17 15:46:51 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,6 @@
 
 
 class InterpreterMacroAssembler: public MacroAssembler {
-#ifndef CC_INTERP
  protected:
   // Interpreter specific version of call_VM_base
   virtual void call_VM_leaf_base(
@@ -51,7 +50,6 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
   // base routine for all dispatches
   void dispatch_base(TosState state, address* table, bool verifyoop = true);
-#endif /* CC_INTERP */
 
  public:
   InterpreterMacroAssembler(CodeBuffer* code) : MacroAssembler(code) {}
@@ -59,21 +57,12 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void load_earlyret_value(TosState state);
 
   // Interpreter-specific registers
-#ifdef CC_INTERP
-  void save_bcp()                                          { /*  not needed in c++ interpreter and harmless */ }
-  void restore_bcp()                                       { /*  not needed in c++ interpreter and harmless */ }
+  void save_bcp()                                          { movl(Address(ebp, frame::interpreter_frame_bcx_offset * wordSize), esi); }
+  void restore_bcp()                                       { movl(esi, Address(ebp, frame::interpreter_frame_bcx_offset * wordSize)); }
+  void restore_locals()                                    { movl(edi, Address(ebp, frame::interpreter_frame_locals_offset * wordSize)); }
 
   // Helpers for runtime call arguments/results
-  void get_method(Register reg);
-
-#else
-
-  void save_bcp()                                          { movl(Address(rbp, frame::interpreter_frame_bcx_offset * wordSize), rsi); }
-  void restore_bcp()                                       { movl(rsi, Address(rbp, frame::interpreter_frame_bcx_offset * wordSize)); }
-  void restore_locals()                                    { movl(rdi, Address(rbp, frame::interpreter_frame_locals_offset * wordSize)); }
-
-  // Helpers for runtime call arguments/results
-  void get_method(Register reg)                            { movl(reg, Address(rbp, frame::interpreter_frame_method_offset * wordSize)); }
+  void get_method(Register reg)                            { movl(reg, Address(ebp, frame::interpreter_frame_method_offset * wordSize)); }
   void get_constant_pool(Register reg)                     { get_method(reg); movl(reg, Address(reg, methodOopDesc::constants_offset())); }
   void get_constant_pool_cache(Register reg)               { get_constant_pool(reg); movl(reg, Address(reg, constantPoolOopDesc::cache_offset_in_bytes())); }
   void get_cpool_and_tags(Register cpool, Register tags)   { get_constant_pool(cpool); movl(tags, Address(cpool, constantPoolOopDesc::tags_offset_in_bytes()));
@@ -85,37 +74,32 @@ class InterpreterMacroAssembler: public MacroAssembler {
   // Expression stack
   void f2ieee();                                           // truncate ftos to 32bits
   void d2ieee();                                           // truncate dtos to 64bits
-#endif // CC_INTERP
+  void empty_expression_stack()                            { 
+       movl(esp, Address(ebp, frame::interpreter_frame_monitor_block_top_offset * wordSize));
+      // NULL last_sp until next java call
+      movl(Address(ebp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
+  }
 
-
-  void pop_ptr(Register r = rax);
+  void pop_ptr(Register r = eax);
   void pop_ptr(Register r, Register tag);
-  void pop_i(Register r = rax);
-  void pop_l(Register lo = rax, Register hi = rdx);
+  void pop_i(Register r = eax);
+  void pop_l(Register lo = eax, Register hi = edx);
   void pop_f();
   void pop_d();
-  void pop_ftos_to_rsp();
-  void pop_dtos_to_rsp();
+  void pop_ftos_to_esp();
+  void pop_dtos_to_esp();
 
-  void push_ptr(Register r = rax);
+  void push_ptr(Register r = eax);
   void push_ptr(Register r, Register tag);
-  void push_i(Register r = rax);
-  void push_l(Register lo = rax, Register hi = rdx);
-  void push_d(Register r = rax);
+  void push_i(Register r = eax);
+  void push_l(Register lo = eax, Register hi = edx);
+  void push_d(Register r = eax);
   void push_f();
 
   void pop(TosState state);        // transition vtos -> state
   void push(TosState state);       // transition state -> vtos
 
   DEBUG_ONLY(void verify_stack_tag(frame::Tag t);)
-
-#ifndef CC_INTERP
-
-  void empty_expression_stack()                            { 
-       movl(rsp, Address(rbp, frame::interpreter_frame_monitor_block_top_offset * wordSize));
-      // NULL last_sp until next java call
-      movl(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
-  }
 
   // Tagged stack helpers for swap and dup
   void load_ptr_and_tag(int n, Register val, Register tag);
@@ -147,11 +131,11 @@ class InterpreterMacroAssembler: public MacroAssembler {
   // Dispatching
   void dispatch_prolog(TosState state, int step = 0);
   void dispatch_epilog(TosState state, int step = 0);
-  void dispatch_only(TosState state);                      // dispatch via rbx, (assume rbx, is loaded already)
-  void dispatch_only_normal(TosState state);               // dispatch normal table via rbx, (assume rbx, is loaded already)
+  void dispatch_only(TosState state);                      // dispatch via ebx (assume ebx is loaded already)
+  void dispatch_only_normal(TosState state);               // dispatch normal table via ebx (assume ebx is loaded already)
   void dispatch_only_noverify(TosState state);
-  void dispatch_next(TosState state, int step = 0);        // load rbx, from [esi + step] and dispatch via rbx,
-  void dispatch_via (TosState state, address* table);      // load rbx, from [esi] and dispatch via rbx, and table
+  void dispatch_next(TosState state, int step = 0);        // load ebx from [esi + step] and dispatch via ebx
+  void dispatch_via (TosState state, address* table);      // load ebx from [esi] and dispatch via ebx and table
 
 
   // jump to an invoked target
@@ -173,20 +157,10 @@ class InterpreterMacroAssembler: public MacroAssembler {
                          bool throw_monitor_exception = true, 
                          bool install_monitor_exception = true,
                          bool notify_jvmdi = true);
-#endif /* !CC_INTERP */
-
-  // Debugging
-  void verify_oop(Register reg, TosState state = atos);    // only if +VerifyOops && state == atos
-#ifndef CC_INTERP
-  void verify_FPU(int stack_depth, TosState state = ftos); // only if +VerifyFPU  && (state == ftos || state == dtos)
-    
-#endif /* !CC_INTERP */
 
   // Object locking
   void lock_object  (Register lock_reg);
   void unlock_object(Register lock_reg);
-
-#ifndef CC_INTERP
 
   // Interpreter profiling operations
   void set_method_data_pointer_for_bcp();
@@ -227,8 +201,10 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void profile_switch_default(Register mdp);
   void profile_switch_case(Register index_in_scratch, Register mdp, Register scratch2);
 
-#endif /* !CC_INTERP */
-
+  // Debugging
+  void verify_oop(Register reg, TosState state = atos);    // only if +VerifyOops && state == atos
+  void verify_FPU(int stack_depth, TosState state = ftos); // only if +VerifyFPU  && (state == ftos || state == dtos)
+    
   typedef enum { NotifyJVMTI, SkipNotifyJVMTI } NotifyMethodExitMode;
 
   // support for jvmti

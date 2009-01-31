@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)machnode.hpp	1.202 07/05/17 15:59:11 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -88,7 +88,7 @@ public:
     return ::as_FloatRegister(reg(ra_, node, idx));
   }
 
-#if defined(IA32) || defined(AMD64)
+#if defined(IA32)
   XMMRegister  as_XMMRegister(PhaseRegAlloc *ra_, const Node *node)   const {
     return ::as_XMMRegister(reg(ra_, node));
   }

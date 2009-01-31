@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)generateOptoStub.cpp	1.101 07/05/05 17:06:17 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.

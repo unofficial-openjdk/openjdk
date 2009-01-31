@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)callGenerator.hpp	1.19 07/05/05 17:06:12 JVM"
 #endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.

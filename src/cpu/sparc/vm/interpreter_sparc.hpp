@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interpreter_sparc.hpp	1.33 07/05/05 17:04:29 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -25,37 +25,51 @@
  *  
  */
 
+class Interpreter: public AbstractInterpreter {
  public:
-
-  // Support for Tagged Stacks
-
-  // Stack index relative to tos (which points at value)
-  static int expr_index_at(int i)     { 
-    return stackElementWords() * i; 
-  }
-
-  static int expr_tag_index_at(int i) { 
-    assert(TaggedStackInterpreter, "should not call this");
-    // tag is one word above java stack element
-    return stackElementWords() * i + 1;
-  }
-
+  // Offset from Lesp (which points one word past the stack element)
   static int expr_offset_in_bytes(int i) { return stackElementSize()*i + wordSize; }
   static int expr_tag_offset_in_bytes (int i) {
     assert(TaggedStackInterpreter, "should not call this");
     return expr_offset_in_bytes(i) + wordSize;
   }
 
-  // Already negated by c++ interpreter
-  static int local_index_at(int i)     {
-    assert(i<=0, "local direction already negated");
-    return stackElementWords() * i + (value_offset_in_bytes()/wordSize);
-  }
+  // Size of interpreter code.  Increase if too small.  Interpreter will
+  // fail with a guarantee ("not enough space for interpreter generation");
+  // if too small.
+  // Run with +PrintInterpreter to get the VM to print out the size.
+  // Max size with JVMTI and TaggedStackInterpreter
+#ifdef _LP64
+  // The sethi() instruction generates lots more instructions when shell
+  // stack limit is unlimited, so that's why this is much bigger.
+  const static int InterpreterCodeSize = 210 * K;
+#else
+  const static int InterpreterCodeSize = 180 * K;
+#endif
+};
 
-  static int local_tag_index_at(int i) {
-    assert(i<=0, "local direction already negated");
-    assert(TaggedStackInterpreter, "should not call this");
-    return stackElementWords() * i + (tag_offset_in_bytes()/wordSize);
-  }
 
+class InterpreterGenerator: AbstractInterpreterGenerator {
+  friend class AbstractInterpreterGenerator;
+ public:
+  InterpreterGenerator(StubQueue* code);
+ private:
 
+  address generate_asm_interpreter_entry(bool synchronized);
+  address generate_native_entry(bool synchronized);
+  address generate_abstract_entry(void);
+  address generate_math_entry(AbstractInterpreter::MethodKind kind);
+  address generate_empty_entry(void);
+  address generate_accessor_entry(void);
+  static address frame_manager_return;
+  static address frame_manager_sync_return;
+  void lock_method(void);
+  void save_native_result(void);
+  void restore_native_result(void);
+  void generate_fixed_frame(bool native_call); // asm interpreter only
+  void generate_stack_overflow_check(Register Rframe_size, Register Rscratch,
+                                     Register Rscratch2);
+
+  void generate_counter_incr(Label* overflow, Label* profile_method, Label* profile_method_continue);
+  void generate_counter_overflow(Label& Lcontinue);
+};

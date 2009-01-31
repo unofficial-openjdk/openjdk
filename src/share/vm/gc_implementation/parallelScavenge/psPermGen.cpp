@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)psPermGen.cpp	1.28 07/05/05 17:05:30 JVM"
 #endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.

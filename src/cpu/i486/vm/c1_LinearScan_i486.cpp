@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LinearScan_i486.cpp	1.7 07/05/05 17:04:13 JVM"
 #endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -702,7 +702,7 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
     case lir_div: {
       assert(left->is_fpu_register(), "must be");
       assert(res->is_fpu_register(), "must be");
-      assert(left->is_equal(res), "must be");
+      assert(left->is_equivalent(res), "must be");
 
       // either the left-hand or the right-hand side must be on top of stack
       // (if right is not a register, left must be on top)
@@ -743,7 +743,7 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
       assert(left->is_fpu_register(), "must be");
       assert(right->is_fpu_register(), "must be");
       assert(res->is_fpu_register(), "must be");
-      assert(left->is_equal(res), "must be");
+      assert(left->is_equivalent(res), "must be");
 
       // Must bring both operands to top of stack with following operand ordering:
       // * fpu stack before rem: ... right left

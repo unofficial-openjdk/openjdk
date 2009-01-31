@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)taskqueue.hpp	1.33 06/08/10 17:56:52 JVM"
+#pragma ident "@(#)taskqueue.hpp	1.38 07/05/05 17:07:10 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -26,6 +26,8 @@
  */
 
 class TaskQueueSuper: public CHeapObj {
+  friend class ChunkTaskQueue;
+
 protected:
   // The first free element after the last one pushed (mod _n).
   // (For now we'll assume only 32-bit CAS).
@@ -129,129 +131,115 @@ public:
 
 };
 
-template<class E> class GenericTaskQueue: public TaskQueueSuper {
+typedef oop Task;
+class OopTaskQueue: public TaskQueueSuper {
 private:
   // Slow paths for push, pop_local.  (pop_global has no fast path.)
-  bool push_slow(E t, juint dirty_n_elems);
+  bool push_slow(Task t, juint dirty_n_elems);
   bool pop_local_slow(juint localBot, Age oldAge);
 
 public:
   // Initializes the queue to empty.
-  GenericTaskQueue();
+  OopTaskQueue();
 
   void initialize();
 
   // Push the task "t" on the queue.  Returns "false" iff the queue is
   // full.
-  inline bool push(E t);
+  inline bool push(Task t);
 
   // If succeeds in claiming a task (from the 'local' end, that is, the
   // most recently pushed task), returns "true" and sets "t" to that task.
   // Otherwise, the queue is empty and returns false.
-  inline bool pop_local(E& t);
+  inline bool pop_local(Task& t);
 
   // If succeeds in claiming a task (from the 'global' end, that is, the
   // least recently pushed task), returns "true" and sets "t" to that task.
   // Otherwise, the queue is empty and returns false.
-  bool pop_global(E& t);
+  bool pop_global(Task& t);
 
   // Delete any resource associated with the queue.
-  ~GenericTaskQueue();
+  ~OopTaskQueue();
 
 private:
   // Element array.
-  volatile E* _elems;
+  volatile Task* _elems;
+
 };
 
-template<class E>
-GenericTaskQueue<E>::GenericTaskQueue():TaskQueueSuper() {
-  assert(sizeof(Age) == sizeof(jint), "Depends on this.");
-}
+typedef oop* StarTask;
+class OopStarTaskQueue: public TaskQueueSuper {
+private:
+  // Slow paths for push, pop_local.  (pop_global has no fast path.)
+  bool push_slow(StarTask t, juint dirty_n_elems);
+  bool pop_local_slow(juint localBot, Age oldAge);
 
-template<class E>
-void GenericTaskQueue<E>::initialize() {
-  _elems = NEW_C_HEAP_ARRAY(E, n());
-  guarantee(_elems != NULL, "Allocation failed.");
-}
+public:
+  // Initializes the queue to empty.
+  OopStarTaskQueue();
 
-template<class E>
-bool GenericTaskQueue<E>::push_slow(E t, juint dirty_n_elems) {
-  if (dirty_n_elems == n() - 1) {
-    // Actually means 0, so do the push.
-    juint localBot = _bottom;
-    _elems[localBot] = t;
-    _bottom = increment_index(localBot);
-    return true;
-  } else
-    return false;
-}
+  void initialize();
 
-template<class E>
-bool GenericTaskQueue<E>::
-pop_local_slow(juint localBot, Age oldAge) {
-  // This queue was observed to contain exactly one element; either this
-  // thread will claim it, or a competing "pop_global".  In either case,
-  // the queue will be logically empty afterwards.  Create a new Age value
-  // that represents the empty queue for the given value of "_bottom".  (We 
-  // must also increment "tag" because of the case where "bottom == 1",
-  // "top == 0".  A pop_global could read the queue element in that case,
-  // then have the owner thread do a pop followed by another push.  Without
-  // the incrementing of "tag", the pop_global's CAS could succeed,
-  // allowing it to believe it has claimed the stale element.)
-  Age newAge;
-  newAge._top = localBot;
-  newAge._tag = oldAge.tag() + 1;
-  // Perhaps a competing pop_global has already incremented "top", in which 
-  // case it wins the element.
-  if (localBot == oldAge.top()) {
-    Age tempAge;
-    // No competing pop_global has yet incremented "top"; we'll try to
-    // install new_age, thus claiming the element.
-    assert(sizeof(Age) == sizeof(jint) && sizeof(jint) == sizeof(juint),
-	   "Assumption about CAS unit.");
-    *(jint*)&tempAge = Atomic::cmpxchg(*(jint*)&newAge, (volatile jint*)&_age, *(jint*)&oldAge);
-    if (tempAge == oldAge) {
-      // We win.
-      assert(dirty_size(localBot, get_top()) != n() - 1,
-	     "Shouldn't be possible...");
-      return true;
-    }
-  }
-  // We fail; a completing pop_global gets the element.  But the queue is
-  // empty (and top is greater than bottom.)  Fix this representation of
-  // the empty queue to become the canonical one.
-  set_age(newAge);
-  assert(dirty_size(localBot, get_top()) != n() - 1,
-	 "Shouldn't be possible...");
-  return false;
-}
+  // Push the task "t" on the queue.  Returns "false" iff the queue is
+  // full.
+  inline bool push(StarTask t);
 
-template<class E>
-bool GenericTaskQueue<E>::pop_global(E& t) {
-  Age newAge;
-  Age oldAge = get_age();
-  juint localBot = _bottom;
-  juint n_elems = size(localBot, oldAge.top());
-  if (n_elems == 0) {
-    return false;
-  }
-  t = _elems[oldAge.top()];
-  newAge = oldAge;
-  newAge._top = increment_index(newAge.top());
-  if ( newAge._top == 0 ) newAge._tag++;
-  Age resAge;
-  *(jint*)&resAge = Atomic::cmpxchg(*(jint*)&newAge, (volatile jint*)&_age, *(jint*)&oldAge);
-  // Note that using "_bottom" here might fail, since a pop_local might
-  // have decremented it.
-  assert(dirty_size(localBot, newAge._top) != n() - 1,
-	 "Shouldn't be possible...");
-  return (resAge == oldAge);
-}
+  // If succeeds in claiming a task (from the 'local' end, that is, the
+  // most recently pushed task), returns "true" and sets "t" to that task.
+  // Otherwise, the queue is empty and returns false.
+  inline bool pop_local(StarTask& t);
 
-template<class E>
-GenericTaskQueue<E>::~GenericTaskQueue() {
-  FREE_C_HEAP_ARRAY(E, _elems);
-}
+  // If succeeds in claiming a task (from the 'global' end, that is, the
+  // least recently pushed task), returns "true" and sets "t" to that task.
+  // Otherwise, the queue is empty and returns false.
+  bool pop_global(StarTask& t);
+
+  // Delete any resource associated with the queue.
+  ~OopStarTaskQueue();
+
+private:
+  // Element array.
+  volatile StarTask* _elems;
+
+};
+
+// Clone of OopTaskQueue with GenTask instead of Task
+typedef size_t GenTask;  // Generic task
+class GenTaskQueue: public TaskQueueSuper {
+private:
+  // Slow paths for push, pop_local.  (pop_global has no fast path.)
+  bool push_slow(GenTask t, juint dirty_n_elems);
+  bool pop_local_slow(juint localBot, Age oldAge);
+
+public:
+  // Initializes the queue to empty.
+  GenTaskQueue();
+
+  void initialize();
+
+  // Push the task "t" on the queue.  Returns "false" iff the queue is
+  // full.
+  inline bool push(GenTask t);
+
+  // If succeeds in claiming a task (from the 'local' end, that is, the
+  // most recently pushed task), returns "true" and sets "t" to that task.
+  // Otherwise, the queue is empty and returns false.
+  inline bool pop_local(GenTask& t);
+
+  // If succeeds in claiming a task (from the 'global' end, that is, the
+  // least recently pushed task), returns "true" and sets "t" to that task.
+  // Otherwise, the queue is empty and returns false.
+  bool pop_global(GenTask& t);
+
+  // Delete any resource associated with the queue.
+  ~GenTaskQueue();
+
+private:
+  // Element array.
+  volatile GenTask* _elems;
+
+};
+// End clone of OopTaskQueue with GenTask instead of Task
 
 // Inherits the typedef of "Task" from above.
 class TaskQueueSetSuper: public CHeapObj {
@@ -262,129 +250,100 @@ public:
   virtual bool peek() = 0;
 };
 
-template<class E> class GenericTaskQueueSet: public TaskQueueSetSuper {
+class OopTaskQueueSet: public TaskQueueSetSuper {
 private:
   int _n;
-  GenericTaskQueue<E>** _queues;
+  OopTaskQueue** _queues;
 
+  bool steal_1_random(int queue_num, int* seed, Task& t);
+  bool steal_best_of_2(int queue_num, int* seed, Task& t);
+  bool steal_best_of_all(int queue_num, int* seed, Task& t);
 public:
-  GenericTaskQueueSet(int n) : _n(n) {
-    typedef GenericTaskQueue<E>* GenericTaskQueuePtr;
-    _queues = NEW_C_HEAP_ARRAY(GenericTaskQueuePtr, n);
+  OopTaskQueueSet(int n) : _n(n) {
+    typedef OopTaskQueue* OopTaskQueuePtr;
+    _queues = NEW_C_HEAP_ARRAY(OopTaskQueuePtr, n);
     guarantee(_queues != NULL, "Allocation failure.");
-    for (int i = 0; i < n; i++) {
-      _queues[i] = NULL;
-    }
+    for (int i = 0; i < n; i++) _queues[i] = NULL;
   }
 
-  bool steal_1_random(int queue_num, int* seed, E& t);
-  bool steal_best_of_2(int queue_num, int* seed, E& t);
-  bool steal_best_of_all(int queue_num, int* seed, E& t);
+  void register_queue(int i, OopTaskQueue* q);
 
-  void register_queue(int i, GenericTaskQueue<E>* q);
-
-  GenericTaskQueue<E>* queue(int n);
+  OopTaskQueue* queue(int n);
 
   // The thread with queue number "queue_num" (and whose random number seed 
   // is at "seed") is trying to steal a task from some other queue.  (It
   // may try several queues, according to some configuration parameter.)
   // If some steal succeeds, returns "true" and sets "t" the stolen task,
   // otherwise returns false.
-  bool steal(int queue_num, int* seed, E& t);
+  bool steal(int queue_num, int* seed, Task& t);
 
   bool peek();
 };
 
-template<class E>
-void GenericTaskQueueSet<E>::register_queue(int i, GenericTaskQueue<E>* q) {
-  assert(0 <= i && i < _n, "index out of range.");
-  _queues[i] = q;
-}
+class OopStarTaskQueueSet: public TaskQueueSetSuper {
+private:
+  int _n;
+  OopStarTaskQueue** _queues;
 
-template<class E>
-GenericTaskQueue<E>* GenericTaskQueueSet<E>::queue(int i) {
-  return _queues[i];
-}
-
-template<class E>
-bool GenericTaskQueueSet<E>::steal(int queue_num, int* seed, E& t) {
-  for (int i = 0; i < 2 * _n; i++)
-    if (steal_best_of_2(queue_num, seed, t))
-      return true;
-  return false;
-}
-
-template<class E>
-bool GenericTaskQueueSet<E>::steal_best_of_all(int queue_num, int* seed, E& t) {
-  if (_n > 2) {
-    int best_k;
-    jint best_sz = 0;
-    for (int k = 0; k < _n; k++) {
-      if (k == queue_num) continue;
-      jint sz = _queues[k]->size();
-      if (sz > best_sz) {
-	best_sz = sz;
-	best_k = k;
-      }
-    }
-    return best_sz > 0 && _queues[best_k]->pop_global(t);
-  } else if (_n == 2) {
-    // Just try the other one.
-    int k = (queue_num + 1) % 2;
-    return _queues[k]->pop_global(t);
-  } else {
-    assert(_n == 1, "can't be zero.");
-    return false;
+  bool steal_1_random(int queue_num, int* seed, StarTask& t);
+  bool steal_best_of_2(int queue_num, int* seed, StarTask& t);
+  bool steal_best_of_all(int queue_num, int* seed, StarTask& t);
+public:
+  OopStarTaskQueueSet(int n) : _n(n) {
+    typedef OopStarTaskQueue* OopStarTaskQueuePtr;
+    _queues = NEW_C_HEAP_ARRAY(OopStarTaskQueuePtr, n);
+    guarantee(_queues != NULL, "Allocation failure.");
+    for (int i = 0; i < n; i++) _queues[i] = NULL;
   }
-}
 
-template<class E>
-bool GenericTaskQueueSet<E>::steal_1_random(int queue_num, int* seed, E& t) {
-  if (_n > 2) {
-    int k = queue_num;
-    while (k == queue_num) k = randomParkAndMiller(seed) % _n;
-    return _queues[2]->pop_global(t);
-  } else if (_n == 2) {
-    // Just try the other one.
-    int k = (queue_num + 1) % 2;
-    return _queues[k]->pop_global(t);
-  } else {
-    assert(_n == 1, "can't be zero.");
-    return false;
-  }
-}
+  void register_queue(int i, OopStarTaskQueue* q);
 
-template<class E>
-bool GenericTaskQueueSet<E>::steal_best_of_2(int queue_num, int* seed, E& t) {
-  if (_n > 2) {
-    int k1 = queue_num;
-    while (k1 == queue_num) k1 = randomParkAndMiller(seed) % _n;
-    int k2 = queue_num;
-    while (k2 == queue_num || k2 == k1) k2 = randomParkAndMiller(seed) % _n;
-    // Sample both and try the larger.
-    juint sz1 = _queues[k1]->size();
-    juint sz2 = _queues[k2]->size();
-    if (sz2 > sz1) return _queues[k2]->pop_global(t);
-    else return _queues[k1]->pop_global(t);
-  } else if (_n == 2) {
-    // Just try the other one.
-    int k = (queue_num + 1) % 2;
-    return _queues[k]->pop_global(t);
-  } else {
-    assert(_n == 1, "can't be zero.");
-    return false;
-  }
-}
+  OopStarTaskQueue* queue(int n);
 
-template<class E>
-bool GenericTaskQueueSet<E>::peek() {
-  // Try all the queues.
-  for (int j = 0; j < _n; j++) {
-    if (_queues[j]->peek())
-      return true;
+  // The thread with queue number "queue_num" (and whose random number seed 
+  // is at "seed") is trying to steal a task from some other queue.  (It
+  // may try several queues, according to some configuration parameter.)
+  // If some steal succeeds, returns "true" and sets "t" the stolen task,
+  // otherwise returns false.
+  bool steal(int queue_num, int* seed, StarTask& t);
+
+  bool peek();
+};
+
+// Clone of OopTaskQueueSet for GenTask
+class GenTaskQueueSet: public TaskQueueSetSuper {
+  friend class ChunkTaskQueueSet;
+
+private:
+  int _n;
+  GenTaskQueue** _queues;
+
+protected:
+  bool steal_1_random(int queue_num, int* seed, GenTask& t);
+  bool steal_best_of_2(int queue_num, int* seed, GenTask& t);
+  bool steal_best_of_all(int queue_num, int* seed, GenTask& t);
+public:
+  GenTaskQueueSet(int n) : _n(n) {
+    typedef GenTaskQueue* GenTaskQueuePtr;
+    _queues = NEW_C_HEAP_ARRAY(GenTaskQueuePtr, n);
+    guarantee(_queues != NULL, "Allocation failure.");
+    for (int i = 0; i < n; i++) _queues[i] = NULL;
   }
-  return false;
-}
+
+  void register_queue(int i, GenTaskQueue* q);
+
+  GenTaskQueue* queue(int n);
+
+  // The thread with queue number "queue_num" (and whose random number seed 
+  // is at "seed") is trying to steal a task from some other queue.  (It
+  // may try several queues, according to some configuration parameter.)
+  // If some steal succeeds, returns "true" and sets "t" the stolen task,
+  // otherwise returns false.
+  bool steal(int queue_num, int* seed, GenTask& t);
+
+  bool peek();
+};
+// End clone of OopTaskQueueSet for GenTask
 
 // A class to aid in the termination of a set of parallel tasks using
 // TaskQueueSet's for work stealing.
@@ -394,6 +353,8 @@ private:
   int _n_threads;
   TaskQueueSetSuper* _queue_set;
   jint _offered_termination;
+  jint _terminated;
+  Monitor _term_monitor;
 
   bool peek_in_queue_set();
 protected:
@@ -422,7 +383,7 @@ public:
 
 #define SIMPLE_STACK 0
 
-template<class E> inline bool GenericTaskQueue<E>::push(E t) {
+inline bool OopTaskQueue::push(Task t) {
 #if SIMPLE_STACK
   juint localBot = _bottom;
   if (_bottom < max_elems()) {
@@ -449,7 +410,7 @@ template<class E> inline bool GenericTaskQueue<E>::push(E t) {
 #endif
 }
 
-template<class E> inline bool GenericTaskQueue<E>::pop_local(E& t) {
+inline bool OopTaskQueue::pop_local(Task& t) {
 #if SIMPLE_STACK
   juint localBot = _bottom;
   assert(localBot > 0, "precondition.");
@@ -489,21 +450,167 @@ template<class E> inline bool GenericTaskQueue<E>::pop_local(E& t) {
 #endif
 }
 
-typedef oop Task;
-typedef GenericTaskQueue<Task>         OopTaskQueue;
-typedef GenericTaskQueueSet<Task>      OopTaskQueueSet;
+inline bool OopStarTaskQueue::push(StarTask t) {
+#if SIMPLE_STACK
+  juint localBot = _bottom;
+  if (_bottom < max_elems()) {
+    _elems[localBot] = t;
+    _bottom = localBot + 1;
+    return true;
+  } else {
+    return false;
+  }
+#else
+  juint localBot = _bottom;
+  assert((localBot >= 0) && (localBot < n()), "_bottom out of range.");
+  jushort top = get_top();
+  juint dirty_n_elems = dirty_size(localBot, top);
+  assert((dirty_n_elems >= 0) && (dirty_n_elems < n()),
+	 "n_elems out of range.");
+  if (dirty_n_elems < max_elems()) {
+    _elems[localBot] = t;
+    _bottom = increment_index(localBot);
+    return true;
+  } else {
+    return push_slow(t, dirty_n_elems);
+  }
+#endif
+}
 
-typedef oop* StarTask;
-typedef GenericTaskQueue<StarTask>     OopStarTaskQueue;
-typedef GenericTaskQueueSet<StarTask>  OopStarTaskQueueSet;
+inline bool OopStarTaskQueue::pop_local(StarTask& t) {
+#if SIMPLE_STACK
+  juint localBot = _bottom;
+  assert(localBot > 0, "precondition.");
+  localBot--;
+  t = _elems[localBot];
+  _bottom = localBot;
+  return true;
+#else
+  juint localBot = _bottom;
+  // This value cannot be n-1.  That can only occur as a result of
+  // the assignment to bottom in this method.  If it does, this method
+  // resets the size( to 0 before the next call (which is sequential,
+  // since this is pop_local.)
+  juint dirty_n_elems = dirty_size(localBot, get_top());
+  assert(dirty_n_elems != n() - 1, "Shouldn't be possible...");
+  if (dirty_n_elems == 0) return false;
+  localBot = decrement_index(localBot);
+  _bottom = localBot;
+  // This is necessary to prevent any read below from being reordered
+  // before the store just above.
+  OrderAccess::fence();
+  t = _elems[localBot];
+  // This is a second read of "age"; the "size()" above is the first.
+  // If there's still at least one element in the queue, based on the
+  // "_bottom" and "age" we've read, then there can be no interference with 
+  // a "pop_global" operation, and we're done.
+  juint tp = get_top();
+  if (size(localBot, tp) > 0) {
+    assert(dirty_size(localBot, tp) != n() - 1,
+	   "Shouldn't be possible...");
+    return true;
+  } else {
+    // Otherwise, the queue contained exactly one element; we take the slow
+    // path.
+    return pop_local_slow(localBot, get_age());
+  }
+#endif
+}
+
+// Clone of OopTaskQueue for GenTask
+
+inline bool GenTaskQueue::push(GenTask t) {
+#if SIMPLE_STACK
+  juint localBot = _bottom;
+  if (_bottom < max_elems()) {
+    _elems[localBot] = t;
+    _bottom = localBot + 1;
+    return true;
+  } else {
+    return false;
+  }
+#else
+  juint localBot = _bottom;
+  assert((localBot >= 0) && (localBot < n()), "_bottom out of range.");
+  jushort top = get_top();
+  juint dirty_n_elems = dirty_size(localBot, top);
+  assert((dirty_n_elems >= 0) && (dirty_n_elems < n()),
+	 "n_elems out of range.");
+  if (dirty_n_elems < max_elems()) {
+    _elems[localBot] = t;
+    _bottom = increment_index(localBot);
+    return true;
+  } else {
+    return push_slow(t, dirty_n_elems);
+  }
+#endif
+}
+
+inline bool GenTaskQueue::pop_local(GenTask& t) {
+#if SIMPLE_STACK
+  juint localBot = _bottom;
+  assert(localBot > 0, "precondition.");
+  localBot--;
+  t = _elems[localBot];
+  _bottom = localBot;
+  return true;
+#else
+  juint localBot = _bottom;
+  // This value cannot be n-1.  That can only occur as a result of
+  // the assignment to bottom in this method.  If it does, this method
+  // resets the size( to 0 before the next call (which is sequential,
+  // since this is pop_local.)
+  juint dirty_n_elems = dirty_size(localBot, get_top());
+  assert(dirty_n_elems != n() - 1, "Shouldn't be possible...");
+  if (dirty_n_elems == 0) return false;
+  localBot = decrement_index(localBot);
+  _bottom = localBot;
+  // This is necessary to prevent any read below from being reordered
+  // before the store just above.
+  OrderAccess::fence();
+  t = _elems[localBot];
+  // This is a second read of "age"; the "size()" above is the first.
+  // If there's still at least one element in the queue, based on the
+  // "_bottom" and "age" we've read, then there can be no interference with 
+  // a "pop_global" operation, and we're done.
+  juint tp = get_top();
+  if (size(localBot, tp) > 0) {
+    assert(dirty_size(localBot, tp) != n() - 1,
+	   "Shouldn't be possible...");
+    return true;
+  } else {
+    // Otherwise, the queue contained exactly one element; we take the slow
+    // path.
+    return pop_local_slow(localBot, get_age());
+  }
+#endif
+}
+// End clone of OopTaskQueue for GenTask
 
 typedef size_t ChunkTask;  // index for chunk
-typedef GenericTaskQueue<ChunkTask>    ChunkTaskQueue;
-typedef GenericTaskQueueSet<ChunkTask> ChunkTaskQueueSet;
+
+class ChunkTaskQueue: public CHeapObj {
+private:
+  GenTaskQueue	_chunk_queue;
+
+ public:
+  ChunkTaskQueue() {};
+  ~ChunkTaskQueue() {};
+
+  bool push_slow(ChunkTask t, juint dirty_n_elems);
+  bool pop_local_slow(juint localBot, TaskQueueSuper::Age oldAge);
+
+  inline void initialize() { _chunk_queue.initialize(); }
+  inline bool push(ChunkTask t) { return _chunk_queue.push((GenTask) t); }
+  inline bool pop_local(ChunkTask& t) { return _chunk_queue.pop_local((GenTask&) t); }
+  bool pop_global(ChunkTask& t) { return _chunk_queue.pop_global((GenTask&) t); }  
+  juint size() { return _chunk_queue.size(); }
+};
 
 class ChunkTaskQueueWithOverflow: public CHeapObj {
+  friend class ChunkTaskQueueSet;
  protected:
-  ChunkTaskQueue              _chunk_queue;
+  GenTaskQueue	              _chunk_queue;
   GrowableArray<ChunkTask>*   _overflow_stack;
 
  public:
@@ -522,7 +629,50 @@ class ChunkTaskQueueWithOverflow: public CHeapObj {
   bool stealable_is_empty();
   bool overflow_is_empty();
   juint stealable_size() { return _chunk_queue.size(); }
-  ChunkTaskQueue* task_queue() { return &_chunk_queue; }
 };
 
+class ChunkTaskQueueSet: public CHeapObj {
+private:
+  GenTaskQueueSet _task_queue_set;
+
+  bool steal_1_random(int queue_num, int* seed, GenTask& t) {
+    return _task_queue_set.steal_1_random(queue_num, seed, t);
+  }
+  bool steal_best_of_2(int queue_num, int* seed, GenTask& t) {
+    return _task_queue_set.steal_best_of_2(queue_num, seed, t);
+  }
+  bool steal_best_of_all(int queue_num, int* seed, GenTask& t) {
+    return _task_queue_set.steal_best_of_all(queue_num, seed, t);
+  }
+public:
+  ChunkTaskQueueSet(int n) : _task_queue_set(n) {}
+
 #define USE_ChunkTaskQueueWithOverflow
+  void register_queue(int i, GenTaskQueue* q) {
+    _task_queue_set.register_queue(i, q);
+  }
+
+  void register_queue(int i, ChunkTaskQueueWithOverflow* q) {
+    register_queue(i, &q->_chunk_queue);
+  }
+
+  ChunkTaskQueue* queue(int n) { 
+    return (ChunkTaskQueue*) _task_queue_set.queue(n); 
+  }
+
+  GenTaskQueueSet* task_queue_set() { return &_task_queue_set; }
+
+  // The thread with queue number "queue_num" (and whose random number seed 
+  // is at "seed") is trying to steal a task from some other queue.  (It
+  // may try several queues, according to some configuration parameter.)
+  // If some steal succeeds, returns "true" and sets "t" the stolen task,
+  // otherwise returns false.
+  bool steal(int queue_num, int* seed, GenTask& t) {
+    return _task_queue_set.steal(queue_num, seed, t);
+  }
+
+  bool peek() {
+    return _task_queue_set.peek();
+  }
+};
+// End clone of OopTaskQueueSet for GenTask

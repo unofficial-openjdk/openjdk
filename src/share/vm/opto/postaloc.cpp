@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)postaloc.cpp	1.83 07/05/05 17:06:28 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.

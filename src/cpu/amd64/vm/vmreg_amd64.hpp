@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmreg_amd64.hpp	1.5 07/05/05 17:04:09 JVM"
 #endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -30,6 +30,3 @@
 
   bool is_FloatRegister();
   FloatRegister as_FloatRegister();
-
-  bool is_XMMRegister();
-  XMMRegister as_XMMRegister();

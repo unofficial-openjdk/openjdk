@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interpreterRT_amd64.cpp	1.23 07/06/08 18:13:30 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -36,7 +36,8 @@ Register InterpreterRuntime::SignatureHandlerGenerator::from() { return r14; }
 Register InterpreterRuntime::SignatureHandlerGenerator::to()   { return rsp; }
 Register InterpreterRuntime::SignatureHandlerGenerator::temp() { return rscratch1; }
 
-void InterpreterRuntime::SignatureHandlerGenerator::pass_int() {
+void InterpreterRuntime::SignatureHandlerGenerator::pass_int()
+{
   const Address src(from(), Interpreter::local_offset_in_bytes(offset()));
 
 #ifdef _WIN64
@@ -90,7 +91,8 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_int() {
 #endif
 }
 
-void InterpreterRuntime::SignatureHandlerGenerator::pass_long() {
+void InterpreterRuntime::SignatureHandlerGenerator::pass_long()
+{
   const Address src(from(), Interpreter::local_offset_in_bytes(offset() + 1));
 
 #ifdef _WIN64
@@ -145,12 +147,13 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_long() {
 #endif
 }
 
-void InterpreterRuntime::SignatureHandlerGenerator::pass_float() {
+void InterpreterRuntime::SignatureHandlerGenerator::pass_float()
+{
   const Address src(from(), Interpreter::local_offset_in_bytes(offset()));
 
 #ifdef _WIN64
   if (_num_args < Argument::n_float_register_parameters_c-1) {
-    __ movflt(as_XMMRegister(++_num_args), src);
+    __ movflt(as_FloatRegister(++_num_args), src);
   } else {
     __ movl(rax, src);
     __ movl(Address(to(), _stack_offset), rax);
@@ -158,7 +161,7 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_float() {
   }
 #else
   if (_num_fp_args < Argument::n_float_register_parameters_c) {
-    __ movflt(as_XMMRegister(_num_fp_args++), src);
+    __ movflt(as_FloatRegister(_num_fp_args++), src);
   } else {
     __ movl(rax, src);
     __ movl(Address(to(), _stack_offset), rax);
@@ -167,12 +170,13 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_float() {
 #endif
 }
 
-void InterpreterRuntime::SignatureHandlerGenerator::pass_double() {
+void InterpreterRuntime::SignatureHandlerGenerator::pass_double()
+{
   const Address src(from(), Interpreter::local_offset_in_bytes(offset() + 1));
 
 #ifdef _WIN64
   if (_num_args < Argument::n_float_register_parameters_c-1) {
-    __ movdbl(as_XMMRegister(++_num_args), src);
+    __ movdbl(as_FloatRegister(++_num_args), src);
   } else {
     __ movq(rax, src);
     __ movq(Address(to(), _stack_offset), rax);
@@ -180,7 +184,7 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_double() {
   }
 #else
   if (_num_fp_args < Argument::n_float_register_parameters_c) {
-    __ movdbl(as_XMMRegister(_num_fp_args++), src);
+    __ movdbl(as_FloatRegister(_num_fp_args++), src);
   } else {
     __ movq(rax, src);
     __ movq(Address(to(), _stack_offset), rax);
@@ -189,7 +193,8 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_double() {
 #endif
 }
 
-void InterpreterRuntime::SignatureHandlerGenerator::pass_object() {
+void InterpreterRuntime::SignatureHandlerGenerator::pass_object()
+{
   const Address src(from(), Interpreter::local_offset_in_bytes(offset()));
 
 #ifdef _WIN64
@@ -269,12 +274,15 @@ void InterpreterRuntime::SignatureHandlerGenerator::pass_object() {
 #endif
 }
 
-void InterpreterRuntime::SignatureHandlerGenerator::generate(uint64_t fingerprint) {
+void InterpreterRuntime::SignatureHandlerGenerator::generate(
+  uint64_t fingerprint) 
+{
   // generate code to handle arguments
   iterate(fingerprint);
 
   // return result handler
-  __ lea(rax, ExternalAddress(Interpreter::result_handler(method()->result_type())));
+  __ movq(rax, (int64_t) AbstractInterpreter::
+                           result_handler(method()->result_type()));
   __ ret(0);
 
   __ flush();
@@ -288,7 +296,8 @@ void SignatureHandlerLibrary::pd_set_handler(address handler) {}
 
 #ifdef _WIN64
 class SlowSignatureHandler 
-  : public NativeSignatureIterator {
+  : public NativeSignatureIterator 
+{
  private:
   address   _from;
   intptr_t* _to;
@@ -390,7 +399,8 @@ class SlowSignatureHandler
 };
 #else
 class SlowSignatureHandler 
-  : public NativeSignatureIterator {
+  : public NativeSignatureIterator 
+{
  private:
   address   _from;
   intptr_t* _to;
@@ -507,5 +517,5 @@ IRT_ENTRY(address,
   SlowSignatureHandler(m, (address)from, to + 1).iterate(UCONST64(-1));
 
   // return result handler
-  return Interpreter::result_handler(m->result_type());
+  return AbstractInterpreter::result_handler(m->result_type());
 IRT_END

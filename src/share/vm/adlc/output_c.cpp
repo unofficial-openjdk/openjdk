@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)output_c.cpp	1.184 07/05/17 15:49:23 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -2199,7 +2199,7 @@ private:
   const char* reg_conversion(const char* rep_var) {
     if (strcmp(rep_var,"$Register") == 0)      return "as_Register";
     if (strcmp(rep_var,"$FloatRegister") == 0) return "as_FloatRegister";
-#if defined(IA32) || defined(AMD64)
+#if defined(IA32)
     if (strcmp(rep_var,"$XMMRegister") == 0)   return "as_XMMRegister";
 #endif
     return NULL;

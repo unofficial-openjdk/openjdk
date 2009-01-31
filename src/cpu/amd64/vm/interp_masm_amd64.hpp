@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interp_masm_amd64.hpp	1.21 07/05/17 15:39:50 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,8 @@
 
 
 class InterpreterMacroAssembler 
-  : public MacroAssembler {
+  : public MacroAssembler 
+{
  protected:
   // Interpreter specific version of call_VM_base
   virtual void call_VM_leaf_base(address entry_point,
@@ -104,13 +105,13 @@ class InterpreterMacroAssembler
   void pop_ptr(Register r = rax);
   void pop_i(Register r = rax);
   void pop_l(Register r = rax);
-  void pop_f(XMMRegister r = xmm0);
-  void pop_d(XMMRegister r = xmm0);
+  void pop_f(FloatRegister r = xmm0);
+  void pop_d(FloatRegister r = xmm0);
   void push_ptr(Register r = rax);
   void push_i(Register r = rax);
   void push_l(Register r = rax);
-  void push_f(XMMRegister r = xmm0);
-  void push_d(XMMRegister r = xmm0);
+  void push_f(FloatRegister r = xmm0);
+  void push_d(FloatRegister r = xmm0);
 
   void pop(TosState state); // transition vtos -> state
   void push(TosState state); // transition state -> vtos
@@ -141,7 +142,7 @@ class InterpreterMacroAssembler
     movq(rsp, Address(rbp, frame::interpreter_frame_monitor_block_top_offset *
                       wordSize));
     // NULL last_sp until next java call
-    movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
+    movq(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
   }
 
   // Super call_VM calls - correspond to MacroAssembler::call_VM(_leaf) calls

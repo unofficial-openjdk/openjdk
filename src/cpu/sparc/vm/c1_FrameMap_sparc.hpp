@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_FrameMap_sparc.hpp	1.43 07/05/05 17:04:25 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -122,15 +122,9 @@
   static LIR_Opr as_long_opr(Register r) {
     return LIR_OprFact::double_cpu(cpu_reg2rnr(r), cpu_reg2rnr(r));
   }
-  static LIR_Opr as_pointer_opr(Register r) {
-    return LIR_OprFact::double_cpu(cpu_reg2rnr(r), cpu_reg2rnr(r));
-  }
 #else
   static LIR_Opr as_long_opr(Register r) {
     return LIR_OprFact::double_cpu(cpu_reg2rnr(r->successor()), cpu_reg2rnr(r));
-  }
-  static LIR_Opr as_pointer_opr(Register r) {
-    return as_opr(r);
   }
 #endif
   static LIR_Opr as_float_opr(FloatRegister r) {

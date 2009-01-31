@@ -65,16 +65,6 @@ OPT_CFLAGS/jvm.o = -c
 OPT_CFLAGS/parse2.o = -c
 endif # Platform_arch == i486
 endif
-
-# Frame size > 100k  if we allow inlining via -g0!
-DEBUG_CFLAGS/bytecodeInterpreter.o = -g
-DEBUG_CFLAGS/bytecodeInterpreterWithChecks.o = -g
-ifeq ($(Platform_arch), i486)
-# ube explodes on x86
-OPT_CFLAGS/bytecodeInterpreter.o = -xO1
-OPT_CFLAGS/bytecodeInterpreterWithChecks.o =  -xO1
-endif # Platform_arch == i486
-
 endif # Platform_compiler == sparcWorks
 
 # Workaround for a bug in dtrace.  If ciEnv::post_compiled_method_load_event()

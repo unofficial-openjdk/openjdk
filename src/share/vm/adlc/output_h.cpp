@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)output_h.cpp	1.178 07/05/05 17:05:03 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1817,7 +1817,9 @@ void ArchDesc::declareClasses(FILE *fp) {
       // legal base-pointer input.  Otherwise it is NOT an oop.
       fprintf(fp,"  const Type *bottom_type() const { return AddPNode::mach_bottom_type(this); } // AddP\n");
     }
-    else if (instr->is_tls_instruction()) {
+    else if ( instr->_ident && ( ! strcmp(instr->_ident,"tlsLoadP")
+				 || ! strncmp(instr->_ident,"tlsLoadP_",9)) ) {
+      // !!!!! 
       // Special hack for tlsLoadP 
       fprintf(fp,"  const Type            *bottom_type() const { return TypeRawPtr::BOTTOM; } // tlsLoadP\n");
     }

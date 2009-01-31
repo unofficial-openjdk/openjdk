@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame_i486.inline.hpp	1.73 07/05/05 17:04:15 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -126,6 +126,12 @@ inline void      frame::set_link(intptr_t* addr)  { *(intptr_t **)addr_at(link_o
 
 inline intptr_t* frame::unextended_sp() const     { return _unextended_sp; }
 
+inline intptr_t* frame::entry_frame_argument_at(int offset) const {
+  // Since an entry frame always calls the interpreter first,
+  // the format of the call is always compatible with the interpreter.
+  return interpreter_frame_tos_at(offset);
+}
+
 // Return address:
 
 inline address* frame::sender_pc_addr()      const { return (address*) addr_at( return_addr_offset); }
@@ -134,60 +140,11 @@ inline address  frame::sender_pc()           const { return *sender_pc_addr(); }
 // return address of param, zero origin index.
 inline address* frame::native_param_addr(int idx) const { return (address*) addr_at( native_frame_initial_param_offset+idx); }
 
-#ifdef CC_INTERP
-
-inline interpreterState frame::get_interpreterState() const {
-  return ((interpreterState)addr_at( -sizeof(BytecodeInterpreter)/wordSize ));
-}
-
-inline intptr_t*    frame::sender_sp()        const { 
-  // Hmm this seems awfully expensive QQQ, is this really called with interpreted frames?
-  if (is_interpreted_frame()) {
-    assert(false, "should never happen");
-    return get_interpreterState()->sender_sp();
-  } else {
-    return            addr_at(sender_sp_offset);
-  }
-}
-
-inline jint** frame::interpreter_frame_locals_addr() const { 
-  assert(is_interpreted_frame(), "must be interpreted");
-  return &(get_interpreterState()->_locals);
-}
-
-inline jint* frame::interpreter_frame_bcx_addr() const {
-  assert(is_interpreted_frame(), "must be interpreted");
-  return (jint*) &(get_interpreterState()->_bcp);
-}
-
-
-// Constant pool cache
-
-inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
-  assert(is_interpreted_frame(), "must be interpreted");
-  return &(get_interpreterState()->_constants);
-}
-
-// Method
-
-inline methodOop* frame::interpreter_frame_method_addr() const { 
-  assert(is_interpreted_frame(), "must be interpreted");
-  return &(get_interpreterState()->_method);
-}
-
-inline jint* frame::interpreter_frame_mdx_addr() const {
-  assert(is_interpreted_frame(), "must be interpreted");
-  return (jint*) &(get_interpreterState()->_mdx);
-}
-
-// top of expression stack
-inline intptr_t* frame::interpreter_frame_tos_address() const {
-  assert(is_interpreted_frame(), "wrong frame type");
-  return get_interpreterState()->_stack + 1;
-}
-
-#else /* asm interpreter */
 inline intptr_t*    frame::sender_sp()        const { return            addr_at(   sender_sp_offset); }
+
+inline int frame::pd_oop_map_offset_adjustment() const {
+  return 0;
+}
 
 inline intptr_t** frame::interpreter_frame_locals_addr() const { 
   return (intptr_t**)addr_at(interpreter_frame_locals_offset); 
@@ -207,38 +164,6 @@ inline intptr_t* frame::interpreter_frame_mdx_addr() const {
 }
 
 
-
-// Constant pool cache
-
-inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
-  return (constantPoolCacheOop*)addr_at(interpreter_frame_cache_offset);
-}
-
-// Method
-
-inline methodOop* frame::interpreter_frame_method_addr() const { 
-  return (methodOop*)addr_at(interpreter_frame_method_offset);
-}
-
-// top of expression stack
-inline intptr_t* frame::interpreter_frame_tos_address() const {
-  intptr_t* last_sp = interpreter_frame_last_sp();
-  if (last_sp == NULL ) {
-    return sp();
-  } else {
-    // sp() may have been extended by an adapter
-    assert(last_sp < fp() && last_sp >= sp(), "bad tos");
-    return last_sp;
-  }
-}
-
-#endif /* CC_INTERP */
-
-
-inline int frame::pd_oop_map_offset_adjustment() const {
-  return 0;
-}
-
 inline int frame::interpreter_frame_monitor_size() {
   return BasicObjectLock::size();
 }
@@ -254,6 +179,33 @@ inline intptr_t* frame::interpreter_frame_expression_stack() const {
 
 
 inline jint frame::interpreter_frame_expression_stack_direction() { return -1; }
+
+// top of expression stack
+inline intptr_t* frame::interpreter_frame_tos_address() const {
+  intptr_t* last_sp = interpreter_frame_last_sp();
+  if (last_sp == NULL ) {
+    return sp();
+  } else {
+    // sp() may have been extended by an i2c
+    assert(last_sp < fp() && last_sp >= sp(), "bad tos");
+    return last_sp;
+  }
+}
+
+
+// Method
+
+inline methodOop* frame::interpreter_frame_method_addr() const { 
+  return (methodOop*)addr_at(interpreter_frame_method_offset);
+}
+
+
+// Constant pool cache
+
+inline constantPoolCacheOop* frame::interpreter_frame_cache_addr() const {
+  return (constantPoolCacheOop*)addr_at(interpreter_frame_cache_offset);
+}
+
 
 // Entry frames
 
@@ -283,10 +235,10 @@ inline bool frame::volatile_across_calls(Register reg) {
 
 
 inline oop frame::saved_oop_result(RegisterMap* map) const       { 
-  return *((oop*) map->location(rax->as_VMReg()));
+  return *((oop*) map->location(eax->as_VMReg()));
 }
 
 inline void frame::set_saved_oop_result(RegisterMap* map, oop obj) {
-  *((oop*) map->location(rax->as_VMReg())) = obj;
+  *((oop*) map->location(eax->as_VMReg())) = obj;
 }
 

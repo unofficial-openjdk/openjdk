@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)graphKit.cpp	1.128 07/05/17 17:43:32 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -541,10 +541,11 @@ void GraphKit::builtin_throw(Deoptimization::DeoptReason reason, Node* arg) {
       // Weblogic sometimes mutates the detail message of exceptions 
       // using reflection.
       int offset = java_lang_Throwable::get_detailMessage_offset();
-      const TypePtr* adr_typ = ex_con->add_offset(offset);
+      uint alias_idx = C->get_alias_index(ex_con->add_offset(offset));
       
       Node *adr = basic_plus_adr(ex_node, ex_node, offset);
-      Node *store = store_oop_to_object(control(), ex_node, adr, adr_typ, null(), ex_con, T_OBJECT);
+      Node *store = store_to_memory(control(), adr, null(), T_OBJECT, alias_idx, false);
+      store_barrier(store, T_OBJECT, ex_node, adr, null());
         
       add_exception_state(make_exception_state(ex_node));
       return;
@@ -1351,102 +1352,6 @@ Node* GraphKit::store_to_memory(Node* ctl, Node* adr, Node *val, BasicType bt,
   return st;
 }
 
-void GraphKit::pre_barrier(Node* ctl,
-                           Node* obj,
-                           Node* adr,
-                           uint adr_idx,
-                           Node *val,
-                           const Type* val_type,
-                           BasicType bt) {
-  BarrierSet* bs = Universe::heap()->barrier_set();
-  set_control(ctl);
-  switch (bs->kind()) {
-
-    case BarrierSet::CardTableModRef:
-    case BarrierSet::CardTableExtension:
-    case BarrierSet::ModRef: 
-      break;
-
-    case BarrierSet::Other:
-    default      : 
-      ShouldNotReachHere();
-      
-  }
-}
-
-void GraphKit::post_barrier(Node* ctl,
-                            Node* store,
-                            Node* obj,
-                            Node* adr,
-                            uint adr_idx,
-                            Node *val,
-                            BasicType bt,
-                            bool use_precise) {
-  BarrierSet* bs = Universe::heap()->barrier_set();
-  set_control(ctl);
-  switch (bs->kind()) {
-
-    case BarrierSet::CardTableModRef:
-    case BarrierSet::CardTableExtension:
-      write_barrier_post(store, obj, adr, val, use_precise);
-      break;
-
-    case BarrierSet::ModRef: 
-      break;
-
-    case BarrierSet::Other:
-    default      : 
-      ShouldNotReachHere();
-      
-  }
-}
-
-Node* GraphKit::store_oop_to_object(Node* ctl,
-                                    Node* obj,
-                                    Node* adr,
-                                    const TypePtr* adr_type,
-                                    Node *val,
-                                    const Type* val_type,
-                                    BasicType bt) {
-  uint adr_idx = C->get_alias_index(adr_type);
-  Node* store;
-  pre_barrier(ctl, obj, adr, adr_idx, val, val_type, bt);
-  store = store_to_memory(control(), adr, val, bt, adr_idx);
-  post_barrier(control(), store, obj, adr, adr_idx, val, bt, false);
-  return store;
-}
-
-Node* GraphKit::store_oop_to_array(Node* ctl,
-                                   Node* obj,
-                                   Node* adr,
-                                   const TypePtr* adr_type,
-                                   Node *val,
-                                   const Type* val_type,
-                                   BasicType bt) {
-  uint adr_idx = C->get_alias_index(adr_type);
-  Node* store;
-  pre_barrier(ctl, obj, adr, adr_idx, val, val_type, bt);
-  store = store_to_memory(control(), adr, val, bt, adr_idx);
-  post_barrier(control(), store, obj, adr, adr_idx, val, bt, true);
-  return store;
-}
-
-Node* GraphKit::store_oop_to_unknown(Node* ctl,
-                                     Node* obj,
-                                     Node* adr,
-                                     const TypePtr* adr_type,
-                                     Node *val,
-                                     const Type* val_type,
-                                     BasicType bt) {
-  uint adr_idx = C->get_alias_index(adr_type);
-  Node* store;
-  pre_barrier(ctl, obj, adr, adr_idx, val, val_type, bt);
-  store = store_to_memory(control(), adr, val, bt, adr_idx);
-  post_barrier(control(), store, obj, adr, adr_idx, val, bt, true);
-  return store;
-}
-
-
 //-------------------------array_element_address-------------------------
 Node* GraphKit::array_element_address(Node* ary, Node* idx, BasicType elembt,
                                       const TypeInt* sizetype) {
@@ -1632,8 +1537,7 @@ void GraphKit::increment_counter(Node* counter_addr) {
 // right debug info.  
 void GraphKit::uncommon_trap(int trap_request,
                              ciKlass* klass, const char* comment,
-                             bool must_throw,
-                             bool keep_exact_action) {
+                             bool must_throw) {
   if (failing())  stop();
   if (stopped())  return; // trap reachable?
 
@@ -1660,11 +1564,8 @@ void GraphKit::uncommon_trap(int trap_request,
   switch (action) {
   case Deoptimization::Action_maybe_recompile:
   case Deoptimization::Action_reinterpret:
-    // Temporary fix for 6529811 to allow virtual calls to be sure they
-    // get the chance to go from mono->bi->mega
-    if (!keep_exact_action && 
-        Deoptimization::trap_request_index(trap_request) < 0 && 
-        too_many_recompiles(reason)) {
+    if (Deoptimization::trap_request_index(trap_request) < 0
+        && too_many_recompiles(reason)) {
       // This BCI is causing too many recompilations.
       action = Deoptimization::Action_none;
       trap_request = Deoptimization::make_trap_request(reason, action);
@@ -1745,55 +1646,30 @@ void GraphKit::uncommon_trap(int trap_request,
 }
 
 
-//--------------------------just_allocated_object------------------------------
-// Report the object that was just allocated.
-// It must be the case that there are no intervening safepoints.
-// We use this to determine if an object is so "fresh" that
-// it does not require card marks.
-Node* GraphKit::just_allocated_object(Node* current_control) {
-  if (C->recent_alloc_ctl() == current_control)
-    return C->recent_alloc_obj();
-  return NULL;
-}
-
-
 //------------------------------store_barrier----------------------------------
 // Insert a write-barrier store.  This is to let generational GC work; we have 
 // to flag all oop-stores before the next GC point.
-void GraphKit::write_barrier_post(Node* oop_store, Node* obj, Node* adr,
-                                  Node* val, bool use_precise) {
+void GraphKit::store_barrier(Node* oop_store, BasicType obj_type,
+                             Node* obj, Node* adr, Node* val) {
   // No store check needed if we're storing a NULL or an old object
   // (latter case is probably a string constant). The concurrent
   // mark sweep garbage collector, however, needs to have all nonNull
   // oop updates flagged via card-marks.
-  if (val != NULL && val->is_Con()) {
+  if (val != NULL && val->is_Con() &&
+      (!UseConcMarkSweepGC || val->bottom_type() == TypePtr::NULL_PTR)) {
     // must be either an oop or NULL
     const Type* t = val->bottom_type();
-    if (t == TypePtr::NULL_PTR || t == Type::TOP)
-      // stores of null never (?) need barriers
-      return;
-    ciObject* con = t->is_oopptr()->const_oop();
-    if (con != NULL
-        && con->is_perm()
-        && Universe::heap()->can_elide_permanent_oop_store_barriers())
-      // no store barrier needed, because no old-to-new ref created
-      return;
-  }
-
-  if (use_ReduceInitialCardMarks()
-      && obj == just_allocated_object(control())) {
-    // We can skip marks on a freshly-allocated object.
-    // Keep this code in sync with do_eager_card_mark in runtime.cpp.
-    // That routine eagerly marks the occasional object which is produced
-    // by the slow path, so that we don't have to do it here.
+    assert( t == Type::TOP || t == TypePtr::NULL_PTR || t->is_oopptr()->const_oop() != NULL,
+            "must be either a constant oop or NULL");
+    // no store barrier needed, because no old-to-new ref created
     return;
   }
 
-  if (!use_precise) {
+  if (obj_type == T_OBJECT) {
     // All card marks for a (non-array) instance are in one place:
     adr = obj;
   }
-  // (Else it's an array (or unknown), and we want more precise card marks.)
+  // (Else it's an array, and we want more precise card marks.)
   assert(adr != NULL, "");
 
   // Get the alias_index for raw card-mark memory
@@ -1805,8 +1681,9 @@ void GraphKit::write_barrier_post(Node* oop_store, Node* obj, Node* adr,
          "Only one we handle so far.");
   CardTableModRefBS* ct =
     (CardTableModRefBS*)(Universe::heap()->barrier_set());
-  Node *b = _gvn.transform(new (C, 3) URShiftXNode( cast, _gvn.intcon(CardTableModRefBS::card_shift) ));
+  Node *a = _gvn.transform(new (C, 3) URShiftXNode( cast, _gvn.intcon(CardTableModRefBS::card_shift) ));
   // We store into a byte array, so do not bother to left-shift by zero
+  Node *b = a;
   // Get base of card map
   assert(sizeof(*ct->byte_map_base) == sizeof(jbyte),
          "adjust this code");
@@ -2606,7 +2483,6 @@ Node* GraphKit::insert_mem_bar_volatile(int opcode, int alias_idx, Node* precede
   if (alias_idx == Compile::AliasIdxBot) {
     mb->set_req(TypeFunc::Memory, merged_memory()->base_memory());
   } else {
-    assert(!(opcode == Op_Initialize && alias_idx != Compile::AliasIdxRaw), "fix caller");
     mb->set_req(TypeFunc::Memory, memory(alias_idx));
   }
   Node* membar = _gvn.transform(mb);
@@ -2726,6 +2602,21 @@ void GraphKit::shared_unlock(Node* box, Node* obj) {
   map()->pop_monitor( );
 }
 
+//---------------------------set_eden_pointers-------------------------
+void GraphKit::set_eden_pointers( Node * &eden_top_adr, Node * &eden_end_adr) {
+  CollectedHeap* ch = Universe::heap();
+  if( UseTLAB ) {               // Private allocation: load from TLS
+    Node *thread = _gvn.transform(new (C, 1) ThreadLocalNode());
+    eden_top_adr = _gvn.transform( new (C, 4) AddPNode(top()/*not oop*/, thread, _gvn.MakeConX( in_bytes(JavaThread::tlab_top_offset()))));
+    eden_end_adr = _gvn.transform( new (C, 4) AddPNode(top()/*not oop*/, thread, _gvn.MakeConX( in_bytes(JavaThread::tlab_end_offset()))));
+  } else {                      // Shared allocation: load from globals
+    address top_adr = (address)ch->top_addr();
+    address end_adr = (address)ch->end_addr();
+    eden_top_adr = makecon(TypeRawPtr::make(top_adr));
+    eden_end_adr = basic_plus_adr( eden_top_adr, eden_top_adr, end_adr - top_adr );
+  }
+}
+
 //-------------------------------get_layout_helper-----------------------------
 // If the given klass is a constant or known to be an array,
 // fetch the constant layout helper value into constant_value
@@ -2751,19 +2642,6 @@ Node* GraphKit::get_layout_helper(Node* klass_node, jint& constant_value) {
   return make_load(NULL, lhp, TypeInt::INT, T_INT);
 }
 
-// We just put in an allocate/initialize with a big raw-memory effect.
-// Hook selected additional alias categories on the initialization.
-static void hook_memory_on_init(GraphKit& kit, int alias_idx,
-                                MergeMemNode* init_in_merge,
-                                Node* init_out_raw) {
-  DEBUG_ONLY(Node* init_in_raw = init_in_merge->base_memory());
-  assert(init_in_merge->memory_at(alias_idx) == init_in_raw, "");
-
-  Node* prevmem = kit.memory(alias_idx);
-  init_in_merge->set_memory_at(alias_idx, prevmem);
-  kit.set_memory(init_out_raw, alias_idx);
-}
-
 //---------------------------set_output_for_allocation-------------------------
 Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
                                           const TypeOopPtr* oop_type,
@@ -2786,45 +2664,9 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
   set_i_o(_gvn.transform( new (C, 1) ProjNode(allocx, TypeFunc::I_O, false) ) );
   Node* rawoop = _gvn.transform( new (C, 1) ProjNode(allocx, TypeFunc::Parms) );
  
-  // put in an initialization barrier
-  InitializeNode* init = insert_mem_bar_volatile(Op_Initialize, rawidx,
-                                                 rawoop)->as_Initialize();
-  assert(alloc->initialization() == init,  "2-way macro link must work");
-  assert(init ->allocation()     == alloc, "2-way macro link must work");
-  if (ReduceFieldZeroing && !raw_mem_only) {
-    // Extract memory strands which may participate in the new object's
-    // initialization, and source them from the new InitializeNode.
-    // This will allow us to observe initializations when they occur,
-    // and link them properly (as a group) to the InitializeNode.
-    Node* klass_node = alloc->in(AllocateNode::KlassNode);
-    assert(init->in(InitializeNode::Memory) == malloc, "");
-    MergeMemNode* minit_in = MergeMemNode::make(C, malloc);
-    init->set_req(InitializeNode::Memory, minit_in);
-    record_for_igvn(minit_in); // fold it up later, if possible
-    Node* minit_out = memory(rawidx);
-    assert(minit_out->is_Proj() && minit_out->in(0) == init, "");
-    if (oop_type->isa_aryptr()) {
-      const TypePtr* telemref = oop_type->add_offset(Type::OffsetBot);
-      int            elemidx  = C->get_alias_index(telemref);
-      hook_memory_on_init(*this, elemidx, minit_in, minit_out);
-    } else if (oop_type->isa_instptr()) {
-      ciInstanceKlass* ik = oop_type->klass()->as_instance_klass();
-      for (int i = 0, len = ik->nof_nonstatic_fields(); i < len; i++) {
-        ciField* field = ik->nonstatic_field_at(i);
-        if (field->offset() >= TrackedInitializationLimit)
-          continue;  // do not bother to track really large numbers of fields
-        // Find (or create) the alias category for this field:
-        int fieldidx = C->alias_type(field)->index();
-        hook_memory_on_init(*this, fieldidx, minit_in, minit_out);
-      }
-    }
-  }
- 
   // Cast raw oop to the real thing...
   Node* javaoop = new (C, 2) CheckCastPPNode(control(), rawoop, oop_type);
   javaoop = _gvn.transform(javaoop);
-  C->set_recent_alloc(control(), javaoop);
-  assert(just_allocated_object(control()) == javaoop, "just allocated");
  
 #ifdef ASSERT
   { // Verify that the AllocateNode::Ideal_foo recognizers work:
@@ -2861,6 +2703,7 @@ Node* GraphKit::new_instance(Node* klass_node,
                              Node* extra_slow_test,
                              bool raw_mem_only, // affect only raw memory
                              Node* *return_size_val) {
+
   // Compute size in doublewords
   // The size is always an integral number of doublewords, represented
   // as a positive bytewise size stored in the klass's layout_helper.
@@ -2870,6 +2713,7 @@ Node* GraphKit::new_instance(Node* klass_node,
   int   layout_is_con = (layout_val == NULL);
 
   if (extra_slow_test == NULL)  extra_slow_test = intcon(0);
+
   // Generate the initial go-slow test.  It's either ALWAYS (return a
   // Node for 1) or NEVER (return a NULL) or perhaps (in the reflective
   // case) a computed value derived from the layout_helper.
@@ -2917,25 +2761,18 @@ Node* GraphKit::new_instance(Node* klass_node,
   const TypeOopPtr* oop_type = tklass->as_instance_type();
 
   // Now generate allocation code
+  Node *eden_top_adr;
+  Node *eden_end_adr;
+  set_eden_pointers(eden_top_adr, eden_end_adr);
+
   AllocateNode* alloc
     = new (C, AllocateNode::ParmLimit)
         AllocateNode(C, AllocateNode::alloc_type(),
                      control(), memory(Compile::AliasIdxRaw), i_o(),
                      size, klass_node,
-                     initial_slow_test);
+                     initial_slow_test, eden_top_adr, eden_end_adr);
 
   return set_output_for_allocation(alloc, oop_type, raw_mem_only);
-}
-
-// Local cache for arrayOopDesc::max_array_length(etype),
-// which is kind of slow (and cached elsewhere by other users).
-static jint max_array_length_cache[T_CONFLICT+1];
-static jint max_array_length(BasicType etype) {
-  jint& cache = max_array_length_cache[etype];
-  jint res = cache;
-  if (res == 0)
-    cache = res = arrayOopDesc::max_array_length(etype);
-  return res;
 }
 
 //-------------------------------new_array-------------------------------------
@@ -2994,19 +2831,15 @@ Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
   // The rounding mask is strength-reduced, if possible.
   int round_mask = MinObjAlignmentInBytes - 1;
   Node* header_size = NULL;
-  int   header_size_min  = arrayOopDesc::base_offset_in_bytes(T_BYTE);
-  jint  array_length_max = max_array_length(T_BYTE);
-  // (T_BYTE has the weakest alignment and size restrictions...)
+  int   header_size_min = arrayOopDesc::base_offset_in_bytes(T_BYTE);
+  // (T_BYTE has the smallest alignment restriction...)
   if (layout_is_con) {
-    int       hsize  = Klass::layout_helper_header_size(layout_con);
-    int       eshift = Klass::layout_helper_log2_element_size(layout_con);
-    BasicType etype  = Klass::layout_helper_element_type(layout_con);
+    int hsize  = Klass::layout_helper_header_size(layout_con);
+    int eshift = Klass::layout_helper_log2_element_size(layout_con);
     if ((round_mask & ~right_n_bits(eshift)) == 0)
       round_mask = 0;  // strength-reduce it if it goes away completely
     assert((hsize & right_n_bits(eshift)) == 0, "hsize is pre-rounded");
     assert(header_size_min <= hsize, "generic minimum is smallest");
-    assert(array_length_max >= max_array_length(etype), "generic max least");
-    array_length_max = max_array_length(etype);
     header_size_min = hsize;
     header_size = intcon(hsize + round_mask);
   } else {
@@ -3028,27 +2861,6 @@ Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
     // The semantics of LShiftINode include an implicit mask to 0x1F.
     assert(Klass::_lh_log2_element_size_shift == 0, "use shift in place");
     elem_shift = layout_val;
-  }
-
-  Node*          orig_length = length;
-  const TypeInt* length_type = _gvn.type(length)->isa_int();
-  const TypeInt* pos_length_type = NULL;
-  if (length_type != NULL) {
-    jint minlen = MAX2(length_type->_lo, (jint) 0);
-    jint maxlen = MIN2(length_type->_hi, (jint) array_length_max);
-    if (minlen <= maxlen) {
-      // Optimize only if length is provably non-negative.
-      pos_length_type = TypeInt::make(minlen, maxlen, Type::WidenMax);
-      if (pos_length_type != length_type) {
-        Node* ccast = new (C, 2) CastIINode(length, pos_length_type);
-        // %%% This control input (root) is lame.
-        // %%% Can we push it down lower?
-        ccast->set_req(0, root());
-        _gvn.set_type_bottom(ccast);
-        record_for_igvn(ccast);
-        length = ccast;
-      }
-    }
   }
 
   // Transition to native address size for all offset calculations:
@@ -3074,6 +2886,17 @@ Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
     (*return_size_val) = size;
   }
 
+  const TypeInt* length_type = _gvn.type(length)->isa_int();
+  const TypeInt* pos_length_type = NULL;
+  if (length_type != NULL) {
+    pos_length_type = length_type->join(TypeInt::POS)->isa_int();
+    if (pos_length_type == NULL || pos_length_type->empty()) {
+      // Optimize only if length is provably non-negative.
+      length_type     = NULL;
+      pos_length_type = NULL;
+    }
+  }
+
   // Cast to correct type.  Note that the klass_node may be constant or not,
   // and in the latter case the actual array type will be inexact also.
   // (This happens via a non-constant argument to inline_native_newArray.)
@@ -3085,21 +2908,34 @@ Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
   }
 
   // Now generate allocation code
+  Node *eden_top_adr;
+  Node *eden_end_adr;
+  set_eden_pointers(eden_top_adr, eden_end_adr);
+
   // Create the AllocateArrayNode and its result projections
   AllocateArrayNode* alloc
     = new (C, AllocateArrayNode::ParmLimit)
         AllocateArrayNode(C, AllocateArrayNode::alloc_type(),
                           control(), memory(Compile::AliasIdxRaw), i_o(),
                           size, klass_node,
-                          initial_slow_test,
-                          orig_length, length);
+                          initial_slow_test,  eden_top_adr, eden_end_adr,
+                          length);
 
   Node* javaoop = set_output_for_allocation(alloc, ary_type, raw_mem_only);
 
+  /*
+    Not yet.  We don't know what to do when the cast tops out.
   // Cast length on remaining path to be positive:
-  if (length != orig_length && map()->find_edge(orig_length) >= 0) {
-    replace_in_map(orig_length, length);
+  if (pos_length_type != NULL &&
+      pos_length_type != length_type &&
+      map()->find_edge(length) >= 0) {
+    Node* ccast = new (C, 2) CastIINode(length, pos_length_type);
+    ccast->set_req(0, control());
+    _gvn.set_type_bottom(ccast);
+    record_for_igvn(ccast);
+    replace_in_map(length, ccast);
   }
+  */
 
   return javaoop;
 }
@@ -3133,30 +2969,4 @@ AllocateNode* AllocateNode::Ideal_allocation(Node* ptr, PhaseTransform* phase,
   Node* base = AddPNode::Ideal_base_and_offset(ptr, phase, offset);
   if (base == NULL)  return NULL;
   return Ideal_allocation(base, phase);
-}
-
-// Trace Initialize <- Proj[Parm] <- Allocate
-AllocateNode* InitializeNode::allocation() {
-  Node* rawoop = in(InitializeNode::RawAddress);
-  if (rawoop->is_Proj()) {
-    Node* alloc = rawoop->in(0);
-    if (alloc->is_Allocate()) {
-      return alloc->as_Allocate();
-    }
-  }
-  return NULL;
-}
-
-// Trace Allocate -> Proj[Parm] -> Initialize
-InitializeNode* AllocateNode::initialization() {
-  ProjNode* rawoop = proj_out(AllocateNode::RawAddress);
-  if (rawoop == NULL)  return NULL;
-  for (DUIterator_Fast imax, i = rawoop->fast_outs(imax); i < imax; i++) {
-    Node* init = rawoop->fast_out(i);
-    if (init->is_Initialize()) {
-      assert(init->as_Initialize()->allocation() == this, "2-way link");
-      return init->as_Initialize();
-    }
-  }
-  return NULL;
 }

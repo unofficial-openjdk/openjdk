@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)invocationCounter.hpp	1.49 07/05/05 17:05:39 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -89,6 +89,7 @@ class InvocationCounter VALUE_OBJ_CLASS_SPEC {
   int    limit() const                           { return CompileThreshold; }
   Action action() const                          { return _action[state()]; }
   int    count() const                           { return _counter >> number_of_noncount_bits; }
+  bool   has_overflowed() const                  { return count() >= limit(); }
 
   int   get_InvocationLimit() const              { return InterpreterInvocationLimit >> number_of_noncount_bits; }
   int   get_BackwardBranchLimit() const          { return InterpreterBackwardBranchLimit >> number_of_noncount_bits; }

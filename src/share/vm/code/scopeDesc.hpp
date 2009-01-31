@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)scopeDesc.hpp	1.36 07/05/05 17:05:22 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -55,11 +55,6 @@ class SimpleScopeDesc : public StackObj {
 class ScopeDesc : public ResourceObj {
  public:
   // Constructor
-  ScopeDesc(const nmethod* code, int decode_offset, int obj_decode_offset);
-
-  // Calls above, giving default value of "serialized_null" to the
-  // "obj_decode_offset" argument.  (We don't use a default argument to
-  // avoid a .hpp-.hpp dependency.)
   ScopeDesc(const nmethod* code, int decode_offset);
 
   // JVM state
@@ -69,7 +64,6 @@ class ScopeDesc : public ResourceObj {
   GrowableArray<ScopeValue*>*   locals();
   GrowableArray<ScopeValue*>*   expressions();  
   GrowableArray<MonitorValue*>* monitors();
-  GrowableArray<ScopeValue*>*   objects();
 
   // Stack walking, returns NULL if this is the outer most scope.
   ScopeDesc* sender() const;
@@ -83,9 +77,6 @@ class ScopeDesc : public ResourceObj {
   bool is_equal(ScopeDesc* sd) const;
 
  private:
-  // Alternative constructor
-  ScopeDesc(const ScopeDesc* parent);
-
   // JVM state
   methodHandle  _method;
   int           _bci;
@@ -97,9 +88,6 @@ class ScopeDesc : public ResourceObj {
   int _expressions_decode_offset;
   int _monitors_decode_offset;
 
-  // Object pool
-  GrowableArray<ScopeValue*>* _objects;
-
   // Nmethod information
   const nmethod* _code;
 
@@ -107,7 +95,6 @@ class ScopeDesc : public ResourceObj {
   void decode_body();
   GrowableArray<ScopeValue*>* decode_scope_values(int decode_offset);
   GrowableArray<MonitorValue*>* decode_monitor_values(int decode_offset);
-  GrowableArray<ScopeValue*>* decode_object_values(int decode_offset);
 
   DebugInfoReadStream* stream_at(int decode_offset) const;
 

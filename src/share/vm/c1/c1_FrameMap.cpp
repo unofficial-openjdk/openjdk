@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_FrameMap.cpp	1.37 07/05/05 17:05:06 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -83,8 +83,7 @@ CallingConvention* FrameMap::java_calling_convention(const BasicTypeArray* signa
     args->append(opr);
     if (opr->is_address()) {
       LIR_Address* addr = opr->as_address_ptr();
-      assert(addr->disp() == (int)addr->disp(), "out of range value");
-      out_preserve = MAX2(out_preserve, (intptr_t)addr->disp() / 4);
+      out_preserve = MAX2(out_preserve, addr->disp() / 4);
     }
     i += type2size[t];
   }
@@ -129,13 +128,10 @@ CallingConvention* FrameMap::c_calling_convention(const BasicTypeArray* signatur
     // C calls are always outgoing
     bool outgoing = true;
     LIR_Opr opr = map_to_opr(t, regs + i, outgoing);
-    // they might be of different types if for instance floating point
-    // values are passed in cpu registers, but the sizes must match.
-    assert(type2size[opr->type()] == type2size[t], "type mismatch");
     args->append(opr);
     if (opr->is_address()) {
       LIR_Address* addr = opr->as_address_ptr();
-      out_preserve = MAX2(out_preserve, (intptr_t)addr->disp() / 4);
+      out_preserve = MAX2(out_preserve, addr->disp() / 4);
     }
     i += type2size[t];
   }
@@ -176,7 +172,7 @@ FrameMap::FrameMap(ciMethod* method, int monitors, int reserved_argument_area_si
     LIR_Opr opr = _incoming_arguments->at(i);
     if (opr->is_address()) {
       LIR_Address* address = opr->as_address_ptr();
-      _argument_locations->at_put(java_index, address->disp() - STACK_BIAS);
+      _argument_locations->at_put(java_index, address->disp());
       _incoming_arguments->args()->at_put(i, LIR_OprFact::stack(java_index, as_BasicType(as_ValueType(address->type()))));
     }
     java_index += type2size[opr->type()];

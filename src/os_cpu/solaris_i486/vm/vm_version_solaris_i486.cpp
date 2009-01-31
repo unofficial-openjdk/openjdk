@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vm_version_solaris_i486.cpp	1.6 07/05/05 17:04:51 JVM"
 #endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.

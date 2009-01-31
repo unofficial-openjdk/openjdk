@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)mutex_win32.inline.hpp	1.18 07/05/05 17:04:44 JVM"
 #endif
 /*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -25,3 +25,14 @@
  *  
  */
 
+inline bool Mutex::lock_implementation() {
+  return InterlockedIncrement((long *) &_lock_count)==0;
+}
+
+
+inline bool Mutex::try_lock_implementation() {
+  // We can only get the lock, if we can atomicly increase the _lock_count 
+  // from -1 to 0. Hence, this is like lock_implementation, except that we
+  // only count if the initial value is -1.
+  return (Atomic::cmpxchg(0, &_lock_count, -1) == -1);
+}

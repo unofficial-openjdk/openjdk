@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_globals_sparc.hpp	1.68 07/05/05 17:04:27 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -60,7 +60,6 @@ define_pd_global(uintx, PermSize,                    12*M );
 define_pd_global(uintx, MaxPermSize,                 64*M );
 define_pd_global(bool, NeverActAsServerClassMachine, true);
 define_pd_global(intx, NewSizeThreadIncrease,        16*K );
-define_pd_global(uintx, DefaultMaxRAM,               1*G);
 define_pd_global(intx, InitialCodeCacheSize,         160*K);
 #endif // TIERED
 

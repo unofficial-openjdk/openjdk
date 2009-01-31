@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)specialized_oop_closures.hpp	1.30 07/05/29 09:44:17 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.

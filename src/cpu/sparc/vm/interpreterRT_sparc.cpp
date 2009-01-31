@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interpreterRT_sparc.cpp	1.72 07/05/05 17:04:29 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -143,7 +143,7 @@ void InterpreterRuntime::SignatureHandlerGenerator::generate(uint64_t fingerprin
   iterate(fingerprint);
 
   // return result handler
-  Address result_handler(Lscratch, Interpreter::result_handler(method()->result_type()));
+  Address result_handler(Lscratch, AbstractInterpreter::result_handler(method()->result_type()));
   __ sethi(result_handler);
   __ retl();
   __ delayed()->add(result_handler, result_handler.base());
@@ -259,5 +259,5 @@ IRT_ENTRY(address, InterpreterRuntime::slow_signature_handler(
   // back to the code that pops the arguments into the CPU registers
   SlowSignatureHandler(m, (address)from, m->is_static() ? to+2 : to+1, to).iterate(UCONST64(-1));
   // return result handler
-  return Interpreter::result_handler(m->result_type());
+  return AbstractInterpreter::result_handler(m->result_type());
 IRT_END

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)relocInfo_sparc.hpp	1.22 07/05/05 17:04:31 JVM"
 #endif
 /*
  * Copyright 1997-2001 Sun Microsystems, Inc.  All Rights Reserved.

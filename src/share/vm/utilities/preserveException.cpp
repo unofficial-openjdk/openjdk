@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)preserveException.cpp	1.21 07/05/05 17:07:11 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.

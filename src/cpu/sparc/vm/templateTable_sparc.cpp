@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)templateTable_sparc.cpp	1.261 07/05/05 17:04:33 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,7 +28,6 @@
 #include "incls/_precompiled.incl"
 #include "incls/_templateTable_sparc.cpp.incl"
 
-#ifndef CC_INTERP
 #define __ _masm->
 
 
@@ -3573,4 +3572,3 @@ void TemplateTable::multianewarray() {
      call_VM(Otos_i, CAST_FROM_FN_PTR(address, InterpreterRuntime::multianewarray), O1);
   __ add(  Lesp,     Lscratch,        Lesp); // pop all dimensions off the stack
 }
-#endif /* !CC_INTERP */

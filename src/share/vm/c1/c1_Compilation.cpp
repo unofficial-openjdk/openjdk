@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_Compilation.cpp	1.159 07/05/17 15:49:28 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -290,16 +290,13 @@ int Compilation::compile_java_method() {
 }
 
 void Compilation::install_code(int frame_size) {
-  // frame_size is in 32-bit words so adjust it intptr_t words
-  assert(frame_size == frame_map()->framesize(), "must match");
-  assert(in_bytes(frame_map()->framesize_in_bytes()) % sizeof(intptr_t) == 0, "must be at least pointer aligned");
   _env->register_method(
     method(),
     osr_bci(),
     &_offsets,
     in_bytes(_frame_map->sp_offset_for_orig_pc()),
     code(),
-    in_bytes(frame_map()->framesize_in_bytes()) / sizeof(intptr_t),
+    frame_size,
     debug_info_recorder()->_oopmaps,
     exception_handler_table(),
     implicit_exception_table(),

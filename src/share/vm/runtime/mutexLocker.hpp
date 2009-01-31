@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)mutexLocker.hpp	1.150 07/06/19 03:54:12 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -122,9 +122,9 @@ char *lock_name(Mutex *mutex);
 
 class MutexLocker: StackObj {
  private:
-  Monitor * _mutex;
+  Mutex* _mutex;
  public:
-  MutexLocker(Monitor * mutex) {
+  MutexLocker(Mutex* mutex) {
     assert(mutex->rank() != Mutex::special,
       "Special ranked mutex should only use MutexLockerEx");
     _mutex = mutex;
@@ -132,7 +132,7 @@ class MutexLocker: StackObj {
   }
 
   // Overloaded constructor passing current thread
-  MutexLocker(Monitor * mutex, Thread *thread) {
+  MutexLocker(Mutex* mutex, Thread *thread) {
     assert(mutex->rank() != Mutex::special,
       "Special ranked mutex should only use MutexLockerEx");
     _mutex = mutex;
@@ -147,8 +147,8 @@ class MutexLocker: StackObj {
 
 // for debugging: check that we're already owning this lock (or are at a safepoint)
 #ifdef ASSERT
-void assert_locked_or_safepoint(const Monitor * lock);
-void assert_lock_strong(const Monitor * lock);
+void assert_locked_or_safepoint(const Mutex* lock);
+void assert_lock_strong(const Mutex* lock);
 #else
 #define assert_locked_or_safepoint(lock)
 #define assert_lock_strong(lock)
@@ -163,9 +163,9 @@ void assert_lock_strong(const Monitor * lock);
 
 class MutexLockerEx: public StackObj {
  private:
-  Monitor * _mutex;
+  Mutex* _mutex;
  public:
-  MutexLockerEx(Monitor * mutex, bool no_safepoint_check = !Mutex::_no_safepoint_check_flag) {
+  MutexLockerEx(Mutex* mutex, bool no_safepoint_check = !Mutex::_no_safepoint_check_flag) {
     _mutex = mutex;
     if (_mutex != NULL) {
       assert(mutex->rank() > Mutex::special || no_safepoint_check,
@@ -190,7 +190,7 @@ class MutexLockerEx: public StackObj {
 
 class MonitorLockerEx: public MutexLockerEx {
  private:
-  Monitor * _monitor;
+  Monitor* _monitor;
  public:
   MonitorLockerEx(Monitor* monitor,
                   bool no_safepoint_check = !Mutex::_no_safepoint_check_flag):
@@ -242,10 +242,10 @@ class MonitorLockerEx: public MutexLockerEx {
 
 class GCMutexLocker: public StackObj {
 private:
-  Monitor * _mutex;
+  Mutex* _mutex;
   bool _locked;
 public:
-  GCMutexLocker(Monitor * mutex);
+  GCMutexLocker(Mutex* mutex);
   ~GCMutexLocker() { if (_locked) _mutex->unlock(); }
 };
 
@@ -256,10 +256,10 @@ public:
 
 class MutexUnlocker: StackObj {
  private:
-  Monitor * _mutex;
+  Mutex* _mutex;
 
  public:
-  MutexUnlocker(Monitor * mutex) {
+  MutexUnlocker(Mutex* mutex) {
     _mutex = mutex;
     _mutex->unlock();
   }
@@ -274,11 +274,11 @@ class MutexUnlocker: StackObj {
 
 class MutexUnlockerEx: StackObj {
  private:
-  Monitor * _mutex;
+  Mutex* _mutex;
   bool _no_safepoint_check;
 
  public:
-  MutexUnlockerEx(Monitor * mutex, bool no_safepoint_check = !Mutex::_no_safepoint_check_flag) {
+  MutexUnlockerEx(Mutex* mutex, bool no_safepoint_check = !Mutex::_no_safepoint_check_flag) {
     _mutex = mutex;
     _no_safepoint_check = no_safepoint_check;
     _mutex->unlock();
@@ -305,10 +305,10 @@ class MutexUnlockerEx: StackObj {
 //
 class VerifyMutexLocker: StackObj {
  private:
-  Monitor * _mutex;
+  Mutex* _mutex;
   bool   _reentrant;
  public:
-  VerifyMutexLocker(Monitor * mutex) {
+  VerifyMutexLocker(Mutex* mutex) {
     _mutex     = mutex;
     _reentrant = mutex->owned_by_self();
     if (!_reentrant) {

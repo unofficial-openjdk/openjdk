@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)attachListener.hpp	1.11 07/05/05 17:07:04 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,7 +34,6 @@
 // complets the result value and any result data is returned to the client
 // tool.
 
-#ifndef SERVICES_KERNEL
 
 class AttachOperation;
 
@@ -44,31 +43,25 @@ struct AttachOperationFunctionInfo {
   const char* name;
   AttachOperationFunction func;
 };
-#endif // SERVICES_KERNEL
 
 class AttachListener: AllStatic {
- public:
-  static void init()  KERNEL_RETURN;
-  static void abort() KERNEL_RETURN;
-
-  // invoke to perform clean-up tasks when all clients detach
-  static void detachall() KERNEL_RETURN;
-
-  // indicates if the Attach Listener needs to be created at startup
-  static bool init_at_startup() KERNEL_RETURN_(return false;);
-
-  // indicates if we have a trigger to start the Attach Listener
-  static bool is_init_trigger() KERNEL_RETURN_(return false;);
-
-#ifdef SERVICES_KERNEL
-  static bool is_attach_supported()             { return false; }
-#else // SERVICES_KERNEL
  private:
   static volatile bool _initialized;
 
  public:
+  static void init();
   static bool is_initialized()			{ return _initialized; }
   static void set_initialized()                 { _initialized = true; }
+  static void abort();
+
+  // invoke to perform clean-up tasks when all clients detach
+  static void detachall();
+
+  // indicates if the Attach Listener needs to be created at startup
+  static bool init_at_startup();
+
+  // indicates if we have a trigger to start the Attach Listener
+  static bool is_init_trigger();
 
   // indicates if this VM supports attach-on-demand
   static bool is_attach_supported()             { return !DisableAttachMechanism; }
@@ -90,10 +83,8 @@ class AttachListener: AllStatic {
 
   // dequeue the next operation
   static AttachOperation* dequeue();
-#endif // SERVICES_KERNEL
 };
 
-#ifndef SERVICES_KERNEL
 class AttachOperation: public CHeapObj {
  public:
   enum {
@@ -147,4 +138,6 @@ class AttachOperation: public CHeapObj {
   // complete operation by sending result code and any result data to the client
   virtual void complete(jint result, bufferedStream* result_stream) = 0;
 };
-#endif // SERVICES_KERNEL
+
+
+

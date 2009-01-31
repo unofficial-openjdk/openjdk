@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)heapInspection.cpp	1.21 07/05/29 09:44:16 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.

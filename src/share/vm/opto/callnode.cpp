@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)callnode.cpp	1.235 07/05/05 17:06:13 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -830,7 +830,8 @@ uint AllocateNode::size_of() const { return sizeof(*this); }
 
 AllocateNode::AllocateNode(Compile* C, const TypeFunc *atype,
                            Node *ctrl, Node *mem, Node *abio,
-                           Node *size, Node *klass_node, Node *initial_test)
+                           Node *size, Node *klass_node, Node *initial_test,
+                           Node *eden_top, Node *eden_end)
   : CallNode(atype, NULL, TypeRawPtr::BOTTOM)
 {
   init_class_id(Class_Allocate);
@@ -845,8 +846,9 @@ AllocateNode::AllocateNode(Compile* C, const TypeFunc *atype,
   init_req( AllocSize          , size);
   init_req( KlassNode          , klass_node);
   init_req( InitialTest        , initial_test);
+  init_req( EdenTop            , eden_top);
+  init_req( EdenEnd            , eden_end);
   init_req( ALength            , topnode);
-  init_req( ALengthRaw         , topnode);
   C->add_macro_node(this);
 }
 

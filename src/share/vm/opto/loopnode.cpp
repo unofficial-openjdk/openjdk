@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)loopnode.cpp	1.258 07/05/17 17:44:08 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -269,7 +269,7 @@ Node *PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
 
   // Check for SafePoint on backedge and remove
   Node *sfpt = x->in(LoopNode::LoopBackControl);
-  if( sfpt->Opcode() == Op_SafePoint && is_deleteable_safept(sfpt)) {
+  if( sfpt->Opcode() == Op_SafePoint ) {
     lazy_replace( sfpt, iftrue );
     loop->_tail = iftrue;
   }
@@ -460,7 +460,7 @@ Node *PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
 
   // Check for immediately preceeding SafePoint and remove
   Node *sfpt2 = le->in(0);
-  if( sfpt2->Opcode() == Op_SafePoint && is_deleteable_safept(sfpt2))
+  if( sfpt2->Opcode() == Op_SafePoint )
     lazy_replace( sfpt2, sfpt2->in(TypeFunc::Control));
 
   // Free up intermediate goo
@@ -1113,172 +1113,30 @@ bool IdealLoopTree::beautify_loops( PhaseIdealLoop *phase ) {
   return result;
 }
 
-//------------------------------allpaths_check_safepts----------------------------
-// Allpaths backwards scan from loop tail, terminating each path at first safepoint
-// encountered.  Helper for check_safepts.
-void IdealLoopTree::allpaths_check_safepts(VectorSet &visited, Node_List &stack) {
-  assert(stack.size() == 0, "empty stack");
-  stack.push(_tail);
-  visited.Clear();
-  visited.set(_tail->_idx);
-  while (stack.size() > 0) {
-    Node* n = stack.pop();
-    if (n->is_Call() && n->as_Call()->guaranteed_safepoint()) {
-      // Terminate this path
-    } else if (n->Opcode() == Op_SafePoint) {
-      if (_phase->get_loop(n) != this) {
-        if (_required_safept == NULL) _required_safept = new Node_List();
-        _required_safept->push(n);  // save the one closest to the tail
-      }
-      // Terminate this path
-    } else {
-      uint start = n->is_Region() ? 1 : 0;
-      uint end   = n->is_Region() && !n->is_Loop() ? n->req() : start + 1;
-      for (uint i = start; i < end; i++) {
-        Node* in = n->in(i);
-        assert(in->is_CFG(), "must be");
-        if (!visited.test_set(in->_idx) && is_member(_phase->get_loop(in))) {
-          stack.push(in);
-        }
-      }
-    }
-  }
-}
+//------------------------------check_inner_safepts----------------------------
+// Given dominators, try to find inner loops with calls that must always be
+// executed (call dominates loop tail).  These loops do not need a seperate
+// safepoint.
+void IdealLoopTree::check_inner_safepts( PhaseIdealLoop *phase ) {
 
-//------------------------------check_safepts----------------------------
-// Given dominators, try to find loops with calls that must always be
-// executed (call dominates loop tail).  These loops do not need non-call
-// safepoints (ncsfpt).
-// 
-// A complication is that a safepoint in a inner loop may be needed
-// by an outer loop. In the following, the inner loop sees it has a
-// call (block 3) on every path from the head (block 2) to the
-// backedge (arc 3->2).  So it deletes the ncsfpt (non-call safepoint)
-// in block 2, _but_ this leaves the outer loop without a safepoint.
-//
-//          entry  0
-//                 |
-//                 v
-// outer 1,2    +->1
-//              |  |
-//              |  v
-//              |  2<---+  ncsfpt in 2
-//              |_/|\   |
-//                 | v  |
-// inner 2,3      /  3  |  call in 3
-//               /   |  |
-//              v    +--+
-//        exit  4
-//
-// 
-// This method creates a list (_required_safept) of ncsfpt nodes that must
-// be protected is created for each loop. When a ncsfpt maybe deleted, it
-// is first looked for in the lists for the outer loops of the current loop.
-//
-// The insights into the problem:
-//  A) counted loops are okay
-//  B) innermost loops are okay (only an inner loop can delete
-//     a ncsfpt needed by an outer loop)
-//  C) a loop is immune from an inner loop deleting a safepoint
-//     if the loop has a call on the idom-path
-//  D) a loop is also immune if it has a ncsfpt (non-call safepoint) on the
-//     idom-path that is not in a nested loop
-//  E) otherwise, an ncsfpt on the idom-path that is nested in an inner
-//     loop needs to be prevented from deletion by an inner loop
-//
-// There are two analyses:
-//  1) The first, and cheaper one, scans the loop body from
-//     tail to head following the idom (immediate dominator)
-//     chain, looking for the cases (C,D,E) above.
-//     Since inner loops are scanned before outer loops, there is summary
-//     information about inner loops.  Inner loops can be skipped over
-//     when the tail of an inner loop is encountered.
-//
-//  2) The second, invoked if the first fails to find a call or ncsfpt on
-//     the idom path (which is rare), scans all predecessor control paths
-//     from the tail to the head, terminating a path when a call or sfpt
-//     is encountered, to find the ncsfpt's that are closest to the tail.
-//
-void IdealLoopTree::check_safepts(VectorSet &visited, Node_List &stack) {
-  // Bottom up traversal
-  IdealLoopTree* ch = _child;
-  while (ch != NULL) {
-    ch->check_safepts(visited, stack);
-    ch = ch->_next;
-  }
-  
-  if (!_head->is_CountedLoop() && !_has_sfpt && _parent != NULL && !_irreducible) {
-    bool  has_call         = false; // call on dom-path
-    bool  has_local_ncsfpt = false; // ncsfpt on dom-path at this loop depth
-    Node* nonlocal_ncsfpt  = NULL;  // ncsfpt on dom-path at a deeper depth
-    // Scan the dom-path nodes from tail to head
-    for (Node* n = tail(); n != _head; n = _phase->idom(n)) {
-      if (n->is_Call() && n->as_Call()->guaranteed_safepoint()) {
-        has_call = true;
+  // No safepoints found yet?  Not irreducible?
+  if( !_has_sfpt && !_irreducible &&
+      // Inner loop, or at least a short trip count to walk the loop?
+      (!_child ||
+       (phase->dom_depth(tail()) - phase->dom_depth(_head)) < 20 ) ) {
+    // Look for a dominating call
+    for (Node* n = tail(); n != _head; n = phase->idom(n)) {
+      if( n->is_Call() &&       // Found a call on idom chain?
+         n->as_Call()->guaranteed_safepoint() ) {
         _has_sfpt = 1;          // Then no need for a safept!
         break;
-      } else if (n->Opcode() == Op_SafePoint) {
-        if (_phase->get_loop(n) == this) {
-          has_local_ncsfpt = true;
-          break;
-        }
-        if (nonlocal_ncsfpt == NULL) {
-          nonlocal_ncsfpt = n; // save the one closest to the tail
-        }
-      } else {
-        IdealLoopTree* nlpt = _phase->get_loop(n);
-        if (this != nlpt) {
-          // If at an inner loop tail, see if the inner loop has already
-          // recorded seeing a call on the dom-path (and stop.)  If not,
-          // jump to the head of the inner loop.
-          assert(is_member(nlpt), "nested loop");
-          Node* tail = nlpt->_tail;
-          if (tail->in(0)->is_If()) tail = tail->in(0);
-          if (n == tail) {
-            // If inner loop has call on dom-path, so does outer loop
-            if (nlpt->_has_sfpt) {
-              has_call = true;
-              _has_sfpt = 1; 
-              break;
-            }
-            // Skip to head of inner loop
-            assert(_phase->is_dominator(_head, nlpt->_head), "inner head dominated by outer head");
-            n = nlpt->_head;
-          }
-        }
-      }
-    }
-    // Record safept's that this loop needs preserved when an
-    // inner loop attempts to delete it's safepoints.
-    if (_child != NULL && !has_call && !has_local_ncsfpt) {
-      if (nonlocal_ncsfpt != NULL) {
-        if (_required_safept == NULL) _required_safept = new Node_List();
-        _required_safept->push(nonlocal_ncsfpt);
-      } else {
-        // Failed to find a suitable safept on the dom-path.  Now use
-        // an all paths walk from tail to head, looking for safepoints to preserve.
-        allpaths_check_safepts(visited, stack);
       }
     }
   }
-}
 
-//---------------------------is_deleteable_safept----------------------------
-// Is safept not required by an outer loop?
-bool PhaseIdealLoop::is_deleteable_safept(Node* sfpt) {
-  assert(sfpt->Opcode() == Op_SafePoint, "");
-  IdealLoopTree* lp = get_loop(sfpt)->_parent;
-  while (lp != NULL) {
-    Node_List* sfpts = lp->_required_safept;
-    if (sfpts != NULL) {
-      for (uint i = 0; i < sfpts->size(); i++) {
-        if (sfpt == sfpts->at(i))
-          return false;
-      }
-    }
-    lp = lp->_parent;
-  }
-  return true;
+  // Recursively
+  if( _child ) _child->check_inner_safepts( phase );
+  if( _next  ) _next ->check_inner_safepts( phase );
 }
 
 //------------------------------counted_loop-----------------------------------
@@ -1296,8 +1154,7 @@ void IdealLoopTree::counted_loop( PhaseIdealLoop *phase ) {
 
     // Look for a safepoint to remove
     for (Node* n = tail(); n != _head; n = phase->idom(n))
-      if (n->Opcode() == Op_SafePoint && phase->get_loop(n) == this &&
-          phase->is_deleteable_safept(n))
+      if( n->Opcode() == Op_SafePoint ) // Found a safept?
         phase->lazy_replace(n,n->in(TypeFunc::Control));
 
     CountedLoopNode *cl = _head->as_CountedLoop();
@@ -1372,21 +1229,6 @@ void IdealLoopTree::counted_loop( PhaseIdealLoop *phase ) {
         --i; // deleted this phi; rescan starting with next position
         continue;
       }
-    }
-  } else if (_parent != NULL && !_irreducible) {
-    // Not a counted loop. 
-    // Look for a safepoint on the idom-path to remove, preserving the first one
-    bool found = false;
-    Node* n = tail();
-    for (; n != _head && !found; n = phase->idom(n)) {
-      if (n->Opcode() == Op_SafePoint && phase->get_loop(n) == this)
-        found = true; // Found one
-    }
-    // Skip past it and delete the others
-    for (; n != _head; n = phase->idom(n)) {
-      if (n->Opcode() == Op_SafePoint && phase->get_loop(n) == this &&
-          phase->is_deleteable_safept(n))
-        phase->lazy_replace(n,n->in(TypeFunc::Control));
     }
   }
 
@@ -1532,8 +1374,7 @@ PhaseIdealLoop::PhaseIdealLoop( PhaseIterGVN &igvn, const PhaseIdealLoop *verify
   // Given dominators, try to find inner loops with calls that must
   // always be executed (call dominates loop tail).  These loops do
   // not need a seperate safepoint.
-  Node_List cisstack(a);
-  _ltree_root->check_safepts(visited, cisstack);
+  _ltree_root->check_inner_safepts( this );
 
   // Walk the DATA nodes and place into loops.  Find earliest control
   // node.  For CFG nodes, the _nodes array starts out and remains
@@ -2278,8 +2119,7 @@ void PhaseIdealLoop::build_loop_early( VectorSet &visited, Node_List &worklist, 
           // (the old code here would yank a 2nd safepoint after seeing a
           // first one, even though the 1st did not dominate in the loop body
           // and thus could be avoided indefinitely)
-          if( !verify_me && ilt->_has_sfpt && n->Opcode() == Op_SafePoint &&
-              is_deleteable_safept(n)) {
+          if( !verify_me && ilt->_has_sfpt && n->Opcode() == Op_SafePoint ) {
             Node *in = n->in(TypeFunc::Control);
             lazy_replace(n,in);       // Pull safepoint now
             // Carry on with the recursion "as if" we are walking

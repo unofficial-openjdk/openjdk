@@ -236,7 +236,7 @@ class CompilerInterfaceVC6  extends CompilerInterface {
 	       "                /nologo /base:\"0x8000000\" /subsystem:windows /dll" +
 	       "                /export:JNI_GetDefaultJavaVMInitArgs /export:JNI_CreateJavaVM /export:JNI_GetCreatedJavaVMs "+ 
 	       "                /export:jio_snprintf /export:jio_printf /export:jio_fprintf /export:jio_vfprintf "+
-	       "                /export:jio_vsnprintf ");
+	       "                /export:jio_vsnprintf /export:JVM_EnqueueOperation ");
 	rv.add("SUBTRACT LINK32 /pdb:none /map");
 
 	return rv;

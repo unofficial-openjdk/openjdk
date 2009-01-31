@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)register_definitions_sparc.cpp	1.12 07/05/05 17:04:31 JVM"
 #endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -144,22 +144,10 @@ REGISTER_DEFINITION(Register, G1_scratch);
 REGISTER_DEFINITION(Register, G3_scratch);
 REGISTER_DEFINITION(Register, G4_scratch);
 REGISTER_DEFINITION(Register, Gtemp);
-REGISTER_DEFINITION(Register, Lentry_args);
-
-#ifdef CC_INTERP
-REGISTER_DEFINITION(Register, Lstate);
-REGISTER_DEFINITION(Register, L1_scratch);
-REGISTER_DEFINITION(Register, Lmirror);
-REGISTER_DEFINITION(Register, L2_scratch);
-REGISTER_DEFINITION(Register, L3_scratch);
-REGISTER_DEFINITION(Register, L4_scratch);
-REGISTER_DEFINITION(Register, Lscratch);
-REGISTER_DEFINITION(Register, Lscratch2);
-REGISTER_DEFINITION(Register, L7_scratch);
-REGISTER_DEFINITION(Register, I5_savedSP);
-#else // CC_INTERP
 REGISTER_DEFINITION(Register, Lesp);
 REGISTER_DEFINITION(Register, Lbcp);
+REGISTER_DEFINITION(Register, Lmethod);
+REGISTER_DEFINITION(Register, Llocals);
 REGISTER_DEFINITION(Register, Lmonitors);
 REGISTER_DEFINITION(Register, Lbyte_code);
 REGISTER_DEFINITION(Register, Llast_SP);
@@ -171,8 +159,5 @@ REGISTER_DEFINITION(Register, O5_savedSP);
 REGISTER_DEFINITION(Register, IdispatchAddress);
 REGISTER_DEFINITION(Register, ImethodDataPtr);
 REGISTER_DEFINITION(Register, IdispatchTables);
-#endif // CC_INTERP
-REGISTER_DEFINITION(Register, Lmethod);
-REGISTER_DEFINITION(Register, Llocals);
 REGISTER_DEFINITION(Register, Oexception);
 REGISTER_DEFINITION(Register, Oissuing_pc);

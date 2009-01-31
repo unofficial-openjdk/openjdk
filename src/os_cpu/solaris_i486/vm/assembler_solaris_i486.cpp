@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_solaris_i486.cpp	1.20 07/05/05 17:04:51 JVM"
 #endif
 /*
  * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,14 +29,14 @@
 #include "incls/_assembler_solaris_i486.cpp.incl"
 
 
-void MacroAssembler::int3() {
-  pushl(rax);
-  pushl(rdx);
-  pushl(rcx);
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
-  popl(rcx);
-  popl(rdx);
-  popl(rax);
+void Assembler::int3() {
+  pushl(eax);
+  pushl(edx);
+  pushl(ecx);
+  call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
+  popl(ecx);
+  popl(edx);
+  popl(eax);
 }
 
 void MacroAssembler::get_thread(Register thread) {  
@@ -46,17 +46,14 @@ void MacroAssembler::get_thread(Register thread) {
   if (tlsMode == ThreadLocalStorage::pd_tlsAccessIndirect) { 		// T1
      // Use thread as a temporary: mov r, gs:[0]; mov r, [r+tlsOffset]
      emit_byte (Assembler::GS_segment) ; 			
-     // ExternalAddress doesn't work because it can't take NULL
-     AddressLiteral null(0, relocInfo::none);
-     movptr (thread, null);
+     movl (thread, Address(0, relocInfo::none)) ; 
      movl (thread, Address(thread, ThreadLocalStorage::pd_getTlsOffset())) ; 
      return ; 
   } else 
   if (tlsMode == ThreadLocalStorage::pd_tlsAccessDirect) { 		// T2 
      // mov r, gs:[tlsOffset]
      emit_byte (Assembler::GS_segment) ; 			
-     AddressLiteral tls((address)ThreadLocalStorage::pd_getTlsOffset(), relocInfo::none);
-     movptr (thread, tls);
+     movl (thread, Address(ThreadLocalStorage::pd_getTlsOffset(), relocInfo::none)) ; 
      return ; 
   }
 
@@ -65,21 +62,21 @@ void MacroAssembler::get_thread(Register thread) {
   // Consider using pthread_getspecific instead.  
 
   pushl(0);								// allocate space for return value
-  if (thread != rax) pushl(rax);					// save rax, if caller still wants it
-  pushl(rcx);							        // save caller save
-  pushl(rdx);							        // save caller save
-  if (thread != rax) {
-    leal(thread, Address(rsp, 3 * sizeof(int)));	                // address of return value
+  if (thread != eax) pushl(eax);					// save eax if caller still wants it
+  pushl(ecx);							        // save caller save
+  pushl(edx);							        // save caller save
+  if (thread != eax) {
+    leal(thread, Address(esp, 3 * sizeof(int)));	                // address of return value
   } else {
-    leal(thread, Address(rsp, 2 * sizeof(int)));	                // address of return value
+    leal(thread, Address(esp, 2 * sizeof(int)));	                // address of return value
   }
   pushl(thread);							// and pass the address
   pushl(ThreadLocalStorage::thread_index());				// the key
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, thr_getspecific)));
-  increment(rsp, 2 * wordSize);
-  popl(rdx);
-  popl(rcx);
-  if (thread != rax) popl(rax);
+  call(CAST_FROM_FN_PTR(address, thr_getspecific), relocInfo::runtime_call_type);
+  increment(esp, 2 * wordSize);
+  popl(edx);
+  popl(ecx);
+  if (thread != eax) popl(eax);
   popl(thread);
 }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)psParallelCompact.hpp	1.47 07/05/05 17:05:30 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.

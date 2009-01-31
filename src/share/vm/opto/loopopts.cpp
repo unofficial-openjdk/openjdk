@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)loopopts.cpp	1.220 07/06/29 13:39:54 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -602,9 +602,6 @@ Node *PhaseIdealLoop::split_if_with_blocks_pre( Node *n ) {
       return n;
     }
   }
-
-  // Use same limit as split_if_with_blocks_post
-  if( C->unique() > 35000 ) return n; // Method too big
 
   // Split 'n' through the merge point if it is profitable
   Node *phi = split_thru_phi( n, n_blk, policy );

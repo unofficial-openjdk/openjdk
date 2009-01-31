@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)register_i486.hpp	1.26 07/05/05 17:04:19 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -41,13 +41,8 @@ inline Register as_Register(int encoding) {
 class RegisterImpl: public AbstractRegisterImpl {
  public:
   enum {
-#ifndef AMD64
     number_of_registers      = 8,
     number_of_byte_registers = 4
-#else
-    number_of_registers      = 16,
-    number_of_byte_registers = 16
-#endif // AMD64
   };
 
   // derived registers, offsets, and addresses
@@ -59,35 +54,26 @@ class RegisterImpl: public AbstractRegisterImpl {
   VMReg as_VMReg();
 
   // accessors
-  int   encoding() const                         { assert(is_valid(), "invalid register"); return (intptr_t)this; }
-  bool  is_valid() const                         { return 0 <= (intptr_t)this && (intptr_t)this < number_of_registers; }
-  bool  has_byte_register() const                { return 0 <= (intptr_t)this && (intptr_t)this < number_of_byte_registers; }
+  int   encoding() const                         { assert(is_valid(), "invalid register"); return (int)this; }
+  bool  is_valid() const                         { return 0 <= (int)this && (int)this < number_of_registers; }
+  bool  has_byte_register() const                { return 0 <= (int)this && (int)this < number_of_byte_registers; }
   const char* name() const;
 };
 
-// The integer registers of the ia32/amd64 architecture
+// The integer registers of the ia32 architecture
 
 CONSTANT_REGISTER_DECLARATION(Register, noreg, (-1));
 
+CONSTANT_REGISTER_DECLARATION(Register, eax  , ( 0));
+CONSTANT_REGISTER_DECLARATION(Register, ecx  , ( 1));
+CONSTANT_REGISTER_DECLARATION(Register, edx  , ( 2));
+CONSTANT_REGISTER_DECLARATION(Register, ebx  , ( 3));
 
-CONSTANT_REGISTER_DECLARATION(Register, rax,    (0));
-CONSTANT_REGISTER_DECLARATION(Register, rcx,    (1));
-CONSTANT_REGISTER_DECLARATION(Register, rdx,    (2));
-CONSTANT_REGISTER_DECLARATION(Register, rbx,    (3));
-CONSTANT_REGISTER_DECLARATION(Register, rsp,    (4));
-CONSTANT_REGISTER_DECLARATION(Register, rbp,    (5));
-CONSTANT_REGISTER_DECLARATION(Register, rsi,    (6));
-CONSTANT_REGISTER_DECLARATION(Register, rdi,    (7));
-#ifdef AMD64
-CONSTANT_REGISTER_DECLARATION(Register, r8,     (8));
-CONSTANT_REGISTER_DECLARATION(Register, r9,     (9));
-CONSTANT_REGISTER_DECLARATION(Register, r10,   (10));
-CONSTANT_REGISTER_DECLARATION(Register, r11,   (11));
-CONSTANT_REGISTER_DECLARATION(Register, r12,   (12));
-CONSTANT_REGISTER_DECLARATION(Register, r13,   (13));
-CONSTANT_REGISTER_DECLARATION(Register, r14,   (14));
-CONSTANT_REGISTER_DECLARATION(Register, r15,   (15));
-#endif // AMD64
+CONSTANT_REGISTER_DECLARATION(Register, esp  , ( 4));
+CONSTANT_REGISTER_DECLARATION(Register, ebp  , ( 5));
+CONSTANT_REGISTER_DECLARATION(Register, esi  , ( 6));
+CONSTANT_REGISTER_DECLARATION(Register, edi  , ( 7));
+
 
 // Use FloatRegister as shortcut
 class FloatRegisterImpl;
@@ -113,8 +99,8 @@ class FloatRegisterImpl: public AbstractRegisterImpl {
   FloatRegister successor() const                          { return as_FloatRegister(encoding() + 1); }
 
   // accessors
-  int   encoding() const                          { assert(is_valid(), "invalid register"); return (intptr_t)this; }
-  bool  is_valid() const                          { return 0 <= (intptr_t)this && (intptr_t)this < number_of_registers; }
+  int   encoding() const                          { assert(is_valid(), "invalid register"); return (int)this; }
+  bool  is_valid() const                          { return 0 <= (int)this && (int)this < number_of_registers; }
   const char* name() const;
 
 };
@@ -128,22 +114,18 @@ class MMXRegisterImpl;
 typedef MMXRegisterImpl* MMXRegister;
 
 inline XMMRegister as_XMMRegister(int encoding) {
-  return (XMMRegister)(intptr_t)encoding;
+  return (XMMRegister)encoding;
 }
 
 inline MMXRegister as_MMXRegister(int encoding) {
-  return (MMXRegister)(intptr_t)encoding;
+  return (MMXRegister)encoding;
 }
 
 // The implementation of XMM registers for the IA32 architecture
 class XMMRegisterImpl: public AbstractRegisterImpl {
  public:
   enum {
-#ifndef AMD64
     number_of_registers = 8
-#else
-    number_of_registers = 16
-#endif // AMD64
   };
 
   // construction
@@ -155,8 +137,8 @@ class XMMRegisterImpl: public AbstractRegisterImpl {
   XMMRegister successor() const                          { return as_XMMRegister(encoding() + 1); }
 
   // accessors
-  int   encoding() const                          { assert(is_valid(), "invalid register"); return (intptr_t)this; }
-  bool  is_valid() const                          { return 0 <= (intptr_t)this && (intptr_t)this < number_of_registers; }
+  int   encoding() const                          { assert(is_valid(), "invalid register"); return (int)this; }
+  bool  is_valid() const                          { return 0 <= (int)this && (int)this < number_of_registers; }
   const char* name() const;
 };
 
@@ -171,20 +153,23 @@ CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm4 , ( 4));
 CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm5 , ( 5));
 CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm6 , ( 6));
 CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm7 , ( 7));
-#ifdef AMD64
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm8,      (8));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm9,      (9));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm10,    (10));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm11,    (11));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm12,    (12));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm13,    (13));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm14,    (14));
-CONSTANT_REGISTER_DECLARATION(XMMRegister, xmm15,    (15));
-#endif // AMD64
 
-// Only used by the 32bit stubGenerator. These can't be described by vmreg and hence
-// can't be described in oopMaps and therefore can't be used by the compilers (at least
-// were deopt might wan't to see them).
+// The implementation of MMX registers for the IA32 architecture
+class MMXRegisterImpl: public AbstractRegisterImpl {
+ public:
+  enum {
+    number_of_registers = 8
+  };
+
+  // construction
+  friend MMXRegister as_MMXRegister(int encoding);
+
+  // accessors
+  int   encoding() const                          { assert(is_valid(), "invalid register"); return (int)this; }
+  bool  is_valid() const                          { return 0 <= (int)this && (int)this < number_of_registers; }
+  const char* name() const;
+};
+
 
 // The MMX registers, for P3 and up chips
 CONSTANT_REGISTER_DECLARATION(MMXRegister, mnoreg , (-1));
@@ -197,7 +182,6 @@ CONSTANT_REGISTER_DECLARATION(MMXRegister, mmx5 , ( 5));
 CONSTANT_REGISTER_DECLARATION(MMXRegister, mmx6 , ( 6));
 CONSTANT_REGISTER_DECLARATION(MMXRegister, mmx7 , ( 7));
 
-
 // Need to know the total number of registers of all sorts for SharedInfo.
 // Define a class that exports it.
 class ConcreteRegisterImpl : public AbstractRegisterImpl {
@@ -209,9 +193,6 @@ class ConcreteRegisterImpl : public AbstractRegisterImpl {
   // it's optoregs.
 
     number_of_registers =      RegisterImpl::number_of_registers + 
-#ifdef AMD64
-                               RegisterImpl::number_of_registers +  // "H" half of a 64bit register
-#endif // AMD64
                            2 * FloatRegisterImpl::number_of_registers + 
                            2 * XMMRegisterImpl::number_of_registers +
                            1 // eflags

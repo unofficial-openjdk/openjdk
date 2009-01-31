@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame_sparc.cpp	1.174 07/05/05 17:04:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -189,7 +189,7 @@ frame::frame(intptr_t* sp, unpatchable_t, address pc, CodeBlob* cb) {
   _younger_sp = NULL;
   _pc = pc;
   _cb = cb;
-  _sp_adjustment_by_callee = 0;
+  _interpreter_sp_adjustment = 0;
   assert(pc == NULL && cb == NULL || pc != NULL, "can't have a cb and no pc!");
   if (_cb == NULL && _pc != NULL ) {
     _cb = CodeCache::find_blob(_pc);
@@ -203,7 +203,7 @@ frame::frame(intptr_t* sp, unpatchable_t, address pc, CodeBlob* cb) {
 #endif // ASSERT
 }
 
-frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_stack) { 
+frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_is_interpreted) { 
   _sp = sp;
   _younger_sp = younger_sp;
   if (younger_sp == NULL) {
@@ -219,12 +219,12 @@ frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_sta
     // wrong.  (the _last_native_pc will have the right value)
     // So do not put add any asserts on the _pc here.
   }
-  if (younger_frame_adjusted_stack) {
+  if (younger_frame_is_interpreted) {
     // compute adjustment to this frame's SP made by its interpreted callee
-    _sp_adjustment_by_callee = (intptr_t*)((intptr_t)younger_sp[I5_savedSP->sp_offset_in_saved_window()] +
+    _interpreter_sp_adjustment = (intptr_t*)((intptr_t)younger_sp[I5_savedSP->sp_offset_in_saved_window()] +
                                              STACK_BIAS) - sp;
   } else {
-    _sp_adjustment_by_callee = 0;
+    _interpreter_sp_adjustment = 0;
   }
 
   _deopt_state = unknown;
@@ -242,9 +242,6 @@ frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_sta
   }
 }
 
-bool frame::is_interpreted_frame() const  {
-  return Interpreter::contains(pc());
-}
 
 // sender_sp
 
@@ -253,12 +250,10 @@ intptr_t* frame::interpreter_frame_sender_sp() const {
   return fp();
 }
 
-#ifndef CC_INTERP
 void frame::set_interpreter_frame_sender_sp(intptr_t* sender_sp) {
   assert(is_interpreted_frame(), "interpreted frame expected");
   Unimplemented();
 }
-#endif // CC_INTERP
 
 
 #ifdef ASSERT
@@ -330,7 +325,7 @@ frame frame::sender(RegisterMap* map) const {
 
   intptr_t* younger_sp     = sp();
   intptr_t* sp             = sender_sp();
-  bool      adjusted_stack = false;
+  bool      is_interpreted = false; 
 
   // Note:  The version of this operation on any platform with callee-save
   //        registers must update the register map (if not null).
@@ -345,12 +340,11 @@ frame frame::sender(RegisterMap* map) const {
   //        the RegisterMap update logic from the Intel code.
 
   // The constructor of the sender must know whether this frame is interpreted so it can set the
-  // sender's _sp_adjustment_by_callee field.  An osr adapter frame was originally
+  // sender's _interpreter_sp_adjustment field.  An osr adapter frame was originally
   // interpreted but its pc is in the code cache (for c1 -> osr_frame_return_id stub), so it must be
   // explicitly recognized. 
-
-  adjusted_stack = is_interpreted_frame();
-  if (adjusted_stack) {
+  if (Interpreter::contains(pc())) {
+    is_interpreted = true;
     map->make_integer_regs_unsaved();
     map->shift_window(sp, younger_sp);
   } else if (_cb != NULL) {
@@ -368,8 +362,12 @@ frame frame::sender(RegisterMap* map) const {
         OopMapSet::update_register_map(this, map);
       }
     }
+  } else if (Interpreter::contains(pc())) {
+    is_interpreted = true;
+    map->make_integer_regs_unsaved();
+    map->shift_window(sp, younger_sp);
   }
-  return frame(sp, younger_sp, adjusted_stack);
+  return frame(sp, younger_sp, is_interpreted);
 }
 
 
@@ -454,9 +452,6 @@ void frame::pd_gc_epilog() {
 
 
 bool frame::is_interpreted_frame_valid() const {
-#ifdef CC_INTERP
-  // Is there anything to do?
-#else
   assert(is_interpreted_frame(), "Not an interpreted frame");
   // These are reasonable sanity checks
   if (fp() == 0 || (intptr_t(fp()) & (2*wordSize-1)) != 0) {
@@ -477,7 +472,6 @@ bool frame::is_interpreted_frame_valid() const {
   if (fp() - sp() > 4096) {  // stack frames shouldn't be large.
     return false;
   }
-#endif /* CC_INTERP */
   return true;
 }
 
@@ -517,14 +511,6 @@ void JavaFrameAnchor::make_walkable(JavaThread* thread) {
   }
 }
 
-intptr_t* frame::entry_frame_argument_at(int offset) const {
-  // convert offset to index to deal with tsi
-  int index = (Interpreter::expr_offset_in_bytes(offset)/wordSize);
-
-  intptr_t* LSP = (intptr_t*) sp()[Lentry_args->sp_offset_in_saved_window()];
-  return &LSP[index+1];
-}
-
 
 BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result) {
   assert(is_interpreted_frame(), "interpreted frame expected");
@@ -535,14 +521,8 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
     // Prior to notifying the runtime of the method_exit the possible result
     // value is saved to l_scratch and d_scratch.
 
-#ifdef CC_INTERP
-    interpreterState istate = get_interpreterState();
-    intptr_t* l_scratch = (intptr_t*) &istate->_native_lresult;
-    intptr_t* d_scratch = (intptr_t*) &istate->_native_fresult;
-#else /* CC_INTERP */
     intptr_t* l_scratch = fp() + interpreter_frame_l_scratch_fp_offset;
     intptr_t* d_scratch = fp() + interpreter_frame_d_scratch_fp_offset;
-#endif /* CC_INTERP */
 
     address l_addr = (address)l_scratch;
 #ifdef _LP64
@@ -554,13 +534,9 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
     switch (type) {
       case T_OBJECT:
       case T_ARRAY: {
-#ifdef CC_INTERP
-	*oop_result = istate->_oop_temp;
-#else
 	oop obj = (oop) at(interpreter_frame_oop_temp_offset);
 	assert(obj == NULL || Universe::heap()->is_in(obj), "sanity check");
 	*oop_result = obj;
-#endif // CC_INTERP
 	break;
       }
 

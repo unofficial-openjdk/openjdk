@@ -465,13 +465,6 @@ static jvmtiError JNICALL
   <xsl:apply-templates select="parameters" mode="signature"/>
   <xsl:text>) {
 </xsl:text>
-
-  <xsl:if test="not(contains(@jkernel,'yes'))">
-  <xsl:text>&#xA;#ifdef JVMTI_KERNEL &#xA;</xsl:text>
-  <xsl:text>  return JVMTI_ERROR_NOT_AVAILABLE; &#xA;</xsl:text>
-  <xsl:text>#else &#xA;</xsl:text>
-  </xsl:if>
-
   <xsl:apply-templates select="." mode="traceSetUp"/>
   <xsl:choose>
     <xsl:when test="count(@phase)=0 or contains(@phase,'live')">
@@ -591,13 +584,9 @@ static jvmtiError JNICALL
     </xsl:otherwise>
   </xsl:choose>
   <xsl:text>  return err;
+}
+
 </xsl:text>
-
-  <xsl:if test="not(contains(@jkernel,'yes'))">
-  <xsl:text>#endif // JVMTI_KERNEL&#xA;</xsl:text>
-  </xsl:if>
-
-  <xsl:text>}&#xA;</xsl:text>
 </xsl:template>
 
 <xsl:template match="function" mode="doCall">

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)constantTag.cpp	1.21 07/05/05 17:07:08 JVM"
 #endif
 /*
  * Copyright 1997-1999 Sun Microsystems, Inc.  All Rights Reserved.

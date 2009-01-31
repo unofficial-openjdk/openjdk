@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)objectMonitor_linux.cpp	1.69 07/05/05 17:04:36 JVM"
 #endif
 
 /*

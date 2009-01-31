@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)compactibleFreeListSpace.cpp	1.143 07/07/17 11:43:33 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.

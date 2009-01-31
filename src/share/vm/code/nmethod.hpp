@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)nmethod.hpp	1.170 07/05/17 15:50:48 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -523,13 +523,8 @@ class nmethod : public CodeBlob {
   // PrimitiveIC*   primitiveIC_at(char* p) const;
   oop embeddedOop_at(address p);
 
-  // tells if any of this method's dependencies have been invalidated
-  // (this is expensive!)
-  bool check_all_dependencies();
-
-  // tells if this compiled method is dependent on the given changes,
-  // and the changes have invalidated it
-  bool check_dependency_on(DepChange& changes);
+  // tells if this compiled method is dependent on
+  bool is_dependent_on(klassOop dependee);  
 
   // Evolution support. Tells if this compiled method is dependent on any of
   // methods m() of class dependee, such that if m() in dependee is replaced,

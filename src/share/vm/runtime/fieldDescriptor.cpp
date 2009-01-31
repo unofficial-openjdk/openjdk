@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)fieldDescriptor.cpp	1.56 07/05/05 17:06:46 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.

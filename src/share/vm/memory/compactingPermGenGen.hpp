@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)compactingPermGenGen.hpp	1.20 07/05/05 17:05:45 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -237,7 +237,7 @@ public:
   void verify(bool allow_dirty);
 
   // Serialization
-  static void initialize_oops() KERNEL_RETURN;
+  static void initialize_oops();
   static void serialize_oops(SerializeOopClosure* soc);
   void serialize_bts(SerializeOopClosure* soc);
 

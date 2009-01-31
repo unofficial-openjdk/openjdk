@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LIRGenerator_sparc.cpp	1.10 07/05/05 17:04:26 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -195,24 +195,16 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
       base_opr = array_opr;
       offset = array_offset + offset;
     } else {
-      base_opr = new_pointer_register();
+      base_opr = new_register(T_INT);
       if (Assembler::is_simm13(array_offset)) {
-        __ add(array_opr, LIR_OprFact::intptrConst(array_offset), base_opr);
+        __ add(array_opr, LIR_OprFact::intConst(array_offset), base_opr);
       } else {
-        __ move(LIR_OprFact::intptrConst(array_offset), base_opr);
+        __ move(LIR_OprFact::intConst(array_offset), base_opr);
         __ add(base_opr, array_opr, base_opr);
       }
     }
   } else {
-#ifdef _LP64
-    if (index_opr->type() == T_INT) {
-      LIR_Opr tmp = new_register(T_LONG);
-      __ convert(Bytecodes::_i2l, index_opr, tmp);
-      index_opr = tmp;
-    }
-#endif
-
-    base_opr = new_pointer_register();
+    base_opr = new_register(T_INT);
     assert (index_opr->is_register(), "Must be register");
     if (shift > 0) {
       __ shift_left(index_opr, shift, base_opr);
@@ -222,8 +214,8 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
     }
   }
   if (needs_card_mark) {
-    LIR_Opr ptr = new_pointer_register();
-    __ add(base_opr, LIR_OprFact::intptrConst(offset), ptr);
+    LIR_Opr ptr = new_register(T_INT);
+    __ add(base_opr, LIR_OprFact::intConst(offset), ptr);
     return new LIR_Address(ptr, 0, type);
   } else {
     return new LIR_Address(base_opr, offset, type);
@@ -232,8 +224,8 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
 
 
 void LIRGenerator::increment_counter(address counter, int step) {
-  LIR_Opr pointer = new_pointer_register();
-  __ move(LIR_OprFact::intptrConst(counter), pointer);
+  LIR_Opr pointer = new_register(T_INT);
+  __ move(LIR_OprFact::intConst((int)counter), pointer);
   LIR_Address* addr = new LIR_Address(pointer, 0, T_INT);
   increment_counter(addr, step);
 }
@@ -370,8 +362,7 @@ void LIRGenerator::do_StoreIndexed(StoreIndexed* x) {
 
   __ move(value.result(), array_addr, null_check_info);
   if (obj_store) {
-    // Is this precise?
-    post_barrier(LIR_OprFact::address(array_addr), value.result());
+    write_barrier(LIR_OprFact::address(array_addr));
   }
 }
 
@@ -656,7 +647,7 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   // Use temps to avoid kills
   LIR_Opr t1 = FrameMap::G1_opr; 
   LIR_Opr t2 = FrameMap::G3_opr; 
-  LIR_Opr addr = new_pointer_register();
+  LIR_Opr addr = new_register(T_INT);
 
   // get address of field
   obj.load_item();
@@ -680,7 +671,7 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   LIR_Opr result = rlock_result(x);
   __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result);
   if (type == objectType) {  // Write-barrier needed for Object fields.
-    post_barrier(obj.result(), val.result());
+    write_barrier(addr);
   }
 }
 
@@ -970,10 +961,10 @@ void LIRGenerator::do_NewMultiArray(NewMultiArray* x) {
   jobject2reg_with_patching(reg, x->klass(), patching_info);
   LIR_Opr rank = FrameMap::O1_opr;
   __ move(LIR_OprFact::intConst(x->rank()), rank);
-  LIR_Opr varargs = FrameMap::as_pointer_opr(O2);
+  LIR_Opr varargs = FrameMap::O2_opr;
   int offset_from_sp = (frame::memory_parameter_word_sp_offset * wordSize) + STACK_BIAS;
   __ add(FrameMap::SP_opr,
-         LIR_OprFact::intptrConst(offset_from_sp),
+         LIR_OprFact::intConst(offset_from_sp),
          varargs);
   LIR_OprList* args = new LIR_OprList(3);
   args->append(reg);
@@ -1100,7 +1091,7 @@ void LIRGenerator::do_If(If* x) {
 
 
 LIR_Opr LIRGenerator::getThreadPointer() {
-  return FrameMap::as_pointer_opr(G2);
+  return FrameMap::G2_opr;
 }
 
 
@@ -1116,7 +1107,7 @@ void LIRGenerator::trace_block_entry(BlockBegin* block) {
 void LIRGenerator::volatile_field_store(LIR_Opr value, LIR_Address* address,
                                         CodeEmitInfo* info) {
 #ifdef _LP64
-  __ store(value, address, info);
+  __ store_mem_reg(value, address, info);
 #else
   __ volatile_store_mem_reg(value, address, info);
 #endif
@@ -1125,7 +1116,7 @@ void LIRGenerator::volatile_field_store(LIR_Opr value, LIR_Address* address,
 void LIRGenerator::volatile_field_load(LIR_Address* address, LIR_Opr result,
                                        CodeEmitInfo* info) {
 #ifdef _LP64
-  __ load(address, result, info);
+  __ load_mem_reg(address, result, info);
 #else
   __ volatile_load_mem_reg(address, result, info);
 #endif
@@ -1137,7 +1128,6 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
   LIR_Opr base_op = src;
   LIR_Opr index_op = offset;
 
-  bool is_obj = (type == T_ARRAY || type == T_OBJECT);
 #ifndef _LP64
   if (is_volatile && type == T_LONG) {
     __ volatile_store_unsafe_reg(data, src, offset, type, NULL, lir_patch_none);
@@ -1149,7 +1139,7 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
       }
       LIR_Address* addr;
       if (type == T_ARRAY || type == T_OBJECT) {
-        LIR_Opr tmp = new_pointer_register();
+        LIR_Opr tmp = new_register(T_OBJECT);
         __ add(base_op, index_op, tmp);
         addr = new LIR_Address(tmp, 0, type);
       } else {
@@ -1157,9 +1147,8 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
       }
 
       __ move(data, addr);
-      if (is_obj) {
-        // This address is precise
-        post_barrier(LIR_OprFact::address(addr), data);
+      if (type == T_ARRAY || type == T_OBJECT) {
+        write_barrier(LIR_OprFact::address(addr));
       }
     }
 }
@@ -1167,12 +1156,9 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
 
 void LIRGenerator::get_Object_unsafe(LIR_Opr dst, LIR_Opr src, LIR_Opr offset,
                                      BasicType type, bool is_volatile) {
-#ifndef _LP64
   if (is_volatile && type == T_LONG) {
     __ volatile_load_unsafe_reg(src, offset, dst, type, NULL, lir_patch_none);
-  } else
-#endif
-    {
+  } else {
     LIR_Address* addr = new LIR_Address(src, offset, type);
     __ load(addr, dst);
   }

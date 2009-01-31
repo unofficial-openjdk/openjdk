@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame.cpp	1.233 07/05/05 17:06:44 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -524,7 +524,7 @@ void frame::print_value_on(outputStream* st, JavaThread *thread) const {
   NOT_PRODUCT(address begin = pc()-40;)
   NOT_PRODUCT(address end   = NULL;)
 
-  st->print("%s frame (sp=" INTPTR_FORMAT " unextended sp=" INTPTR_FORMAT, print_name(), sp(), unextended_sp());
+  st->print("%s frame (sp=" INTPTR_FORMAT, print_name(), sp());
   if (sp() != NULL)
     st->print(", fp=" INTPTR_FORMAT ", pc=" INTPTR_FORMAT, fp(), pc());
 
@@ -900,7 +900,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   // Interpreter frame in the midst of a call have a methodOop within the
   // object. 
   interpreterState istate = get_interpreterState();
-  if (istate->msg() == BytecodeInterpreter::call_method) {
+  if (istate->msg() == cInterpreter::call_method) {
     f->do_oop((oop*)&istate->_result._to_call._callee);
   }
 

@@ -122,12 +122,12 @@ OPT_CFLAGS += -O3
 # Hotspot uses very unstrict aliasing turn this optimization off
 OPT_CFLAGS += -fno-strict-aliasing
 
-# The gcc compiler segv's on ia64 when compiling bytecodeInterpreter.cpp 
+# The gcc compiler segv's on ia64 when compiling cInterpreter.cpp 
 # if we use expensive-optimizations
 # Note: all ia64 setting reflect the ones for linux
 # No actial testing was performed: there is no Solaris on ia64 presently
 ifeq ($(BUILDARCH), ia64)
-OPT_CFLAGS/bytecodeInterpreter.o += -fno-expensive-optimizations
+OPT_CFLAGS/cInterpreter.o += -fno-expensive-optimizations
 endif
 
 OPT_CFLAGS/NOOPT=-O0

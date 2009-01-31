@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_amd64.hpp	1.41 07/06/13 16:23:17 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,9 +29,9 @@ class BiasedLockingCounters;
 
 // Contains all the definitions needed for amd64 assembly code generation.
 
-#ifdef _LP64
 // Calling convention
-class Argument VALUE_OBJ_CLASS_SPEC {
+class Argument VALUE_OBJ_CLASS_SPEC 
+{
  public:
   enum {
 #ifdef _WIN64
@@ -57,10 +57,10 @@ REGISTER_DECLARATION(Register, c_rarg1, rdx);
 REGISTER_DECLARATION(Register, c_rarg2, r8);
 REGISTER_DECLARATION(Register, c_rarg3, r9);
 
-REGISTER_DECLARATION(XMMRegister, c_farg0, xmm0);
-REGISTER_DECLARATION(XMMRegister, c_farg1, xmm1);
-REGISTER_DECLARATION(XMMRegister, c_farg2, xmm2);
-REGISTER_DECLARATION(XMMRegister, c_farg3, xmm3);
+REGISTER_DECLARATION(FloatRegister, c_farg0, xmm0);
+REGISTER_DECLARATION(FloatRegister, c_farg1, xmm1);
+REGISTER_DECLARATION(FloatRegister, c_farg2, xmm2);
+REGISTER_DECLARATION(FloatRegister, c_farg3, xmm3);
 
 #else
 
@@ -71,14 +71,14 @@ REGISTER_DECLARATION(Register, c_rarg3, rcx);
 REGISTER_DECLARATION(Register, c_rarg4, r8);
 REGISTER_DECLARATION(Register, c_rarg5, r9);
 
-REGISTER_DECLARATION(XMMRegister, c_farg0, xmm0);
-REGISTER_DECLARATION(XMMRegister, c_farg1, xmm1);
-REGISTER_DECLARATION(XMMRegister, c_farg2, xmm2);
-REGISTER_DECLARATION(XMMRegister, c_farg3, xmm3);
-REGISTER_DECLARATION(XMMRegister, c_farg4, xmm4);
-REGISTER_DECLARATION(XMMRegister, c_farg5, xmm5);
-REGISTER_DECLARATION(XMMRegister, c_farg6, xmm6);
-REGISTER_DECLARATION(XMMRegister, c_farg7, xmm7);
+REGISTER_DECLARATION(FloatRegister, c_farg0, xmm0);
+REGISTER_DECLARATION(FloatRegister, c_farg1, xmm1);
+REGISTER_DECLARATION(FloatRegister, c_farg2, xmm2);
+REGISTER_DECLARATION(FloatRegister, c_farg3, xmm3);
+REGISTER_DECLARATION(FloatRegister, c_farg4, xmm4);
+REGISTER_DECLARATION(FloatRegister, c_farg5, xmm5);
+REGISTER_DECLARATION(FloatRegister, c_farg6, xmm6);
+REGISTER_DECLARATION(FloatRegister, c_farg7, xmm7);
 
 #endif
 
@@ -111,29 +111,26 @@ REGISTER_DECLARATION(Register, j_rarg4, c_rarg5);
 #endif /* _WIN64 */
 REGISTER_DECLARATION(Register, j_rarg5, c_rarg0);
 
-REGISTER_DECLARATION(XMMRegister, j_farg0, xmm0);
-REGISTER_DECLARATION(XMMRegister, j_farg1, xmm1);
-REGISTER_DECLARATION(XMMRegister, j_farg2, xmm2);
-REGISTER_DECLARATION(XMMRegister, j_farg3, xmm3);
-REGISTER_DECLARATION(XMMRegister, j_farg4, xmm4);
-REGISTER_DECLARATION(XMMRegister, j_farg5, xmm5);
-REGISTER_DECLARATION(XMMRegister, j_farg6, xmm6);
-REGISTER_DECLARATION(XMMRegister, j_farg7, xmm7);
+REGISTER_DECLARATION(FloatRegister, j_farg0, xmm0);
+REGISTER_DECLARATION(FloatRegister, j_farg1, xmm1);
+REGISTER_DECLARATION(FloatRegister, j_farg2, xmm2);
+REGISTER_DECLARATION(FloatRegister, j_farg3, xmm3);
+REGISTER_DECLARATION(FloatRegister, j_farg4, xmm4);
+REGISTER_DECLARATION(FloatRegister, j_farg5, xmm5);
+REGISTER_DECLARATION(FloatRegister, j_farg6, xmm6);
+REGISTER_DECLARATION(FloatRegister, j_farg7, xmm7);
 
 REGISTER_DECLARATION(Register, rscratch1, r10);  // volatile
 REGISTER_DECLARATION(Register, rscratch2, r11);  // volatile
 
 REGISTER_DECLARATION(Register, r15_thread, r15); // callee-saved
 
-#endif // _LP64
 
 // Address is an abstraction used to represent a memory location
 // using any of the amd64 addressing modes with one object.
 //
 // Note: A register location is represented via a Register, not
 //       via an address for efficiency & simplicity reasons.
-
-class ArrayAddress;
 
 class Address VALUE_OBJ_CLASS_SPEC {
  public:
@@ -152,9 +149,7 @@ class Address VALUE_OBJ_CLASS_SPEC {
   int              _disp;
   RelocationHolder _rspec;
 
-  // Easily misused constructors make them private
-  Address(int disp, address loc, relocInfo::relocType rtype);
-  Address(int disp, address loc, RelocationHolder spec);
+  address          _target; // only used for RIP-relative addressing
 
  public:
   // creation
@@ -162,24 +157,46 @@ class Address VALUE_OBJ_CLASS_SPEC {
     : _base(noreg),
       _index(noreg),
       _scale(no_scale),
-      _disp(0) {
-  }
+      _disp(0),
+      _target(NULL)
+  {}
 
-  // No default displacement otherwise Register can be implicitly
-  // converted to 0(Register) which is quite a different animal.
+  // NOTE: this constructor takes a dummy argument so that we don't
+  // have implicit type conversion going on behind our pack. Possibly
+  // could be private instead.
+  Address(int disp, bool dummy)
+    : _base(noreg),
+      _index(noreg),
+      _scale(no_scale),
+      _disp(disp),
+      _target(NULL)
+  {}
 
-  Address(Register base, int disp)
+  Address(address target, relocInfo::relocType rtype);
+
+  Address(address target, RelocationHolder const& rspec)
+    : _base(noreg),
+      _index(noreg),
+      _scale(no_scale),
+      _rspec(rspec),
+      _disp(0),
+      _target(target)
+  {}
+
+  Address(Register base, int disp = 0)
     : _base(base),
       _index(noreg),
       _scale(no_scale),
-      _disp(disp) {
-  }
+      _disp(disp),
+      _target(NULL)
+  {}
 
   Address(Register base, Register index, ScaleFactor scale, int disp = 0)
     : _base (base),
       _index(index),
       _scale(scale),
-      _disp (disp) {
+      _disp (disp),
+      _target(NULL) {
     assert(!index->is_valid() == (scale == Address::no_scale), 
            "inconsistent address");
   }
@@ -200,14 +217,16 @@ class Address VALUE_OBJ_CLASS_SPEC {
     : _base(base),
       _index(noreg),
       _scale(no_scale),
-      _disp(in_bytes(disp)) {
-  }
+      _disp(in_bytes(disp)),
+      _target(NULL)
+  {}
 
   Address(Register base, Register index, ScaleFactor scale, ByteSize disp)
     : _base(base),
       _index(index),
       _scale(scale),
-      _disp(in_bytes(disp)) {
+      _disp(in_bytes(disp)),
+      _target(NULL) {
     assert(!index->is_valid() == (scale == Address::no_scale),
            "inconsistent address");
   }
@@ -218,12 +237,6 @@ class Address VALUE_OBJ_CLASS_SPEC {
     return _base == reg || _index == reg; 
   }
 
-  // Convert the raw encoding form into the form expected by the constructor for
-  // Address.  An index of 4 (rsp) corresponds to having no index, so convert
-  // that to noreg for the Address constructor.
-  static Address make_raw(int base, int index, int scale, int disp);
-
-  static Address make_array(ArrayAddress);
 
  private:
   bool base_needs_rex() const {
@@ -234,126 +247,24 @@ class Address VALUE_OBJ_CLASS_SPEC {
     return _index != noreg &&_index->encoding() >= 8;
   }
 
-  relocInfo::relocType reloc() const { return _rspec.type(); }
-
-  friend class Assembler;
-  friend class MacroAssembler;
-  friend class LIR_Assembler; // base/index/scale/disp
-};
-
-//
-// AddressLiteral has been split out from Address because operands of this type
-// need to be treated specially on 32bit vs. 64bit platforms. By splitting it out
-// the few instructions that need to deal with address literals are unique and the
-// MacroAssembler does not have to implement every instruction in the Assembler
-// in order to search for address literals that may need special handling depending
-// on the instruction and the platform. As small step on the way to merging i486/amd64
-// directories.
-//
-class AddressLiteral VALUE_OBJ_CLASS_SPEC {
-  friend class ArrayAddress;
-  RelocationHolder _rspec;
-  // Typically we use AddressLiterals we want to use their rval
-  // However in some situations we want the lval (effect address) of the item.
-  // We provide a special factory for making those lvals.
-  bool _is_lval; 
-
-  // If the target is far we'll need to load the ea of this to
-  // a register to reach it. Otherwise if near we can do rip
-  // relative addressing.
-
-  address          _target; 
-
- protected:
-  // creation
-  AddressLiteral()
-    : _is_lval(false),
-      _target(NULL)
-  {}
-
-  public:
-
-
-  AddressLiteral(address target, relocInfo::relocType rtype);
-
-  AddressLiteral(address target, RelocationHolder const& rspec)
-    : _rspec(rspec),
-      _is_lval(false),
-      _target(target)
-  {}
-
-  AddressLiteral addr() {
-    AddressLiteral ret = *this;
-    ret._is_lval = true;
-    return ret;
+  bool is_rip_relative() const {
+    return _target != NULL;
   }
 
-
- private:
-
-  address target() { return _target; }
-  bool is_lval() { return _is_lval; }
-
+  // Return true if the relocation is such that it will deserve a 64-bit
+  // relocation. We assume that everything in the code cache is reachable
+  // from everything else in the code cache but that from the code cache
+  // to external_word or runtime_call is too far.
+  bool is_far() const {
+    relocInfo::relocType r = _rspec.type();
+    return r == relocInfo::runtime_call_type || r == relocInfo::external_word_type; 
+  }
   relocInfo::relocType reloc() const { return _rspec.type(); }
-  const RelocationHolder& rspec() const { return _rspec; }
 
   friend class Assembler;
   friend class MacroAssembler;
-  friend class Address;
-  friend class LIR_Assembler;
 };
 
-// Convience classes
-class RuntimeAddress: public AddressLiteral {
-
-  public:
-
-  RuntimeAddress(address target) : AddressLiteral(target, relocInfo::runtime_call_type) {}
-  
-};
-
-class OopAddress: public AddressLiteral {
-
-  public:
-
-  OopAddress(address target) : AddressLiteral(target, relocInfo::oop_type){}
-  
-};
-
-class ExternalAddress: public AddressLiteral {
-
-  public:
-
-  ExternalAddress(address target) : AddressLiteral(target, relocInfo::external_word_type){}
-  
-};
-
-class InternalAddress: public AddressLiteral {
-
-  public:
-
-  InternalAddress(address target) : AddressLiteral(target, relocInfo::internal_word_type) {}
-  
-};
-
-// x86 can do array addressing as a single operation since disp can be an absolute
-// address but amd64 can't [e.g. array_base(rx, ry:width) ]. We create a class
-// that expresses the concept but does extra magic on amd64 to get the final result
-
-class ArrayAddress VALUE_OBJ_CLASS_SPEC {
-  private:
-
-  AddressLiteral _base;
-  Address        _index;
-
-  public:
-
-  ArrayAddress() {};
-  ArrayAddress(AddressLiteral base, Address index): _base(base), _index(index) {};
-  AddressLiteral base() { return _base; }
-  Address index() { return _index; }
-
-};
 
 // The amd64 Assembler: Pure assembler doing NO optimizations on
 // the instruction level (e.g. mov rax, 0 is not translated into xor
@@ -362,10 +273,11 @@ class ArrayAddress VALUE_OBJ_CLASS_SPEC {
 
 const int FPUStateSizeInWords = 512 / wordSize;
 
-class Assembler : public AbstractAssembler  {
+class Assembler 
+  : public AbstractAssembler  
+{
   friend class AbstractAssembler; // for the non-virtual hack
   friend class StubGenerator; 
-  
 
  protected:
 #ifdef ASSERT
@@ -374,8 +286,8 @@ class Assembler : public AbstractAssembler  {
 
   inline void emit_long64(jlong x);
 
-  void emit_data(jint data, relocInfo::relocType rtype, int format /* = 1 */);
-  void emit_data(jint data, RelocationHolder const& rspec, int format /* = 1 */);
+  void emit_data(jint data, relocInfo::relocType rtype, int format = 1);
+  void emit_data(jint data, RelocationHolder const& rspec, int format = 1);
   void emit_data64(jlong data, relocInfo::relocType rtype, int format = 0);
   void emit_data64(jlong data, RelocationHolder const& rspec, int format = 0);
 
@@ -383,23 +295,23 @@ class Assembler : public AbstractAssembler  {
   void emit_arith_b(int op1, int op2, Register dst, int imm8);
 
   void emit_arith(int op1, int op2, Register dst, int imm32);
-  // only x86??
-  void emit_arith(int op1, int op2, Register dst, jobject obj);
   void emit_arith(int op1, int op2, Register dst, Register src);
 
   void emit_operand(Register reg, 
                     Register base, Register index, Address::ScaleFactor scale, 
                     int disp,
+                    address target,
                     RelocationHolder const& rspec,
                     int rip_relative_correction = 0);
   void emit_operand(Register reg, Address adr,
                     int rip_relative_correction = 0);
-  void emit_operand(XMMRegister reg, 
+  void emit_operand(FloatRegister reg, 
                     Register base, Register index, Address::ScaleFactor scale,
                     int disp,
+                    address target,
                     RelocationHolder const& rspec,
                     int rip_relative_correction = 0);
-  void emit_operand(XMMRegister reg, Address adr,
+  void emit_operand(FloatRegister reg, Address adr,
                     int rip_relative_correction = 0);
 
   // Immediate-to-memory forms
@@ -407,30 +319,11 @@ class Assembler : public AbstractAssembler  {
 
   void emit_farith(int b1, int b2, int i);
 
-  bool reachable(AddressLiteral adr);
-
-  // These are all easily abused and hence protected
-
-  // Make these disappear in 64bit mode since they would never be correct
-#ifndef _LP64
-  void cmp_literal32(Register src1, int32_t imm32, RelocationHolder const& rspec);
-  void cmp_literal32(Address src1, int32_t imm32, RelocationHolder const& rspec);
-
-  void mov_literal32(Register dst, int32_t imm32, RelocationHolder const& rspec);
-  void mov_literal32(Address dst, int32_t imm32, RelocationHolder const& rspec);
-
-  void push_literal32(int32_t imm32, RelocationHolder const& rspec);
-#endif // _LP64
-
-
-  void mov_literal64(Register dst, intptr_t imm64, RelocationHolder const& rspec);
-
-  // These are unique in that we are ensured by the caller that the 32bit
-  // relative in these instructions will always be able to reach the potentially
-  // 64bit address described by entry. Since they can take a 64bit address they
-  // don't have the 32 suffix like the other instructions in this class.
-  void jmp_literal(address entry, RelocationHolder const& rspec);
-  void call_literal(address entry, RelocationHolder const& rspec);
+  // Helper routine used to determined if we can reach
+  // an address via rip relative addressing.
+  // As a convienence, we return true if the argument is
+  // not a rip address, since it will be reachable.
+  bool is_reachable(Address adr);
 
  public:
   enum Condition { // The amd64 condition codes used for conditional jumps/moves.
@@ -495,12 +388,10 @@ class Assembler : public AbstractAssembler  {
     _WhichOperand_limit = 3
   };
 
-  public:
-
   // Creation
   Assembler(CodeBuffer* code) 
-    : AbstractAssembler(code) {
-  }
+    : AbstractAssembler(code) 
+  {}
 
   // Decoding
   static address locate_operand(address inst, WhichOperand which);
@@ -520,7 +411,6 @@ class Assembler : public AbstractAssembler  {
   void popfq();
 
   void pushq(int imm32);
-
   void pushq(Register src);
   void pushq(Address src);
 
@@ -529,21 +419,6 @@ class Assembler : public AbstractAssembler  {
 
   // Instruction prefixes
   void prefix(Prefix p);
-
-  int prefix_and_encode(int reg_enc, bool byteinst = false);
-  int prefixq_and_encode(int reg_enc);
-
-  int prefix_and_encode(int dst_enc, int src_enc, bool byteinst = false);
-  int prefixq_and_encode(int dst_enc, int src_enc);
-
-  void prefix(Register reg);
-  void prefix(Address adr);
-  void prefixq(Address adr);
-
-  void prefix(Address adr, Register reg,  bool byteinst = false);
-  void prefixq(Address adr, Register reg);
-
-  void prefix(Address adr, XMMRegister reg);
 
   // Moves
   void movb(Register dst, Address src);
@@ -560,16 +435,13 @@ class Assembler : public AbstractAssembler  {
   void movl(Address dst, int imm32);
   void movl(Address dst, Register src);
 
+  void movq(Register dst, int64_t imm64);
+  void movq(Register dst, address imm64, relocInfo::relocType rtype);
   void movq(Register dst, Register src);
+  void movq(Register dst, jobject obj);
   void movq(Register dst, Address src);
+  void movq(Address dst, int64_t imm64);
   void movq(Address dst, Register src);
-  // These prevent using movq from converting a zero (like NULL) into Register
-  // by giving the compiler two choices it can't resolve
-  void movq(Address dst, void* dummy);
-  void movq(Register dst, void* dummy);
-
-  void mov64(Register dst, intptr_t imm64);
-  void mov64(Address dst, intptr_t imm64);
 
   void movsbl(Register dst, Address src);
   void movsbl(Register dst, Register src);
@@ -587,23 +459,23 @@ class Assembler : public AbstractAssembler  {
   // New cpus require use of movsd and movss to avoid partial register stall
   // when loading from memory. But for old Opteron use movlpd instead of movsd.
   // The selection is done in MacroAssembler::movdbl() and movflt().
-  void movss(XMMRegister dst, XMMRegister src);
-  void movss(XMMRegister dst, Address src);
-  void movss(Address dst, XMMRegister src);
-  void movsd(XMMRegister dst, XMMRegister src);
-  void movsd(Address dst, XMMRegister src);
-  void movsd(XMMRegister dst, Address src);
-  void movlpd(XMMRegister dst, Address src);
+  void movss(FloatRegister dst, FloatRegister src);
+  void movss(FloatRegister dst, Address src);
+  void movss(Address dst, FloatRegister src);
+  void movsd(FloatRegister dst, FloatRegister src);
+  void movsd(Address dst, FloatRegister src);
+  void movsd(FloatRegister dst, Address src);
+  void movlpd(FloatRegister dst, Address src);
   // New cpus require use of movaps and movapd to avoid partial register stall
   // when moving between registers.
-  void movapd(XMMRegister dst, XMMRegister src);
-  void movaps(XMMRegister dst, XMMRegister src);
+  void movapd(FloatRegister dst, FloatRegister src);
+  void movaps(FloatRegister dst, FloatRegister src);
  public:
 
-  void movdl(XMMRegister dst, Register src);
-  void movdl(Register dst, XMMRegister src);
-  void movdq(XMMRegister dst, Register src);
-  void movdq(Register dst, XMMRegister src);
+  void movdl(FloatRegister dst, Register src);
+  void movdl(Register dst, FloatRegister src);
+  void movdq(FloatRegister dst, Register src);
+  void movdq(Register dst, FloatRegister src);
 
   void cmovl(Condition cc, Register dst, Register src);
   void cmovl(Condition cc, Register dst, Address src);
@@ -652,13 +524,12 @@ class Assembler : public AbstractAssembler  {
   void cmpl(Register dst, Register src);
   void cmpl(Register dst, Address src);
   void cmpq(Address dst, int imm32);
-  void cmpq(Address dst, Register src);
   void cmpq(Register dst, int imm32);
   void cmpq(Register dst, Register src);
   void cmpq(Register dst, Address src);
 
-  void ucomiss(XMMRegister dst, XMMRegister src);
-  void ucomisd(XMMRegister dst, XMMRegister src);
+  void ucomiss(FloatRegister dst, FloatRegister src);
+  void ucomisd(FloatRegister dst, FloatRegister src);
 
  protected:
   // Don't use next inc() and dec() methods directly. INC & DEC instructions 
@@ -777,6 +648,7 @@ class Assembler : public AbstractAssembler  {
   void cmpxchgq(Register reg, Address adr);
 
   void hlt();
+  void int3();
   void nop(int i = 1);
   void ret(int imm16);
   void smovl();
@@ -796,7 +668,8 @@ class Assembler : public AbstractAssembler  {
   };
 
   // Serializes memory.
-  void membar(Membar_mask_bits order_constraint) {
+  void membar(Membar_mask_bits order_constraint)
+  {
     // We only have to handle StoreLoad and LoadLoad
     if (order_constraint & StoreLoad) {
       // MFENCE subsumes LFENCE
@@ -806,46 +679,54 @@ class Assembler : public AbstractAssembler  {
     } */
   }
 
-  void lfence() {
+  void lfence()
+  {
     emit_byte(0x0F);
     emit_byte(0xAE);
     emit_byte(0xE8);
   }
 
-  void mfence() {
+  void mfence()
+  {
     emit_byte(0x0F);
     emit_byte(0xAE);
     emit_byte(0xF0);
   }
 
   // Identify processor type and features
-  void cpuid() {
+  void cpuid() 
+  {
     emit_byte(0x0F);
     emit_byte(0xA2);
   }
 
-  void cld() { emit_byte(0xfc);
+  void cld() {
+    emit_byte(0xfc);
   }
 
-  void std() { emit_byte(0xfd);
+  void std() {
+    emit_byte(0xfd);
   }
 
 
   // Calls
-
   void call(Label& L, relocInfo::relocType rtype);
-  void call(Register reg);
+  void call(address entry, relocInfo::relocType rtype);
+  void call(address entry, RelocationHolder const& rspec);
+  void call(Register reg,  relocInfo::relocType rtype);
   void call(Address adr);
   
   // Jumps
-
-  void jmp(Register reg);
+  void jmp(address entry, relocInfo::relocType rtype);
+  void jmp(Register reg,  relocInfo::relocType rtype = relocInfo::none);
   void jmp(Address adr);
 
   // Label operations & relative jumps (PPUM Appendix D)
   // unconditional jump to L
   void jmp(Label& L, relocInfo::relocType rtype = relocInfo::none); 
 
+  // Force an 8-bit jump offset
+  void jmpb(address entry); 
 
   // Unconditional 8-bit offset jump to L.
   // WARNING: be very careful using this for forward jumps.  If the label is
@@ -868,8 +749,13 @@ class Assembler : public AbstractAssembler  {
   // Note: The same Label can be used for forward and backward branches
   // but it may be bound only once.
 
+  void jcc(Condition cc, address dst, 
+           relocInfo::relocType rtype = relocInfo::runtime_call_type);
   void jcc(Condition cc, Label& L, 
            relocInfo::relocType rtype = relocInfo::none);
+
+  // Force an 8-bit jump offset
+  void jccb(Condition cc, address dst);
 
   // Conditional jump to a 8-bit offset to L.
   // WARNING: be very careful using this for forward jumps.  If the label is
@@ -884,62 +770,42 @@ class Assembler : public AbstractAssembler  {
   void ldmxcsr(Address src);
   void stmxcsr(Address dst);
 
-  void addss(XMMRegister dst, XMMRegister src);
-  void addss(XMMRegister dst, Address src);
-  void subss(XMMRegister dst, XMMRegister src);
-  void subss(XMMRegister dst, Address src);
-  void mulss(XMMRegister dst, XMMRegister src);
-  void mulss(XMMRegister dst, Address src);
-  void divss(XMMRegister dst, XMMRegister src);
-  void divss(XMMRegister dst, Address src);
-  void addsd(XMMRegister dst, XMMRegister src);
-  void addsd(XMMRegister dst, Address src);
-  void subsd(XMMRegister dst, XMMRegister src);
-  void subsd(XMMRegister dst, Address src);
-  void mulsd(XMMRegister dst, XMMRegister src);
-  void mulsd(XMMRegister dst, Address src);
-  void divsd(XMMRegister dst, XMMRegister src);
-  void divsd(XMMRegister dst, Address src);
+  void addss(FloatRegister dst, FloatRegister src);
+  void addss(FloatRegister dst, Address src);
+  void subss(FloatRegister dst, FloatRegister src);
+  void subss(FloatRegister dst, Address src);
+  void mulss(FloatRegister dst, FloatRegister src);
+  void mulss(FloatRegister dst, Address src);
+  void divss(FloatRegister dst, FloatRegister src);
+  void divss(FloatRegister dst, Address src);
+  void addsd(FloatRegister dst, FloatRegister src);
+  void addsd(FloatRegister dst, Address src);
+  void subsd(FloatRegister dst, FloatRegister src);
+  void subsd(FloatRegister dst, Address src);
+  void mulsd(FloatRegister dst, FloatRegister src);
+  void mulsd(FloatRegister dst, Address src);
+  void divsd(FloatRegister dst, FloatRegister src);
+  void divsd(FloatRegister dst, Address src);
 
   // We only need the double form
-  void sqrtsd(XMMRegister dst, XMMRegister src);
-  void sqrtsd(XMMRegister dst, Address src);
+  void sqrtsd(FloatRegister dst, FloatRegister src);
+  void sqrtsd(FloatRegister dst, Address src);
 
-  void xorps(XMMRegister dst, XMMRegister src);
-  void xorps(XMMRegister dst, Address src);
-  void xorpd(XMMRegister dst, XMMRegister src);
-  void xorpd(XMMRegister dst, Address src);
+  void xorps(FloatRegister dst, FloatRegister src);
+  void xorps(FloatRegister dst, Address src);
+  void xorpd(FloatRegister dst, FloatRegister src);
+  void xorpd(FloatRegister dst, Address src);
 
-  void cvtsi2ssl(XMMRegister dst, Register src);
-  void cvtsi2ssq(XMMRegister dst, Register src);
-  void cvtsi2sdl(XMMRegister dst, Register src);
-  void cvtsi2sdq(XMMRegister dst, Register src);
-  void cvttss2sil(Register dst, XMMRegister src); // truncates
-  void cvttss2siq(Register dst, XMMRegister src); // truncates
-  void cvttsd2sil(Register dst, XMMRegister src); // truncates
-  void cvttsd2siq(Register dst, XMMRegister src); // truncates
-  void cvtss2sd(XMMRegister dst, XMMRegister src);
-  void cvtsd2ss(XMMRegister dst, XMMRegister src);
-
-  void pxor(XMMRegister dst, Address src);       // Xor Packed Byte Integer Values
-  void pxor(XMMRegister dst, XMMRegister src);   // Xor Packed Byte Integer Values
-
-  void movdqa(XMMRegister dst, Address src);     // Move Aligned Double Quadword
-  void movdqa(XMMRegister dst, XMMRegister src);
-  void movdqa(Address     dst, XMMRegister src);
-
-  void movq(XMMRegister dst, Address src);
-  void movq(Address dst, XMMRegister src);
-
-  void pshufd(XMMRegister dst, XMMRegister src, int mode); // Shuffle Packed Doublewords
-  void pshufd(XMMRegister dst, Address src,     int mode);
-  void pshuflw(XMMRegister dst, XMMRegister src, int mode); // Shuffle Packed Low Words
-  void pshuflw(XMMRegister dst, Address src,     int mode);
-
-  void psrlq(XMMRegister dst, int shift); // Shift Right Logical Quadword Immediate
-
-  void punpcklbw(XMMRegister dst, XMMRegister src); // Interleave Low Bytes
-  void punpcklbw(XMMRegister dst, Address src);
+  void cvtsi2ssl(FloatRegister dst, Register src);
+  void cvtsi2ssq(FloatRegister dst, Register src);
+  void cvtsi2sdl(FloatRegister dst, Register src);
+  void cvtsi2sdq(FloatRegister dst, Register src);
+  void cvttss2sil(Register dst, FloatRegister src); // truncates
+  void cvttss2siq(Register dst, FloatRegister src); // truncates
+  void cvttsd2sil(Register dst, FloatRegister src); // truncates
+  void cvttsd2siq(Register dst, FloatRegister src); // truncates
+  void cvtss2sd(FloatRegister dst, FloatRegister src);
+  void cvtsd2ss(FloatRegister dst, FloatRegister src);
 };
 
 
@@ -948,13 +814,10 @@ class Assembler : public AbstractAssembler  {
 // Instructions for which a 'better' code sequence exists depending
 // on arguments should also go in here.
 
-class MacroAssembler : public Assembler {
- friend class LIR_Assembler;
+class MacroAssembler
+  : public Assembler 
+{
  protected:
-
-  Address as_Address(AddressLiteral adr);
-  Address as_Address(ArrayAddress adr);
-
   // Support for VM calls
   //
   // This is the base routine called by the different versions of
@@ -1005,7 +868,7 @@ class MacroAssembler : public Assembler {
                       address entry_point, 
                       int number_of_arguments, 
                       bool check_exceptions = true);
-
+  
  public:
   MacroAssembler(CodeBuffer* code) : Assembler(code) {}
 
@@ -1053,33 +916,22 @@ class MacroAssembler : public Assembler {
   void decrementq(Address dst, int value = 1);
 
   // Support optimal SSE move instructions.
-  void movflt(XMMRegister dst, XMMRegister src) {
+  void movflt(FloatRegister dst, FloatRegister src) {
     if (UseXmmRegToRegMoveAll) { movaps(dst, src); return; }
     else                       { movss (dst, src); return; }
   }
+  void movflt(FloatRegister dst, Address src) { movss(dst, src); }
+  void movflt(Address dst, FloatRegister src) { movss(dst, src); }
 
-  void movflt(XMMRegister dst, Address src) { movss(dst, src); }
-
-  void movflt(XMMRegister dst, AddressLiteral src);
-
-  void movflt(Address dst, XMMRegister src) { movss(dst, src); }
-
-  void movdbl(XMMRegister dst, XMMRegister src) {
+  void movdbl(FloatRegister dst, FloatRegister src) {
     if (UseXmmRegToRegMoveAll) { movapd(dst, src); return; }
     else                       { movsd (dst, src); return; }
   }
-
-  void movdbl(XMMRegister dst, AddressLiteral src);
-
-  void movdbl(XMMRegister dst, Address src) {
+  void movdbl(FloatRegister dst, Address src) {
     if (UseXmmLoadAndClearUpper) { movsd (dst, src); return; }
     else                         { movlpd(dst, src); return; }
   }
-
-  void movdbl(Address dst, XMMRegister src) { movsd(dst, src); }
-
-  void incrementl(AddressLiteral dst);
-  void incrementl(ArrayAddress dst);
+  void movdbl(Address dst, FloatRegister src) { movsd(dst, src); }
 
   // Alignment
   void align(int modulus);
@@ -1087,6 +939,671 @@ class MacroAssembler : public Assembler {
   // Misc
   void fat_nop(); // 5 byte nop 
 
+  // If we can reach the address with a 32 bit displacement
+  // return true otherwise load the address into the scratch register
+  // and return false.
+  inline bool check_reach(Address adr) 
+  { 
+    if (is_reachable(adr)) 
+      return true;
+    // Must make it relocatable if it was relocatable in the first place
+    Assembler::movq(rscratch1, adr._target, adr.reloc());      
+    return false;
+  }
+
+  void pushq(Address src)
+  { 
+    check_reach(src)? Assembler::pushq(src) : 
+                      Assembler::pushq(Address(rscratch1)); 
+  }
+
+  void popq(Address dst)
+  { 
+    check_reach(dst)? Assembler::popq(dst) : 
+                      Assembler::popq(Address(rscratch1)); 
+  }
+
+  // Moves
+  void movb(Register dst, Address src)
+  { 
+    check_reach(dst) ? Assembler::movb(dst, src) :
+                       Assembler::movb(dst, Address(rscratch1));
+  }
+  void movb(Address dst, int imm8)
+  { 
+    check_reach(dst) ? Assembler::movb(dst, imm8) :
+                       Assembler::movb(Address(rscratch1), imm8);
+  }
+  void movb(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::movb(dst, src) :
+                       Assembler::movb(Address(rscratch1), src);
+  }
+
+  void movw(Address dst, int imm16)
+  { 
+    check_reach(dst) ? Assembler::movw(dst, imm16) :
+                       Assembler::movw(Address(rscratch1), imm16);
+  }
+  void movw(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movw(dst, src) :
+                       Assembler::movw(dst, Address(rscratch1));
+  }
+  void movw(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::movw(dst, src) :
+                       Assembler::movw(Address(rscratch1), src);
+  }
+
+  void movl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movl(dst, src) :
+                       Assembler::movl(dst, Address(rscratch1));
+  }
+  void movl(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::movl(dst, imm32) :
+                       Assembler::movl(Address(rscratch1), imm32);
+  }
+  void movl(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::movl(dst, src) :
+                       Assembler::movl(Address(rscratch1), src);
+  }
+
+  void movq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movq(dst, src) :
+                       Assembler::movq(dst, Address(rscratch1));
+  }
+  void movq(Address dst, int64_t imm64)
+  { 
+    if (check_reach(dst)) {
+      if (is_simm32(imm64)) {
+        Assembler::movq(dst, (int) imm64);
+      } else {
+        Assembler::movq(rscratch1,  imm64);
+        Assembler::movq(dst, rscratch1);
+      }
+    } else {
+      if (is_simm32(imm64)) {
+        Assembler::movq(Address(rscratch1), (int) imm64);
+      } else {
+        Assembler::movq(rscratch2,  imm64);
+        Assembler::movq(Address(rscratch1), rscratch2);
+      }
+    }
+  }
+  void movq(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::movq(dst, src) :
+                       Assembler::movq(Address(rscratch1), src);
+  }
+
+  void movsbl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movsbl(dst, src) :
+                       Assembler::movsbl(dst, Address(rscratch1));
+  }
+  void movswl(Register dst, Address src)
+  { 
+    check_reach(dst) ? Assembler::movswl(dst, src) :
+                       Assembler::movswl(dst, Address(rscratch1));
+  }
+  void movslq(Register dst, Address src)
+  { 
+    check_reach(dst) ? Assembler::movslq(dst, src) :
+                       Assembler::movslq(dst, Address(rscratch1));
+  }
+
+  void movzbl(Register dst, Address src)
+  { 
+    check_reach(dst) ? Assembler::movzbl(dst, src) :
+                       Assembler::movzbl(dst, Address(rscratch1));
+  }
+  void movzwl(Register dst, Address src)
+  { 
+    check_reach(dst) ? Assembler::movzwl(dst, src) :
+                       Assembler::movzwl(dst, Address(rscratch1));
+  }
+
+private:
+  void movss(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movss(dst, src) :
+                       Assembler::movss(dst, Address(rscratch1));
+  }
+  void movss(Address dst, FloatRegister src)
+  { 
+    check_reach(dst) ? Assembler::movss(dst, src) :
+                       Assembler::movss(Address(rscratch1), src);
+  }
+  void movlpd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movlpd(dst, src) :
+                       Assembler::movlpd(dst, Address(rscratch1));
+  }
+  void movsd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::movsd(dst, src) :
+                       Assembler::movsd(dst, Address(rscratch1));
+  }
+  void movsd(Address dst, FloatRegister src)
+  { 
+    check_reach(dst) ? Assembler::movsd(dst, src) :
+                       Assembler::movsd(Address(rscratch1), src);
+  }
+
+public:
+  void cmovl(Condition cc, Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::cmovl(cc, dst, src) :
+                       Assembler::cmovl(cc, dst, Address(rscratch1));
+  }
+  void cmovq(Condition cc, Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::cmovq(cc, dst, src) :
+                       Assembler::cmovq(cc, dst, Address(rscratch1));
+  }
+
+  // Arithmetics
+  void adcl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::adcl(dst, src) :
+                       Assembler::adcl(dst, Address(rscratch1));
+  }
+  void adcq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::adcq(dst, src) :
+                       Assembler::adcq(dst, Address(rscratch1));
+  }
+
+  void addl(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::addl(dst, imm32) :
+                       Assembler::addl(Address(rscratch1), imm32);
+  }
+  void addl(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::addl(dst, src) :
+                       Assembler::addl(Address(rscratch1), src);
+  }
+  void addl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::addl(dst, src) :
+                       Assembler::addl(dst, Address(rscratch1));
+  }
+  void addq(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::addq(dst, imm32) :
+                       Assembler::addq(Address(rscratch1), imm32);
+  }
+  void addq(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::addq(dst, src) :
+                       Assembler::addq(Address(rscratch1), src);
+  }
+  void addq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::addq(dst, src) :
+                       Assembler::addq(dst, Address(rscratch1));
+  }
+
+  void andl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::andl(dst, src) :
+                       Assembler::andl(dst, Address(rscratch1));
+  }
+  void andq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::andq(dst, src) :
+                       Assembler::andq(dst, Address(rscratch1));
+  }
+
+  void cmpb(Address dst, int imm8)
+  { 
+    check_reach(dst) ? Assembler::cmpb(dst, imm8) :
+                       Assembler::cmpb(Address(rscratch1), imm8);
+  }
+  void cmpl(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::cmpl(dst, imm32) :
+                       Assembler::cmpl(Address(rscratch1), imm32);
+  }
+  void cmpl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::cmpl(dst, src) :
+                       Assembler::cmpl(dst, Address(rscratch1));
+  }
+  void cmpq(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::cmpq(dst, imm32) :
+                       Assembler::cmpq(Address(rscratch1), imm32);
+  }
+  void cmpq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::cmpq(dst, src) :
+                       Assembler::cmpq(dst, Address(rscratch1));
+  }
+
+  void decl(Address dst)
+  { 
+    check_reach(dst) ? Assembler::decl(dst) :
+                       Assembler::decl(Address(rscratch1));
+  }
+  void decq(Address dst)
+  { 
+    check_reach(dst) ? Assembler::decq(dst) :
+                       Assembler::decq(Address(rscratch1));
+  }
+
+  void incl(Address dst)
+  { 
+    check_reach(dst) ? Assembler::incl(dst) :
+                       Assembler::incl(Address(rscratch1));
+  }
+  void incq(Address dst)
+  { 
+    check_reach(dst) ? Assembler::incq(dst) :
+                       Assembler::incq(Address(rscratch1));
+  }
+
+  void leal(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::leal(dst, src) :
+                       Assembler::leal(dst, Address(rscratch1));
+  }
+  void leaq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::leaq(dst, src) :
+                       Assembler::leaq(dst, Address(rscratch1));
+  }
+
+  void mull(Address src)
+  { 
+    check_reach(src) ? Assembler::mull(src) :
+                       Assembler::mull(Address(rscratch1));
+  }
+
+  void orl(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::orl(dst, imm32) :
+                       Assembler::orl(Address(rscratch1), imm32);
+  }
+  void orl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::orl(dst, src) :
+                       Assembler::orl(dst, Address(rscratch1));
+  }
+  void orq(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::orq(dst, imm32) :
+                       Assembler::orq(Address(rscratch1), imm32);
+  }
+  void orq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::orq(dst, src) :
+                       Assembler::orq(dst, Address(rscratch1));
+  }
+  
+  void sbbl(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::sbbl(dst, imm32) :
+                       Assembler::sbbl(Address(rscratch1), imm32);
+  }
+  void sbbl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::sbbl(dst, src) :
+                       Assembler::sbbl(dst, Address(rscratch1));
+  }
+  void sbbq(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::sbbq(dst, imm32) :
+                       Assembler::sbbq(Address(rscratch1), imm32);
+  }
+  void sbbq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::sbbq(dst, src) :
+                       Assembler::sbbq(dst, Address(rscratch1));
+  }
+
+  void subl(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::subl(dst, imm32) :
+                       Assembler::subl(Address(rscratch1), imm32);
+  }
+  void subl(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::subl(dst, src) :
+                       Assembler::subl(Address(rscratch1), src);
+  }
+  void subl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::subl(dst, src) :
+                       Assembler::subl(dst, Address(rscratch1));
+  }
+  void subq(Address dst, int imm32)
+  { 
+    check_reach(dst) ? Assembler::subq(dst, imm32) :
+                       Assembler::subq(Address(rscratch1), imm32);
+  }
+  void subq(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::subq(dst, src) :
+                       Assembler::subq(Address(rscratch1), src);
+  }
+  void subq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::subq(dst, src) :
+                       Assembler::subq(dst, Address(rscratch1));
+  }
+
+  void xaddl(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::xaddl(dst, src) :
+                       Assembler::xaddl(Address(rscratch1), src);
+  }
+  void xaddq(Address dst, Register src)
+  { 
+    check_reach(dst) ? Assembler::xaddq(dst, src) :
+                       Assembler::xaddq(Address(rscratch1), src);
+  }
+
+  void xorl(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::xorl(dst, src) :
+                       Assembler::xorl(dst, Address(rscratch1));
+  }
+  void xorq(Register dst, Address src)
+  { 
+    check_reach(src) ? Assembler::xorq(dst, src) :
+                       Assembler::xorq(dst, Address(rscratch1));
+  }
+
+  void xchgl(Register reg, Address adr)
+  { 
+    check_reach(adr) ? Assembler::xchgl(reg, adr) :
+                       Assembler::xchgl(reg, Address(rscratch1));
+  }
+  void xchgq(Register reg, Address adr)
+  { 
+    check_reach(adr) ? Assembler::xchgq(reg, adr) :
+                       Assembler::xchgq(reg, Address(rscratch1));
+  }
+
+  void cmpxchgl(Register reg, Address adr)
+  { 
+    check_reach(adr) ? Assembler::cmpxchgl(reg, adr) :
+                       Assembler::cmpxchgl(reg, Address(rscratch1));
+  }
+  void cmpxchgq(Register reg, Address adr)
+  { 
+    check_reach(adr) ? Assembler::cmpxchgq(reg, adr) :
+                       Assembler::cmpxchgq(reg, Address(rscratch1));
+  }
+
+  // Calls
+  void call(Label& L, relocInfo::relocType rtype)
+  { 
+    Assembler::call(L, rtype);
+  }
+
+  void call(address entry, relocInfo::relocType rtype)
+  { 
+    Address dest(entry, rtype);
+    check_reach(dest) ? Assembler::call(entry, rtype) :
+                        Assembler::call(rscratch1, relocInfo::none);
+  }
+  void call(address entry, RelocationHolder const& rspec)
+  { 
+    Address dest(entry, rspec);
+    check_reach(dest) ? Assembler::call(entry, rspec) :
+                        Assembler::call(rscratch1, relocInfo::none);
+  }
+  void call(Address adr)
+  { 
+    check_reach(adr) ? Assembler::call(adr) :
+                       Assembler::call(rscratch1, relocInfo::none);
+  }
+  
+  // Jumps
+  void jmp(address entry, relocInfo::relocType rtype)
+  { 
+    Address dest(entry, rtype);
+    check_reach(dest) ? Assembler::jmp(entry, rtype) :
+                        Assembler::jmp(rscratch1, relocInfo::none);
+  }
+  void jmp(Address adr)
+  { 
+    check_reach(adr) ? Assembler::jmp(adr) :
+                       Assembler::jmp(rscratch1);
+  }
+
+  // Label operations & relative jumps (PPUM Appendix D)
+  // unconditional jump to L
+  void jmp(Label& L, relocInfo::relocType rtype = relocInfo::none) 
+  { 
+    Assembler::jmp(L, rtype);
+  }
+
+  void jcc(Condition cc, address dst, 
+           relocInfo::relocType rtype = relocInfo::runtime_call_type);
+
+  void jcc(Condition cc, Label& L, 
+           relocInfo::relocType rtype = relocInfo::none)
+  { 
+    Assembler::jcc(cc, L, rtype);
+  }
+
+
+  // Floating-point operations
+
+  void fxsave(Address dst)
+  { 
+    check_reach(dst) ? Assembler::fxsave(dst) :
+                       Assembler::fxsave(Address(rscratch1));
+  }
+  void fxrstor(Address src)
+  { 
+    check_reach(src) ? Assembler::fxrstor(src) :
+                       Assembler::fxrstor(Address(rscratch1));
+  }
+  void ldmxcsr(Address src)
+  { 
+    check_reach(src) ? Assembler::ldmxcsr(src) :
+                       Assembler::ldmxcsr(Address(rscratch1));
+  }
+  void stmxcsr(Address dst)
+  { 
+    check_reach(dst) ? Assembler::stmxcsr(dst) :
+                       Assembler::stmxcsr(Address(rscratch1));
+  }
+
+  void addss(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::addss(dst, src) :
+                       Assembler::addss(dst, Address(rscratch1));
+  }
+  void subss(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::subss(dst, src) :
+                       Assembler::subss(dst, Address(rscratch1));
+  }
+  void mulss(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::mulss(dst, src) :
+                       Assembler::mulss(dst, Address(rscratch1));
+  }
+  void divss(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::divss(dst, src) :
+                       Assembler::divss(dst, Address(rscratch1));
+  }
+  void addsd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::addsd(dst, src) :
+                       Assembler::addsd(dst, Address(rscratch1));
+  }
+  void subsd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::subsd(dst, src) :
+                       Assembler::subsd(dst, Address(rscratch1));
+  }
+  void mulsd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::mulsd(dst, src) :
+                       Assembler::mulsd(dst, Address(rscratch1));
+  }
+  void divsd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::divsd(dst, src) :
+                       Assembler::divsd(dst, Address(rscratch1));
+  }
+
+  // We only need the double form
+  void sqrtsd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::sqrtsd(dst, src) :
+                       Assembler::sqrtsd(dst, Address(rscratch1));
+  }
+
+  void xorps(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::xorps(dst, src) :
+                       Assembler::xorps(dst, Address(rscratch1));
+  }
+  void xorpd(FloatRegister dst, Address src)
+  { 
+    check_reach(src) ? Assembler::xorpd(dst, src) :
+                       Assembler::xorpd(dst, Address(rscratch1));
+  }
+
+  // Entrypoints which only call to the super class.
+  // Needed here to satisfy the C++ compiler
+  // Since we are overriding some of the methods which take
+  // an Address as an argument.
+
+  void pushq(int imm32)                     { Assembler::pushq(imm32); }
+  void pushq(Register src)                  { Assembler::pushq(src); }
+  void popq(Register dst)                   { Assembler::popq(dst); }
+  void movl(Register dst, int imm32)        { Assembler::movl(dst, imm32); }
+  void movl(Register dst, Register src)     { Assembler::movl(dst, src); }
+  void movq(Register dst, int64_t imm64)    { Assembler::movq(dst, imm64); }
+  void movq(Register dst, address imm64, relocInfo::relocType rtype) { Assembler::movq(dst, imm64, rtype); }
+  void movq(Register dst, Register src)     { Assembler::movq(dst, src); }
+  void movq(Register dst, jobject obj)      { Assembler::movq(dst, obj); }
+  void movsbl(Register dst, Register src)   { Assembler::movsbl(dst, src); }
+  void movswl(Register dst, Register src)   { Assembler::movswl(dst, src); }
+  void movslq(Register dst, Register src)   { Assembler::movslq(dst, src); }
+  void movzbl(Register dst, Register src)   { Assembler::movzbl(dst, src); }
+  void movzwl(Register dst, Register src)   { Assembler::movzwl(dst, src); }
+private:
+  void movss(FloatRegister dst, FloatRegister src) { Assembler::movss(dst, src); }
+  void movsd(FloatRegister dst, FloatRegister src) { Assembler::movsd(dst, src); }
+
+public:
+  void movdl(FloatRegister dst, Register src) { Assembler::movdl(dst, src); }
+  void movdl(Register dst, FloatRegister src) { Assembler::movdl(dst, src); }
+  void movdq(FloatRegister dst, Register src) { Assembler::movdq(dst, src); }
+  void movdq(Register dst, FloatRegister src) { Assembler::movdq(dst, src); }
+  void cmovl(Condition cc, Register dst, Register src) { Assembler::cmovl(cc, dst, src); }
+  void cmovq(Condition cc, Register dst, Register src) { Assembler::cmovq(cc, dst, src); }
+  void adcl(Register dst, int imm32)        { Assembler::adcl(dst, imm32); }
+  void adcl(Register dst, Register src)     { Assembler::adcl(dst, src); }
+  void adcq(Register dst, int imm32)        { Assembler::adcq(dst, imm32); }
+  void adcq(Register dst, Register src)     { Assembler::adcq(dst, src); }
+  void addl(Register dst, int imm32)        { Assembler::addl(dst, imm32); }
+  void addl(Register dst, Register src)     { Assembler::addl(dst, src); }
+  void addq(Register dst, int imm32)        { Assembler::addq(dst, imm32); }
+  void addq(Register dst, Register src)     { Assembler::addq(dst, src); }
+  void andl(Register dst, int imm32)        { Assembler::andl(dst, imm32); }
+  void andl(Register dst, Register src)     { Assembler::andl(dst, src); }
+  void andq(Register dst, int imm32)        { Assembler::andq(dst, imm32); }
+  void andq(Register dst, Register src)     { Assembler::andq(dst, src); }
+  void cmpl(Register dst, int imm32)        { Assembler::cmpl(dst, imm32); }
+  void cmpl(Register dst, Register src)     { Assembler::cmpl(dst, src); }
+  void cmpq(Register dst, int imm32)        { Assembler::cmpq(dst, imm32); }
+  void cmpq(Register dst, Register src)     { Assembler::cmpq(dst, src); }
+  void ucomiss(FloatRegister dst, FloatRegister src) { Assembler::ucomiss(dst, src); }
+  void ucomisd(FloatRegister dst, FloatRegister src) { Assembler::ucomisd(dst, src); }
+  void decl(Register dst)                   { Assembler::decl(dst); }
+  void decq(Register dst)                   { Assembler::decq(dst); }
+  void idivl(Register src)                  { Assembler::idivl(src); }
+  void idivq(Register src)                  { Assembler::idivq(src); }
+  void imull(Register dst, Register src)    { Assembler::imull(dst, src); }
+  void imull(Register dst, Register src, int value) { Assembler::imull(dst, src, value); }
+  void imulq(Register dst, Register src)    { Assembler::imulq(dst, src); }
+  void imulq(Register dst, Register src, int value) { Assembler::imulq(dst, src, value); }
+  void incl(Register dst)                   { Assembler::incl(dst); }
+  void incq(Register dst)                   { Assembler::incq(dst); }
+  void mull(Register src)                   { Assembler::mull(src); }
+  void negl(Register dst)                   { Assembler::negl(dst); }
+  void negq(Register dst)                   { Assembler::negq(dst); }
+  void notl(Register dst)                   { Assembler::notl(dst); }
+  void notq(Register dst)                   { Assembler::notq(dst); }
+  void orl(Register dst, int imm32)         { Assembler::orl(dst, imm32); }
+  void orl(Register dst, Register src)      { Assembler::orl(dst, src); }
+  void orq(Register dst, int imm32)         { Assembler::orq(dst, imm32); }
+  void orq(Register dst, Register src)      { Assembler::orq(dst, src); }
+  void rcll(Register dst, int imm8)         { Assembler::rcll(dst, imm8); }
+  void rclq(Register dst, int imm8)         { Assembler::rclq(dst, imm8); }
+  void sarl(Register dst, int imm8)         { Assembler::sarl(dst, imm8); }
+  void sarl(Register dst)                   { Assembler::sarl(dst); }
+  void sarq(Register dst, int imm8)         { Assembler::sarq(dst, imm8); }
+  void sarq(Register dst)                   { Assembler::sarq(dst); }
+  void sbbl(Register dst, int imm32)        { Assembler::sbbl(dst, imm32); }
+  void sbbl(Register dst, Register src)     { Assembler::sbbl(dst, src); }
+  void sbbq(Register dst, int imm32)        { Assembler::sbbq(dst, imm32); }
+  void sbbq(Register dst, Register src)     { Assembler::sbbq(dst, src); }
+  void shll(Register dst, int imm8)         { Assembler::shll(dst, imm8); }
+  void shll(Register dst)                   { Assembler::shll(dst); }
+  void shlq(Register dst, int imm8)         { Assembler::shlq(dst, imm8); }
+  void shlq(Register dst)                   { Assembler::shlq(dst); }
+  void shrl(Register dst, int imm8)         { Assembler::shrl(dst, imm8); }
+  void shrl(Register dst)                   { Assembler::shrl(dst); }
+  void shrq(Register dst, int imm8)         { Assembler::shrq(dst, imm8); }
+  void shrq(Register dst)                   { Assembler::shrq(dst); }
+  void subl(Register dst, int imm32)        { Assembler::subl(dst, imm32); }
+  void subl(Register dst, Register src)     { Assembler::subl(dst, src); }
+  void subq(Register dst, int imm32)        { Assembler::subq(dst, imm32); }
+  void subq(Register dst, Register src)     { Assembler::subq(dst, src); }
+  void testb(Register dst, int imm8)        { Assembler::testb(dst, imm8); }
+  void testl(Register dst, int imm32)       { Assembler::testl(dst, imm32); }
+  void testl(Register dst, Register src)    { Assembler::testl(dst, src); }
+  void testq(Register dst, int imm32)       { Assembler::testq(dst, imm32); }
+  void testq(Register dst, Register src)    { Assembler::testq(dst, src); }
+  void xorl(Register dst, int imm32)        { Assembler::xorl(dst, imm32); }
+  void xorl(Register dst, Register src)     { Assembler::xorl(dst, src); }
+  void xorq(Register dst, int imm32)        { Assembler::xorq(dst, imm32); }
+  void xorq(Register dst, Register src)     { Assembler::xorq(dst, src); }
+  void bswapl(Register reg)                 { Assembler::bswapl(reg); }
+  void bswapq(Register reg)                 { Assembler::bswapq(reg); }
+  void xchgl(Register dst, Register src)    { Assembler::xchgl(dst, src); }
+  void xchgq(Register dst, Register src)    { Assembler::xchgq(dst, src); }
+  void call(Register reg,  relocInfo::relocType rtype) { Assembler::call(reg, rtype); }
+  void jmp(Register reg,  relocInfo::relocType rtype = relocInfo::none) { Assembler::jmp(reg, rtype); }
+  void addss(FloatRegister dst, FloatRegister src) { Assembler::addss(dst, src); }
+  void subss(FloatRegister dst, FloatRegister src) { Assembler::subss(dst, src); }
+  void mulss(FloatRegister dst, FloatRegister src) { Assembler::mulss(dst, src); }
+  void divss(FloatRegister dst, FloatRegister src) { Assembler::divss(dst, src); }
+  void addsd(FloatRegister dst, FloatRegister src) { Assembler::addsd(dst, src); }
+  void subsd(FloatRegister dst, FloatRegister src) { Assembler::subsd(dst, src); }
+  void mulsd(FloatRegister dst, FloatRegister src) { Assembler::mulsd(dst, src); }
+  void divsd(FloatRegister dst, FloatRegister src) { Assembler::divsd(dst, src); }
+  void sqrtsd(FloatRegister dst, FloatRegister src) { Assembler::sqrtsd(dst, src); }
+  void xorps(FloatRegister dst, FloatRegister src) { Assembler::xorps(dst, src); }
+  void xorpd(FloatRegister dst, FloatRegister src) { Assembler::xorpd(dst, src); }
+  void cvtsi2ssl(FloatRegister dst, Register src) { Assembler::cvtsi2ssl(dst, src); }
+  void cvtsi2ssq(FloatRegister dst, Register src) { Assembler::cvtsi2ssq(dst, src); }
+  void cvtsi2sdl(FloatRegister dst, Register src) { Assembler::cvtsi2sdl(dst, src); }
+  void cvtsi2sdq(FloatRegister dst, Register src) { Assembler::cvtsi2sdq(dst, src); }
+  void cvttss2sil(Register dst, FloatRegister src) { Assembler::cvttss2sil(dst, src); }
+  void cvttss2siq(Register dst, FloatRegister src) { Assembler::cvttss2siq(dst, src); }
+  void cvttsd2sil(Register dst, FloatRegister src) { Assembler::cvttsd2sil(dst, src); }
+  void cvttsd2siq(Register dst, FloatRegister src) { Assembler::cvttsd2siq(dst, src); }
+  void cvtss2sd(FloatRegister dst, FloatRegister src) { Assembler::cvtss2sd(dst, src); }
+  void cvtsd2ss(FloatRegister dst, FloatRegister src) { Assembler::cvtsd2ss(dst, src); }
 
   // C++ bool manipulation
 
@@ -1103,8 +1620,6 @@ class MacroAssembler : public Assembler {
   // thread-local information) The pointer will be loaded into the
   // thread register.
   void get_thread(Register thread);
-
-  void int3();
 
   // Support for VM calls
   //
@@ -1289,7 +1804,7 @@ class MacroAssembler : public Assembler {
   void bang_stack_size(Register offset, Register tmp);
 
   // Support for serializing memory accesses between threads.
-  void serialize_memory(Register thread, Register tmp);
+  void serialize_memory(Register thread, Register tmp1, Register tmp2);
 
   void verify_tlab();
 
@@ -1313,112 +1828,11 @@ class MacroAssembler : public Assembler {
 
   Condition negate_condition(Condition cond);
 
-  // Instructions that use AddressLiteral operands. These instruction can handle 32bit/64bit 
-  // operands. In general the names are modified to avoid hiding the instruction in Assembler
-  // so that we don't need to implement all the varieties in the Assembler with trivial wrappers
-  // here in MacroAssembler. The major exception to this rule is call
-
-  // Arithmetics
-
-  void cmp8(AddressLiteral src1, int8_t imm32);
-
-  void cmp32(AddressLiteral src1, int32_t src2);
-  // compare reg - mem, or reg - &mem
-  void cmp32(Register src1, AddressLiteral src2);
-
-  void cmp32(Register src1, Address src2);
-
-#ifndef _LP64
-  void cmpoop(Address dst, jobject obj);
-  void cmpoop(Register dst, jobject obj);
-#endif // _LP64
-
-  // NOTE src2 must be the lval. This is NOT an mem-mem compare
-  void cmpptr(Address src1, AddressLiteral src2);
-
-  void cmpptr(Register src1, AddressLiteral src);
-
-  // will be cmpreg(?)
-  void cmp64(Register src1, AddressLiteral src);
-
-  void cmpxchgptr(Register reg, Address adr);
-  void cmpxchgptr(Register reg, AddressLiteral adr);
-
   // Helper functions for statistics gathering.
   // Conditionally (atomically, on MPs) increments passed counter address, preserving condition codes.
-  void cond_inc32(Condition cond, AddressLiteral counter_addr);
+  void cond_incl(Condition cond, Address counter_addr);
   // Unconditional atomic increment.
-  void atomic_incl(AddressLiteral counter_addr);
-
-
-  void lea(Register dst, AddressLiteral src);
-  void lea(Register dst, Address src);
-
-
-  // Calls
-  void call(Label& L, relocInfo::relocType rtype);
-  void call(Register entry);
-  void call(AddressLiteral entry);
-  
-  // Jumps
-
-  // 32bit can do a case table jump in one instruction but we no longer allow the base
-  // to be installed in the Address class
-  void jump(ArrayAddress entry);
-
-  void jump(AddressLiteral entry);
-  void jump_cc(Condition cc, AddressLiteral dst);
-
-  // Floating
-
-  void ldmxcsr(Address src) { Assembler::ldmxcsr(src); }
-  void ldmxcsr(AddressLiteral src);
-
-private:
-  // these are private because users should be doing movflt/movdbl
-
-  void movss(XMMRegister dst, XMMRegister src) { Assembler::movss(dst, src); }
-  void movss(Address dst, XMMRegister src)       { Assembler::movss(dst, src); }
-  void movss(XMMRegister dst, Address src)       { Assembler::movss(dst, src); }
-  void movss(XMMRegister dst, AddressLiteral src);
-
-  void movlpd(XMMRegister dst, Address src)      {Assembler::movlpd(dst, src); }
-  void movlpd(XMMRegister dst, AddressLiteral src);
-
-public:
-
-
-  void xorpd(XMMRegister dst, XMMRegister src) {Assembler::xorpd(dst, src); }
-  void xorpd(XMMRegister dst, Address src)       {Assembler::xorpd(dst, src); }
-  void xorpd(XMMRegister dst, AddressLiteral src);
-
-  void xorps(XMMRegister dst, XMMRegister src) {Assembler::xorps(dst, src); }
-  void xorps(XMMRegister dst, Address src)       {Assembler::xorps(dst, src); }
-  void xorps(XMMRegister dst, AddressLiteral src);
-
-
-  // Data
-
-  void movoop(Register dst, jobject obj);
-  void movoop(Address dst, jobject obj);
-
-  void movptr(ArrayAddress dst, Register src);
-  void movptr(Register dst, AddressLiteral src);
-
-  void movptr(Register dst, intptr_t src);
-  void movptr(Address dst, intptr_t src);
-
-  void movptr(Register dst, ArrayAddress src);
-
-  // to avoid hiding movl
-  void mov32(AddressLiteral dst, Register src);
-  void mov32(Register dst, AddressLiteral src);
-
-  void pushoop(jobject obj);
-
-  // Can push value or effective address
-  void pushptr(AddressLiteral src);
-
+  void atomic_incl(Address counter_addr);
 };
 
 /**

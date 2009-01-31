@@ -93,11 +93,7 @@ STACK_SIZE=
 # AsyncGetCallTrace is not supported on IA64 yet
 AGCT_EXPORT=
 !else
-!if "$(Variant)" == "kernel"
-AGCT_EXPORT=
-!else
 AGCT_EXPORT=/export:AsyncGetCallTrace
-!endif
 !endif
 
 LINK_FLAGS=$(LINK_FLAGS) $(STACK_SIZE) /subsystem:windows /dll /base:0x8000000  \
@@ -105,9 +101,9 @@ LINK_FLAGS=$(LINK_FLAGS) $(STACK_SIZE) /subsystem:windows /dll /base:0x8000000  
   /export:JNI_GetCreatedJavaVMs /export:jio_snprintf               \
   /export:jio_printf /export:jio_fprintf                           \
   /export:jio_vfprintf /export:jio_vsnprintf $(AGCT_EXPORT)        \
-  /export:JVM_GetVersionInfo \
+  /export:JVM_GetVersionInfo /export:JVM_GetVersionInfo            \
   /export:JVM_GetThreadStateNames /export:JVM_GetThreadStateValues \
-  /export:JVM_InitAgentProperties
+  /export:JVM_EnqueueOperation /export:JVM_InitAgentProperties
 
 CPP_INCLUDE_DIRS=\
   /I "..\generated"                          \
@@ -189,12 +185,6 @@ getThread_win32_$(ARCH).obj: $(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm\getThread_
 
 opcodes.obj: $(WorkSpace)\src\share\vm\opto\opcodes.cpp
         $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\share\vm\opto\opcodes.cpp
-
-bytecodeInterpreter.obj: $(WorkSpace)\src\share\vm\interpreter\bytecodeInterpreter.cpp
-        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\share\vm\interpreter\bytecodeInterpreter.cpp
-
-bytecodeInterpreterWithChecks.obj: ..\generated\jvmtifiles\bytecodeInterpreterWithChecks.cpp
-        $(CPP) $(CPP_FLAGS) /c ..\generated\jvmtifiles\bytecodeInterpreterWithChecks.cpp
 
 # Default rules for the Virtual Machine
 {$(WorkSpace)\src\share\vm\c1}.cpp.obj::

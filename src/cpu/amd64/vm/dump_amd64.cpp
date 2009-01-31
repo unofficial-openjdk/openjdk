@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)dump_amd64.cpp	1.11 07/05/05 17:04:04 JVM"
 #endif
 /*
  * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -98,9 +98,9 @@ void CompactingPermGenGen::generate_vtable_methods(void** vtbl_list,
   __ movq(c_rarg0, rax);
   __ shrq(c_rarg0, 8);			// isolate vtable identifier.
   __ shlq(c_rarg0, LogBytesPerWord);
-  __ lea(c_rarg1, ExternalAddress((address)vtbl_list));	// ptr to correct vtable list.
+  __ movq(c_rarg1, (int64_t)vtbl_list);	// ptr to correct vtable list.
   __ addq(c_rarg1, c_rarg0);		// ptr to list entry.
-  __ movq(c_rarg1, Address(c_rarg1, 0));	// get correct vtable address.
+  __ movq(c_rarg1, Address(c_rarg1));	// get correct vtable address.
   __ popq(c_rarg0);			// restore "this"
   __ movq(Address(c_rarg0, 0), c_rarg1);	// update vtable pointer.
 

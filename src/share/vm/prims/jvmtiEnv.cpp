@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jvmtiEnv.cpp	1.162 07/05/23 10:53:40 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,10 +35,12 @@
  // FIXLATER: hook into JvmtiTrace
 #define TraceJVMTICalls false
 
-JvmtiEnv::JvmtiEnv() : JvmtiEnvBase() {
+JvmtiEnv::JvmtiEnv() : JvmtiEnvBase()
+{
 }
 
-JvmtiEnv::~JvmtiEnv() {
+JvmtiEnv::~JvmtiEnv() 
+{
 }
 
 JvmtiEnv*
@@ -89,517 +91,6 @@ JvmtiEnv::Deallocate(unsigned char* mem) {
   return deallocate(mem);
 } /* end Deallocate */
 
-// Threads_lock NOT held, java_thread not protected by lock
-// java_thread - pre-checked
-// data - NULL is a valid value, must be checked
-jvmtiError
-JvmtiEnv::SetThreadLocalStorage(JavaThread* java_thread, const void* data) {
-  JvmtiThreadState* state = java_thread->jvmti_thread_state();
-  if (state == NULL) {
-    if (data == NULL) {
-      // leaving state unset same as data set to NULL
-      return JVMTI_ERROR_NONE;
-    }
-    // otherwise, create the state
-    state = JvmtiThreadState::state_for(java_thread);
-  }
-  state->env_thread_state(this)->set_agent_thread_local_storage_data((void*)data);
-  return JVMTI_ERROR_NONE;
-} /* end SetThreadLocalStorage */
-
-
-// Threads_lock NOT held
-// thread - NOT pre-checked
-// data_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetThreadLocalStorage(jthread thread, void** data_ptr) {
-  JavaThread* current_thread = JavaThread::current();
-  if (thread == NULL) {
-    JvmtiThreadState* state = current_thread->jvmti_thread_state();
-    *data_ptr = (state == NULL) ? NULL :
-      state->env_thread_state(this)->get_agent_thread_local_storage_data();
-  } else {
-
-    // jvmti_GetThreadLocalStorage is "in native" and doesn't transition
-    // the thread to _thread_in_vm. However, when the TLS for a thread
-    // other than the current thread is required we need to transition
-    // from native so as to resolve the jthread.
-
-    ThreadInVMfromNative __tiv(current_thread);
-    __ENTRY(jvmtiError, JvmtiEnv::GetThreadLocalStorage , current_thread) 
-    debug_only(VMNativeEntryWrapper __vew;) 
-
-    oop thread_oop = JNIHandles::resolve_external_guard(thread);
-    if (thread_oop == NULL) {
-      return JVMTI_ERROR_INVALID_THREAD;
-    }
-    if (!thread_oop->is_a(SystemDictionary::thread_klass())) {
-      return JVMTI_ERROR_INVALID_THREAD;
-    }
-    JavaThread* java_thread = java_lang_Thread::thread(thread_oop); 
-    if (java_thread == NULL) {
-      return JVMTI_ERROR_THREAD_NOT_ALIVE;
-    }
-    JvmtiThreadState* state = java_thread->jvmti_thread_state();
-    *data_ptr = (state == NULL) ? NULL :
-      state->env_thread_state(this)->get_agent_thread_local_storage_data();
-  }
-  return JVMTI_ERROR_NONE;
-} /* end GetThreadLocalStorage */
-
-  //
-  // Class functions
-  // 
-
-// class_count_ptr - pre-checked for NULL
-// classes_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetLoadedClasses(jint* class_count_ptr, jclass** classes_ptr) {
-  return JvmtiGetLoadedClasses::getLoadedClasses(this, class_count_ptr, classes_ptr);
-} /* end GetLoadedClasses */
-
-
-// initiating_loader - NULL is a valid value, must be checked
-// class_count_ptr - pre-checked for NULL
-// classes_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetClassLoaderClasses(jobject initiating_loader, jint* class_count_ptr, jclass** classes_ptr) {
-  return JvmtiGetLoadedClasses::getClassLoaderClasses(this, initiating_loader, 
-                                                  class_count_ptr, classes_ptr);
-} /* end GetClassLoaderClasses */
-
-// k_mirror - may be primitive, this must be checked
-// is_modifiable_class_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::IsModifiableClass(oop k_mirror, jboolean* is_modifiable_class_ptr) {
-  *is_modifiable_class_ptr = VM_RedefineClasses::is_modifiable_class(k_mirror)?
-                                                       JNI_TRUE : JNI_FALSE;
-  return JVMTI_ERROR_NONE;
-} /* end IsModifiableClass */
-
-// class_count - pre-checked to be greater than or equal to 0
-// classes - pre-checked for NULL
-jvmtiError
-JvmtiEnv::RetransformClasses(jint class_count, const jclass* classes) {
-//TODO: add locking
-
-  int index;
-  JavaThread* current_thread = JavaThread::current(); 
-  ResourceMark rm(current_thread);  
-
-  jvmtiClassDefinition* class_definitions = 
-                            NEW_RESOURCE_ARRAY(jvmtiClassDefinition, class_count);
-  NULL_CHECK(class_definitions, JVMTI_ERROR_OUT_OF_MEMORY);
-
-  for (index = 0; index < class_count; index++) {
-    HandleMark hm(current_thread);
-
-    jclass jcls = classes[index];
-    oop k_mirror = JNIHandles::resolve_external_guard(jcls);
-    if (k_mirror == NULL) {
-      return JVMTI_ERROR_INVALID_CLASS;
-    }
-    if (!k_mirror->is_a(SystemDictionary::class_klass())) {
-      return JVMTI_ERROR_INVALID_CLASS;
-    }
-
-    if (java_lang_Class::is_primitive(k_mirror)) {
-      return JVMTI_ERROR_UNMODIFIABLE_CLASS;   
-    }
-    
-    klassOop k_oop = java_lang_Class::as_klassOop(k_mirror);
-    KlassHandle klass(current_thread, k_oop);
-    
-    jint status = klass->jvmti_class_status();
-    if (status & (JVMTI_CLASS_STATUS_ERROR)) {
-      return JVMTI_ERROR_INVALID_CLASS;
-    }
-    if (status & (JVMTI_CLASS_STATUS_ARRAY)) {
-      return JVMTI_ERROR_UNMODIFIABLE_CLASS;   
-    }
-
-    instanceKlassHandle ikh(current_thread, k_oop);
-    if (ikh->get_cached_class_file_bytes() == NULL) {
-      // not cached, we need to reconstitute the class file from VM representation
-      constantPoolHandle  constants(current_thread, ikh->constants());
-      ObjectLocker ol(constants, current_thread);    // lock constant pool while we query it
-      
-      JvmtiClassFileReconstituter reconstituter(ikh);
-      if (reconstituter.get_error() != JVMTI_ERROR_NONE) {
-        return reconstituter.get_error();
-      }
-
-      class_definitions[index].class_byte_count = (jint)reconstituter.class_file_size();
-      class_definitions[index].class_bytes      = (unsigned char*)
-                                                       reconstituter.class_file_bytes();
-    } else {
-      // it is cached, get it from the cache
-      class_definitions[index].class_byte_count = ikh->get_cached_class_file_len();
-      class_definitions[index].class_bytes      = ikh->get_cached_class_file_bytes();
-    }
-    class_definitions[index].klass              = jcls;
-  }
-  VM_RedefineClasses op(class_count, class_definitions, jvmti_class_load_kind_retransform);
-  VMThread::execute(&op);
-  return (op.check_error());
-} /* end RetransformClasses */
-
-
-// class_count - pre-checked to be greater than or equal to 0
-// class_definitions - pre-checked for NULL
-jvmtiError
-JvmtiEnv::RedefineClasses(jint class_count, const jvmtiClassDefinition* class_definitions) {
-//TODO: add locking
-  VM_RedefineClasses op(class_count, class_definitions, jvmti_class_load_kind_redefine);
-  VMThread::execute(&op);
-  return (op.check_error());
-} /* end RedefineClasses */
-
-
-  //
-  // Object functions
-  // 
-
-// size_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetObjectSize(jobject object, jlong* size_ptr) {
-  oop mirror = JNIHandles::resolve_external_guard(object);
-  NULL_CHECK(mirror, JVMTI_ERROR_INVALID_OBJECT);
-
-  if (mirror->klass() == SystemDictionary::class_klass()) {
-    if (!java_lang_Class::is_primitive(mirror)) {
-	mirror = java_lang_Class::as_klassOop(mirror);
-	assert(mirror != NULL, "class for non-primitive mirror must exist");
-    }
-  }
-
-  *size_ptr = mirror->size() * wordSize;
-  return JVMTI_ERROR_NONE;
-} /* end GetObjectSize */
-
-  //
-  // Method functions
-  // 
-
-// prefix - NULL is a valid value, must be checked
-jvmtiError
-JvmtiEnv::SetNativeMethodPrefix(const char* prefix) {
-  return prefix == NULL? 
-              SetNativeMethodPrefixes(0, NULL) : 
-              SetNativeMethodPrefixes(1, (char**)&prefix);
-} /* end SetNativeMethodPrefix */
-
-
-// prefix_count - pre-checked to be greater than or equal to 0
-// prefixes - pre-checked for NULL
-jvmtiError
-JvmtiEnv::SetNativeMethodPrefixes(jint prefix_count, char** prefixes) {
-  // Have to grab JVMTI thread state lock to be sure that some thread
-  // isn't accessing the prefixes at the same time we are setting them. 
-  // No locks during VM bring-up.
-  if (Threads::number_of_threads() == 0) {
-    return set_native_method_prefixes(prefix_count, prefixes);
-  } else {
-    MutexLocker mu(JvmtiThreadState_lock);
-    return set_native_method_prefixes(prefix_count, prefixes);
-  }
-} /* end SetNativeMethodPrefixes */
-
-  //
-  // Event Management functions
-  // 
-
-// callbacks - NULL is a valid value, must be checked
-// size_of_callbacks - pre-checked to be greater than or equal to 0
-jvmtiError
-JvmtiEnv::SetEventCallbacks(const jvmtiEventCallbacks* callbacks, jint size_of_callbacks) {
-  JvmtiEventController::set_event_callbacks(this, callbacks, size_of_callbacks);
-  return JVMTI_ERROR_NONE;
-} /* end SetEventCallbacks */
-
-
-// event_thread - NULL is a valid value, must be checked
-jvmtiError
-JvmtiEnv::SetEventNotificationMode(jvmtiEventMode mode, jvmtiEvent event_type, jthread event_thread,   ...) {
-  JavaThread* java_thread = NULL;
-  if (event_thread != NULL) {
-    oop thread_oop = JNIHandles::resolve_external_guard(event_thread);
-    if (thread_oop == NULL) {
-      return JVMTI_ERROR_INVALID_THREAD;
-    }
-    if (!thread_oop->is_a(SystemDictionary::thread_klass())) {
-      return JVMTI_ERROR_INVALID_THREAD;
-    }
-    java_thread = java_lang_Thread::thread(thread_oop); 
-    if (java_thread == NULL) {
-      return JVMTI_ERROR_THREAD_NOT_ALIVE;
-    }
-  }
-
-  // event_type must be valid
-  if (!JvmtiEventController::is_valid_event_type(event_type)) {
-    return JVMTI_ERROR_INVALID_EVENT_TYPE;
-  }
-
-  // global events cannot be controlled at thread level.
-  if (java_thread != NULL && JvmtiEventController::is_global_event(event_type)) {
-    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-  }
-       
-  bool enabled = (mode == JVMTI_ENABLE);
-
-  // assure that needed capabilities are present
-  if (enabled && !JvmtiUtil::has_event_capability(event_type, get_capabilities())) {
-    return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
-  }
-       
-  if (event_type == JVMTI_EVENT_CLASS_FILE_LOAD_HOOK && enabled) {
-    record_class_file_load_hook_enabled();
-  }
-  JvmtiEventController::set_user_enabled(this, java_thread, event_type, enabled);
-  
-  return JVMTI_ERROR_NONE;
-} /* end SetEventNotificationMode */
-
-  //
-  // Capability functions
-  // 
-
-// capabilities_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetPotentialCapabilities(jvmtiCapabilities* capabilities_ptr) {
-  JvmtiManageCapabilities::get_potential_capabilities(get_capabilities(), 
-                                                      get_prohibited_capabilities(),
-                                                      capabilities_ptr);
-  return JVMTI_ERROR_NONE;
-} /* end GetPotentialCapabilities */
-
-
-// capabilities_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::AddCapabilities(const jvmtiCapabilities* capabilities_ptr) {
-  return JvmtiManageCapabilities::add_capabilities(get_capabilities(), 
-                                                   get_prohibited_capabilities(),
-                                                   capabilities_ptr, 
-                                                   get_capabilities());
-} /* end AddCapabilities */
-
-
-// capabilities_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::RelinquishCapabilities(const jvmtiCapabilities* capabilities_ptr) {
-  JvmtiManageCapabilities::relinquish_capabilities(get_capabilities(), capabilities_ptr, get_capabilities());
-  return JVMTI_ERROR_NONE;  
-} /* end RelinquishCapabilities */
-
-
-// capabilities_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetCapabilities(jvmtiCapabilities* capabilities_ptr) {
-  JvmtiManageCapabilities::copy_capabilities(get_capabilities(), capabilities_ptr);
-  return JVMTI_ERROR_NONE;  
-} /* end GetCapabilities */
-
-  //
-  // Class Loader Search functions
-  // 
-
-// segment - pre-checked for NULL
-jvmtiError
-JvmtiEnv::AddToBootstrapClassLoaderSearch(const char* segment) {
-  jvmtiPhase phase = get_phase();
-  if (phase == JVMTI_PHASE_ONLOAD) {
-    Arguments::append_sysclasspath(segment);
-    return JVMTI_ERROR_NONE;
-  } else {
-    assert(phase == JVMTI_PHASE_LIVE, "sanity check");
-
-    // create the zip entry
-    ClassPathZipEntry* zip_entry = ClassLoader::create_class_path_zip_entry(segment);
-    if (zip_entry == NULL) {
-      return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-    }
-
-    // lock the loader 
-    Thread* thread = Thread::current();
-    HandleMark hm;
-    Handle loader_lock = Handle(thread, SystemDictionary::system_loader_lock());
-
-    ObjectLocker ol(loader_lock, thread);
-
-    // add the jar file to the bootclasspath
-    if (TraceClassLoading) {
-      tty->print_cr("[Opened %s]", zip_entry->name());
-    }
-    ClassLoader::add_to_list(zip_entry);
-    return JVMTI_ERROR_NONE;
-  }
-
-} /* end AddToBootstrapClassLoaderSearch */
-
-
-// segment - pre-checked for NULL
-jvmtiError
-JvmtiEnv::AddToSystemClassLoaderSearch(const char* segment) {
-  jvmtiPhase phase = get_phase();
-
-  if (phase == JVMTI_PHASE_ONLOAD) {
-    for (SystemProperty* p = Arguments::system_properties(); p != NULL; p = p->next()) {
-      if (strcmp("java.class.path", p->key()) == 0) {
-	p->append_value(segment);
- 	break;	
-      }
-    }
-    return JVMTI_ERROR_NONE;
-  } else {
-    HandleMark hm;
-
-    assert(phase == JVMTI_PHASE_LIVE, "sanity check");
-
-    // create the zip entry (which will open the zip file and hence
-    // check that the segment is indeed a zip file).
-    ClassPathZipEntry* zip_entry = ClassLoader::create_class_path_zip_entry(segment);
-    if (zip_entry == NULL) {
-      return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-    }
-    delete zip_entry;	// no longer needed
-
-    // lock the loader
-    Thread* THREAD = Thread::current();
-    Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
-
-    ObjectLocker ol(loader, THREAD);
-
-    // need the path as java.lang.String
-    Handle path = java_lang_String::create_from_str(segment, THREAD);
-    if (HAS_PENDING_EXCEPTION) {
-      CLEAR_PENDING_EXCEPTION;
-      return JVMTI_ERROR_INTERNAL;
-    }
-
-    instanceKlassHandle loader_ik(THREAD, loader->klass());
-
-    // Invoke the appendToClassPathForInstrumentation method - if the method
-    // is not found it means the loader doesn't support adding to the class path
-    // in the live phase.
-    {
-      JavaValue res(T_VOID);
-      JavaCalls::call_special(&res,
-			      loader,
-			      loader_ik,
-                              vmSymbolHandles::appendToClassPathForInstrumentation_name(),
-                              vmSymbolHandles::appendToClassPathForInstrumentation_signature(),
-			      path,
-                              THREAD);
-      if (HAS_PENDING_EXCEPTION) {
-	symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
-	CLEAR_PENDING_EXCEPTION;
-
-	if (ex_name == vmSymbols::java_lang_NoSuchMethodError()) {
-	  return JVMTI_ERROR_CLASS_LOADER_UNSUPPORTED;
-	} else {
-	  return JVMTI_ERROR_INTERNAL;
-	}
-      }
-    }
-
-    return JVMTI_ERROR_NONE;
-  }
-} /* end AddToSystemClassLoaderSearch */
-
-  //
-  // General functions
-  // 
-
-// phase_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetPhase(jvmtiPhase* phase_ptr) {
-  *phase_ptr = get_phase();
-  return JVMTI_ERROR_NONE;
-} /* end GetPhase */
-
-
-jvmtiError
-JvmtiEnv::DisposeEnvironment() {
-  dispose();
-  return JVMTI_ERROR_NONE;
-} /* end DisposeEnvironment */
-
-
-// data - NULL is a valid value, must be checked
-jvmtiError
-JvmtiEnv::SetEnvironmentLocalStorage(const void* data) {
-  set_env_local_storage(data);
-  return JVMTI_ERROR_NONE;
-} /* end SetEnvironmentLocalStorage */
-
-
-// data_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetEnvironmentLocalStorage(void** data_ptr) {
-  *data_ptr = (void*)get_env_local_storage();
-  return JVMTI_ERROR_NONE;
-} /* end GetEnvironmentLocalStorage */
-
-// version_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetVersionNumber(jint* version_ptr) {
-  *version_ptr = JVMTI_VERSION;
-  return JVMTI_ERROR_NONE;
-} /* end GetVersionNumber */
-
-
-// name_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetErrorName(jvmtiError error, char** name_ptr) {
-  if (error < JVMTI_ERROR_NONE || error > JVMTI_ERROR_MAX) {
-    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-  }
-  const char *name = JvmtiUtil::error_name(error);
-  if (name == NULL) {
-    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-  }
-  size_t len = strlen(name) + 1;
-  jvmtiError err = allocate(len, (unsigned char**)name_ptr);
-  if (err == JVMTI_ERROR_NONE) {
-    memcpy(*name_ptr, name, len);
-  }
-  return err;
-} /* end GetErrorName */
-
-
-jvmtiError
-JvmtiEnv::SetVerboseFlag(jvmtiVerboseFlag flag, jboolean value) {
-  switch (flag) {
-  case JVMTI_VERBOSE_OTHER:
-    // ignore
-    break;
-  case JVMTI_VERBOSE_CLASS:
-    TraceClassLoading = value != 0;
-    TraceClassUnloading = value != 0;
-    break;
-  case JVMTI_VERBOSE_GC:
-    PrintGC = value != 0;
-    TraceClassUnloading = value != 0;
-    break;
-  case JVMTI_VERBOSE_JNI:
-    PrintJNIResolving = value != 0;
-    break;
-  default:
-    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-  };    
-  return JVMTI_ERROR_NONE;
-} /* end SetVerboseFlag */
-
-
-// format_ptr - pre-checked for NULL
-jvmtiError
-JvmtiEnv::GetJLocationFormat(jvmtiJlocationFormat* format_ptr) {
-  *format_ptr = JVMTI_JLOCATION_JVMBCI;
-  return JVMTI_ERROR_NONE;
-} /* end GetJLocationFormat */
-
-#ifndef JVMTI_KERNEL
 
   //
   // Thread functions
@@ -1095,6 +586,66 @@ JvmtiEnv::RunAgentThread(jthread thread, jvmtiStartFunction proc, const void* ar
 
   return JVMTI_ERROR_NONE;
 } /* end RunAgentThread */
+
+
+// Threads_lock NOT held, java_thread not protected by lock
+// java_thread - pre-checked
+// data - NULL is a valid value, must be checked
+jvmtiError
+JvmtiEnv::SetThreadLocalStorage(JavaThread* java_thread, const void* data) {
+  JvmtiThreadState* state = java_thread->jvmti_thread_state();
+  if (state == NULL) {
+    if (data == NULL) {
+      // leaving state unset same as data set to NULL
+      return JVMTI_ERROR_NONE;
+    }
+    // otherwise, create the state
+    state = JvmtiThreadState::state_for(java_thread);
+  }
+  state->env_thread_state(this)->set_agent_thread_local_storage_data((void*)data);
+  return JVMTI_ERROR_NONE;
+} /* end SetThreadLocalStorage */
+
+
+// Threads_lock NOT held
+// thread - NOT pre-checked
+// data_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetThreadLocalStorage(jthread thread, void** data_ptr) {
+  JavaThread* current_thread = JavaThread::current();
+  if (thread == NULL) {
+    JvmtiThreadState* state = current_thread->jvmti_thread_state();
+    *data_ptr = (state == NULL) ? NULL :
+      state->env_thread_state(this)->get_agent_thread_local_storage_data();
+  } else {
+
+    // jvmti_GetThreadLocalStorage is "in native" and doesn't transition
+    // the thread to _thread_in_vm. However, when the TLS for a thread
+    // other than the current thread is required we need to transition
+    // from native so as to resolve the jthread.
+
+    ThreadInVMfromNative __tiv(current_thread);
+    __ENTRY(jvmtiError, JvmtiEnv::GetThreadLocalStorage , current_thread) 
+    debug_only(VMNativeEntryWrapper __vew;) 
+
+    oop thread_oop = JNIHandles::resolve_external_guard(thread);
+    if (thread_oop == NULL) {
+      return JVMTI_ERROR_INVALID_THREAD;
+    }
+    if (!thread_oop->is_a(SystemDictionary::thread_klass())) {
+      return JVMTI_ERROR_INVALID_THREAD;
+    }
+    JavaThread* java_thread = java_lang_Thread::thread(thread_oop); 
+    if (java_thread == NULL) {
+      return JVMTI_ERROR_THREAD_NOT_ALIVE;
+    }
+    JvmtiThreadState* state = java_thread->jvmti_thread_state();
+    *data_ptr = (state == NULL) ? NULL :
+      state->env_thread_state(this)->get_agent_thread_local_storage_data();
+  }
+  return JVMTI_ERROR_NONE;
+} /* end GetThreadLocalStorage */
+
 
   //
   // Thread Group functions
@@ -2003,9 +1554,27 @@ JvmtiEnv::ClearFieldModificationWatch(fieldDescriptor* fdesc_ptr) {
   return JVMTI_ERROR_NONE;
 } /* end ClearFieldModificationWatch */
 
+
   //
   // Class functions
   // 
+
+// class_count_ptr - pre-checked for NULL
+// classes_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetLoadedClasses(jint* class_count_ptr, jclass** classes_ptr) {
+  return JvmtiGetLoadedClasses::getLoadedClasses(this, class_count_ptr, classes_ptr);
+} /* end GetLoadedClasses */
+
+
+// initiating_loader - NULL is a valid value, must be checked
+// class_count_ptr - pre-checked for NULL
+// classes_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetClassLoaderClasses(jobject initiating_loader, jint* class_count_ptr, jclass** classes_ptr) {
+  return JvmtiGetLoadedClasses::getClassLoaderClasses(this, initiating_loader, 
+                                                  class_count_ptr, classes_ptr);
+} /* end GetClassLoaderClasses */
 
 
 // k_mirror - may be primitive, this must be checked
@@ -2413,6 +1982,16 @@ JvmtiEnv::IsArrayClass(oop k_mirror, jboolean* is_array_class_ptr) {
 
 
 // k_mirror - may be primitive, this must be checked
+// is_modifiable_class_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::IsModifiableClass(oop k_mirror, jboolean* is_modifiable_class_ptr) {
+  *is_modifiable_class_ptr = VM_RedefineClasses::is_modifiable_class(k_mirror)?
+                                                       JNI_TRUE : JNI_FALSE;
+  return JVMTI_ERROR_NONE;
+} /* end IsModifiableClass */
+
+
+// k_mirror - may be primitive, this must be checked
 // classloader_ptr - pre-checked for NULL
 jvmtiError
 JvmtiEnv::GetClassLoader(oop k_mirror, jobject* classloader_ptr) {
@@ -2467,9 +2046,107 @@ JvmtiEnv::GetSourceDebugExtension(oop k_mirror, char** source_debug_extension_pt
   return JVMTI_ERROR_NONE;
 } /* end GetSourceDebugExtension */
 
+
+// class_count - pre-checked to be greater than or equal to 0
+// classes - pre-checked for NULL
+jvmtiError
+JvmtiEnv::RetransformClasses(jint class_count, const jclass* classes) {
+//TODO: add locking
+
+  int index;
+  JavaThread* current_thread = JavaThread::current(); 
+  ResourceMark rm(current_thread);  
+
+  jvmtiClassDefinition* class_definitions = 
+                            NEW_RESOURCE_ARRAY(jvmtiClassDefinition, class_count);
+  NULL_CHECK(class_definitions, JVMTI_ERROR_OUT_OF_MEMORY);
+
+  for (index = 0; index < class_count; index++) {
+    HandleMark hm(current_thread);
+
+    jclass jcls = classes[index];
+    oop k_mirror = JNIHandles::resolve_external_guard(jcls);
+    if (k_mirror == NULL) {
+      return JVMTI_ERROR_INVALID_CLASS;
+    }
+    if (!k_mirror->is_a(SystemDictionary::class_klass())) {
+      return JVMTI_ERROR_INVALID_CLASS;
+    }
+
+    if (java_lang_Class::is_primitive(k_mirror)) {
+      return JVMTI_ERROR_UNMODIFIABLE_CLASS;   
+    }
+    
+    klassOop k_oop = java_lang_Class::as_klassOop(k_mirror);
+    KlassHandle klass(current_thread, k_oop);
+    
+    jint status = klass->jvmti_class_status();
+    if (status & (JVMTI_CLASS_STATUS_ERROR)) {
+      return JVMTI_ERROR_INVALID_CLASS;
+    }
+    if (status & (JVMTI_CLASS_STATUS_ARRAY)) {
+      return JVMTI_ERROR_UNMODIFIABLE_CLASS;   
+    }
+
+    instanceKlassHandle ikh(current_thread, k_oop);
+    if (ikh->get_cached_class_file_bytes() == NULL) {
+      // not cached, we need to reconstitute the class file from VM representation
+      constantPoolHandle  constants(current_thread, ikh->constants());
+      ObjectLocker ol(constants, current_thread);    // lock constant pool while we query it
+      
+      JvmtiClassFileReconstituter reconstituter(ikh);
+      if (reconstituter.get_error() != JVMTI_ERROR_NONE) {
+        return reconstituter.get_error();
+      }
+
+      class_definitions[index].class_byte_count = (jint)reconstituter.class_file_size();
+      class_definitions[index].class_bytes      = (unsigned char*)
+                                                       reconstituter.class_file_bytes();
+    } else {
+      // it is cached, get it from the cache
+      class_definitions[index].class_byte_count = ikh->get_cached_class_file_len();
+      class_definitions[index].class_bytes      = ikh->get_cached_class_file_bytes();
+    }
+    class_definitions[index].klass              = jcls;
+  }
+  VM_RedefineClasses op(class_count, class_definitions, jvmti_class_load_kind_retransform);
+  VMThread::execute(&op);
+  return (op.check_error());
+} /* end RetransformClasses */
+
+
+// class_count - pre-checked to be greater than or equal to 0
+// class_definitions - pre-checked for NULL
+jvmtiError
+JvmtiEnv::RedefineClasses(jint class_count, const jvmtiClassDefinition* class_definitions) {
+//TODO: add locking
+  VM_RedefineClasses op(class_count, class_definitions, jvmti_class_load_kind_redefine);
+  VMThread::execute(&op);
+  return (op.check_error());
+} /* end RedefineClasses */
+
+
   //
   // Object functions
   // 
+
+// size_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetObjectSize(jobject object, jlong* size_ptr) {
+  oop mirror = JNIHandles::resolve_external_guard(object);
+  NULL_CHECK(mirror, JVMTI_ERROR_INVALID_OBJECT);
+
+  if (mirror->klass() == SystemDictionary::class_klass()) {
+    if (!java_lang_Class::is_primitive(mirror)) {
+	mirror = java_lang_Class::as_klassOop(mirror);
+	assert(mirror != NULL, "class for non-primitive mirror must exist");
+    }
+  }
+
+  *size_ptr = mirror->size() * wordSize;
+  return JVMTI_ERROR_NONE;
+} /* end GetObjectSize */
+
 
 // hash_code_ptr - pre-checked for NULL
 jvmtiError
@@ -2861,6 +2538,32 @@ JvmtiEnv::IsMethodObsolete(methodOop method_oop, jboolean* is_obsolete_ptr) {
   return JVMTI_ERROR_NONE;
 } /* end IsMethodObsolete */
 
+
+// prefix - NULL is a valid value, must be checked
+jvmtiError
+JvmtiEnv::SetNativeMethodPrefix(const char* prefix) {
+  return prefix == NULL? 
+              SetNativeMethodPrefixes(0, NULL) : 
+              SetNativeMethodPrefixes(1, (char**)&prefix);
+} /* end SetNativeMethodPrefix */
+
+
+// prefix_count - pre-checked to be greater than or equal to 0
+// prefixes - pre-checked for NULL
+jvmtiError
+JvmtiEnv::SetNativeMethodPrefixes(jint prefix_count, char** prefixes) {
+  // Have to grab JVMTI thread state lock to be sure that some thread
+  // isn't accessing the prefixes at the same time we are setting them. 
+  // No locks during VM bring-up.
+  if (Threads::number_of_threads() == 0) {
+    return set_native_method_prefixes(prefix_count, prefixes);
+  } else {
+    MutexLocker mu(JvmtiThreadState_lock);
+    return set_native_method_prefixes(prefix_count, prefixes);
+  }
+} /* end SetNativeMethodPrefixes */
+
+
   //
   // Raw Monitor functions
   // 
@@ -3150,7 +2853,6 @@ JvmtiEnv::RawMonitorNotifyAll(JvmtiRawMonitor * rmonitor) {
   // JNI Function Interception functions
   // 
 
-
 // function_table - pre-checked for NULL
 jvmtiError
 JvmtiEnv::SetJNIFunctionTable(const jniNativeInterface* function_table) {
@@ -3176,6 +2878,59 @@ JvmtiEnv::GetJNIFunctionTable(jniNativeInterface** function_table) {
   //
   // Event Management functions
   // 
+
+// callbacks - NULL is a valid value, must be checked
+// size_of_callbacks - pre-checked to be greater than or equal to 0
+jvmtiError
+JvmtiEnv::SetEventCallbacks(const jvmtiEventCallbacks* callbacks, jint size_of_callbacks) {
+  JvmtiEventController::set_event_callbacks(this, callbacks, size_of_callbacks);
+  return JVMTI_ERROR_NONE;
+} /* end SetEventCallbacks */
+
+
+// event_thread - NULL is a valid value, must be checked
+jvmtiError
+JvmtiEnv::SetEventNotificationMode(jvmtiEventMode mode, jvmtiEvent event_type, jthread event_thread,   ...) {
+  JavaThread* java_thread = NULL;
+  if (event_thread != NULL) {
+    oop thread_oop = JNIHandles::resolve_external_guard(event_thread);
+    if (thread_oop == NULL) {
+      return JVMTI_ERROR_INVALID_THREAD;
+    }
+    if (!thread_oop->is_a(SystemDictionary::thread_klass())) {
+      return JVMTI_ERROR_INVALID_THREAD;
+    }
+    java_thread = java_lang_Thread::thread(thread_oop); 
+    if (java_thread == NULL) {
+      return JVMTI_ERROR_THREAD_NOT_ALIVE;
+    }
+  }
+
+  // event_type must be valid
+  if (!JvmtiEventController::is_valid_event_type(event_type)) {
+    return JVMTI_ERROR_INVALID_EVENT_TYPE;
+  }
+
+  // global events cannot be controlled at thread level.
+  if (java_thread != NULL && JvmtiEventController::is_global_event(event_type)) {
+    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+  }
+       
+  bool enabled = (mode == JVMTI_ENABLE);
+
+  // assure that needed capabilities are present
+  if (enabled && !JvmtiUtil::has_event_capability(event_type, get_capabilities())) {
+    return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
+  }
+       
+  if (event_type == JVMTI_EVENT_CLASS_FILE_LOAD_HOOK && enabled) {
+    record_class_file_load_hook_enabled();
+  }
+  JvmtiEventController::set_user_enabled(this, java_thread, event_type, enabled);
+  
+  return JVMTI_ERROR_NONE;
+} /* end SetEventNotificationMode */
+
 
 jvmtiError
 JvmtiEnv::GenerateEvents(jvmtiEvent event_type) {
@@ -3224,6 +2979,47 @@ jvmtiError
 JvmtiEnv::SetExtensionEventCallback(jint extension_event_index, jvmtiExtensionEvent callback) {
   return JvmtiExtensions::set_event_callback(this, extension_event_index, callback);
 } /* end SetExtensionEventCallback */
+
+
+  //
+  // Capability functions
+  // 
+
+// capabilities_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetPotentialCapabilities(jvmtiCapabilities* capabilities_ptr) {
+  JvmtiManageCapabilities::get_potential_capabilities(get_capabilities(), 
+                                                      get_prohibited_capabilities(),
+                                                      capabilities_ptr);
+  return JVMTI_ERROR_NONE;
+} /* end GetPotentialCapabilities */
+
+
+// capabilities_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddCapabilities(const jvmtiCapabilities* capabilities_ptr) {
+  return JvmtiManageCapabilities::add_capabilities(get_capabilities(), 
+                                                   get_prohibited_capabilities(),
+                                                   capabilities_ptr, 
+                                                   get_capabilities());
+} /* end AddCapabilities */
+
+
+// capabilities_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::RelinquishCapabilities(const jvmtiCapabilities* capabilities_ptr) {
+  JvmtiManageCapabilities::relinquish_capabilities(get_capabilities(), capabilities_ptr, get_capabilities());
+  return JVMTI_ERROR_NONE;  
+} /* end RelinquishCapabilities */
+
+
+// capabilities_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetCapabilities(jvmtiCapabilities* capabilities_ptr) {
+  JvmtiManageCapabilities::copy_capabilities(get_capabilities(), capabilities_ptr);
+  return JVMTI_ERROR_NONE;  
+} /* end GetCapabilities */
+
 
   //
   // Timers functions
@@ -3285,6 +3081,115 @@ JvmtiEnv::GetAvailableProcessors(jint* processor_count_ptr) {
   *processor_count_ptr = os::active_processor_count();
   return JVMTI_ERROR_NONE;
 } /* end GetAvailableProcessors */
+
+
+  //
+  // Class Loader Search functions
+  // 
+
+// segment - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddToBootstrapClassLoaderSearch(const char* segment) {
+  jvmtiPhase phase = get_phase();
+  if (phase == JVMTI_PHASE_ONLOAD) {
+    Arguments::append_sysclasspath(segment);
+    return JVMTI_ERROR_NONE;
+  } else {
+    assert(phase == JVMTI_PHASE_LIVE, "sanity check");
+
+    // create the zip entry
+    ClassPathZipEntry* zip_entry = ClassLoader::create_class_path_zip_entry(segment);
+    if (zip_entry == NULL) {
+      return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
+
+    // lock the loader 
+    Thread* thread = Thread::current();
+    HandleMark hm;
+    Handle loader_lock = Handle(thread, SystemDictionary::system_loader_lock());
+
+    ObjectLocker ol(loader_lock, thread);
+
+    // add the jar file to the bootclasspath
+    if (TraceClassLoading) {
+      tty->print_cr("[Opened %s]", zip_entry->name());
+    }
+    ClassLoader::add_to_list(zip_entry);
+    return JVMTI_ERROR_NONE;
+  }
+
+} /* end AddToBootstrapClassLoaderSearch */
+
+
+// segment - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddToSystemClassLoaderSearch(const char* segment) {
+  jvmtiPhase phase = get_phase();
+
+  if (phase == JVMTI_PHASE_ONLOAD) {
+    for (SystemProperty* p = Arguments::system_properties(); p != NULL; p = p->next()) {
+      if (strcmp("java.class.path", p->key()) == 0) {
+	p->append_value(segment);
+ 	break;	
+      }
+    }
+    return JVMTI_ERROR_NONE;
+  } else {
+    HandleMark hm;
+
+    assert(phase == JVMTI_PHASE_LIVE, "sanity check");
+
+    // create the zip entry (which will open the zip file and hence
+    // check that the segment is indeed a zip file).
+    ClassPathZipEntry* zip_entry = ClassLoader::create_class_path_zip_entry(segment);
+    if (zip_entry == NULL) {
+      return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
+    delete zip_entry;	// no longer needed
+
+    // lock the loader
+    Thread* THREAD = Thread::current();
+    Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
+
+    ObjectLocker ol(loader, THREAD);
+
+    // need the path as java.lang.String
+    Handle path = java_lang_String::create_from_str(segment, THREAD);
+    if (HAS_PENDING_EXCEPTION) {
+      CLEAR_PENDING_EXCEPTION;
+      return JVMTI_ERROR_INTERNAL;
+    }
+
+    instanceKlassHandle loader_ik(THREAD, loader->klass());
+
+    // Invoke the appendToClassPathForInstrumentation method - if the method
+    // is not found it means the loader doesn't support adding to the class path
+    // in the live phase.
+    {
+      JavaValue res(T_VOID);
+      JavaCalls::call_special(&res,
+			      loader,
+			      loader_ik,
+                              vmSymbolHandles::appendToClassPathForInstrumentation_name(),
+                              vmSymbolHandles::appendToClassPathForInstrumentation_signature(),
+			      path,
+                              THREAD);
+      if (HAS_PENDING_EXCEPTION) {
+	symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+	CLEAR_PENDING_EXCEPTION;
+
+	if (ex_name == vmSymbols::java_lang_NoSuchMethodError()) {
+	  return JVMTI_ERROR_CLASS_LOADER_UNSUPPORTED;
+	} else {
+	  return JVMTI_ERROR_INTERNAL;
+	}
+      }
+    }
+
+    return JVMTI_ERROR_NONE;
+  }
+} /* end AddToSystemClassLoaderSearch */
+
 
   //
   // System Properties functions
@@ -3358,4 +3263,96 @@ JvmtiEnv::SetSystemProperty(const char* property, const char* value) {
   return err;
 } /* end SetSystemProperty */
 
-#endif // !JVMTI_KERNEL
+
+  //
+  // General functions
+  // 
+
+// phase_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetPhase(jvmtiPhase* phase_ptr) {
+  *phase_ptr = get_phase();
+  return JVMTI_ERROR_NONE;
+} /* end GetPhase */
+
+
+jvmtiError
+JvmtiEnv::DisposeEnvironment() {
+  dispose();
+  return JVMTI_ERROR_NONE;
+} /* end DisposeEnvironment */
+
+
+// data - NULL is a valid value, must be checked
+jvmtiError
+JvmtiEnv::SetEnvironmentLocalStorage(const void* data) {
+  set_env_local_storage(data);
+  return JVMTI_ERROR_NONE;
+} /* end SetEnvironmentLocalStorage */
+
+
+// data_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetEnvironmentLocalStorage(void** data_ptr) {
+  *data_ptr = (void*)get_env_local_storage();
+  return JVMTI_ERROR_NONE;
+} /* end GetEnvironmentLocalStorage */
+
+
+// version_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetVersionNumber(jint* version_ptr) {
+  *version_ptr = JVMTI_VERSION;
+  return JVMTI_ERROR_NONE;
+} /* end GetVersionNumber */
+
+
+// name_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetErrorName(jvmtiError error, char** name_ptr) {
+  if (error < JVMTI_ERROR_NONE || error > JVMTI_ERROR_MAX) {
+    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+  }
+  const char *name = JvmtiUtil::error_name(error);
+  if (name == NULL) {
+    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+  }
+  size_t len = strlen(name) + 1;
+  jvmtiError err = allocate(len, (unsigned char**)name_ptr);
+  if (err == JVMTI_ERROR_NONE) {
+    memcpy(*name_ptr, name, len);
+  }
+  return err;
+} /* end GetErrorName */
+
+
+jvmtiError
+JvmtiEnv::SetVerboseFlag(jvmtiVerboseFlag flag, jboolean value) {
+  switch (flag) {
+  case JVMTI_VERBOSE_OTHER:
+    // ignore
+    break;
+  case JVMTI_VERBOSE_CLASS:
+    TraceClassLoading = value != 0;
+    TraceClassUnloading = value != 0;
+    break;
+  case JVMTI_VERBOSE_GC:
+    PrintGC = value != 0;
+    TraceClassUnloading = value != 0;
+    break;
+  case JVMTI_VERBOSE_JNI:
+    PrintJNIResolving = value != 0;
+    break;
+  default:
+    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+  };    
+  return JVMTI_ERROR_NONE;
+} /* end SetVerboseFlag */
+
+
+// format_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetJLocationFormat(jvmtiJlocationFormat* format_ptr) {
+  *format_ptr = JVMTI_JLOCATION_JVMBCI;
+  return JVMTI_ERROR_NONE;
+} /* end GetJLocationFormat */

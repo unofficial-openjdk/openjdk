@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)runtime_i486.cpp	1.110 07/05/05 17:04:19 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -46,16 +46,16 @@ ExceptionBlob*     OptoRuntime::_exception_blob;
 // This code is entered with a jmp.
 // 
 // Arguments:
-//   rax,: exception oop
-//   rdx: exception pc
+//   eax: exception oop
+//   edx: exception pc
 //
 // Results:
-//   rax,: exception oop
-//   rdx: exception pc in caller or ???
+//   eax: exception oop
+//   edx: exception pc in caller or ???
 //   destination: exception handler of caller
 // 
 // Note: the exception pc MUST be at a call (precise debug information)
-//       Only register rax, rdx, rcx are not callee saved.
+//       Only register eax, edx, ecx are not callee saved.
 //
 
 void OptoRuntime::generate_exception_blob() {
@@ -66,7 +66,7 @@ void OptoRuntime::generate_exception_blob() {
     // The frame sender code expects that rbp will be in the "natural" place and
     // will override any oopMap setting for it. We must therefore force the layout
     // so that it agrees with the frame sender code.
-    rbp_off,                
+    ebp_off,                
     return_off,                 // slot for return address
     framesize 
   };
@@ -81,18 +81,18 @@ void OptoRuntime::generate_exception_blob() {
 
   address start = __ pc();  
 
-  __ pushl(rdx);
-  __ subl(rsp, return_off * wordSize);   // Prolog!
+  __ pushl(edx);
+  __ subl(esp, return_off * wordSize);   // Prolog!
 
-  // rbp, location is implicitly known
-  __ movl(Address(rsp,rbp_off  *wordSize),rbp);
+  // ebp location is implicitly known
+  __ movl(Address(esp,ebp_off  *wordSize),ebp);
           
   // Store exception in Thread object. We cannot pass any arguments to the
   // handle_exception call, since we do not want to make any assumption
   // about the size of the frame where the exception happened in.
-  __ get_thread(rcx);
-  __ movl(Address(rcx, JavaThread::exception_oop_offset()), rax);
-  __ movl(Address(rcx, JavaThread::exception_pc_offset()),  rdx);
+  __ get_thread(ecx);
+  __ movl(Address(ecx, JavaThread::exception_oop_offset()), eax);
+  __ movl(Address(ecx, JavaThread::exception_pc_offset()),  edx);
 
   // This call does all the hard work.  It checks if an exception handler
   // exists in the method.  
@@ -100,50 +100,49 @@ void OptoRuntime::generate_exception_blob() {
   // If not, it prepares for stack-unwinding, restoring the callee-save 
   // registers of the frame being removed.
   //  
-  __ movl(Address(rsp, thread_off * wordSize), rcx); // Thread is first argument
-  __ set_last_Java_frame(rcx, noreg, noreg, NULL);
-  
-  __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, OptoRuntime::handle_exception_C)));
+  __ movl(Address(esp, thread_off * wordSize), ecx); // Thread is first argument
+  __ set_last_Java_frame(ecx, noreg, noreg, NULL);
+  __ call(CAST_FROM_FN_PTR(address, OptoRuntime::handle_exception_C), relocInfo::runtime_call_type);
 
-  // No registers to map, rbp is known implicitly
+  // No registers to map, ebp is known implicitly
   oop_maps->add_gc_map( __ pc() - start,  new OopMap( framesize, 0 ));
-  __ get_thread(rcx);
-  __ reset_last_Java_frame(rcx, false, false);
+  __ get_thread(ecx);
+  __ reset_last_Java_frame(ecx, false, false);
 
   // Restore callee-saved registers
-  __ movl(rbp, Address(rsp, rbp_off * wordSize));
+  __ movl(ebp, Address(esp, ebp_off * wordSize));
 
-  __ addl(rsp, return_off * wordSize);   // Epilog!
-  __ popl(rdx); // Exception pc
+  __ addl(esp, return_off * wordSize);   // Epilog!
+  __ popl(edx); // Exception pc
 
 
-  // rax,: exception handler for given <exception oop/exception pc>
+  // eax: exception handler for given <exception oop/exception pc>
   
-  // We have a handler in rax, (could be deopt blob)
-  // rdx - throwing pc, deopt blob will need it.
+  // We have a handler in eax (could be deopt blob)
+  // edx - throwing pc, deopt blob will need it.
 
-  __ pushl(rax); 
+  __ pushl(eax); 
 
-  // rcx contains handler address
+  // ecx contains handler address
 
-  __ get_thread(rcx);           // TLS
+  __ get_thread(ecx);           // TLS
   // Get the exception
-  __ movl(rax, Address(rcx, JavaThread::exception_oop_offset()));
+  __ movl(eax, Address(ecx, JavaThread::exception_oop_offset()));
   // Get the exception pc in case we are deoptimized
-  __ movl(rdx, Address(rcx, JavaThread::exception_pc_offset()));
+  __ movl(edx, Address(ecx, JavaThread::exception_pc_offset()));
 #ifdef ASSERT
-  __ movl(Address(rcx, JavaThread::exception_handler_pc_offset()), 0);
-  __ movl(Address(rcx, JavaThread::exception_pc_offset()), 0); 
+  __ movl(Address(ecx, JavaThread::exception_handler_pc_offset()), 0);
+  __ movl(Address(ecx, JavaThread::exception_pc_offset()), 0); 
 #endif
   // Clear the exception oop so GC no longer processes it as a root.
-  __ movl(Address(rcx, JavaThread::exception_oop_offset()), 0);
+  __ movl(Address(ecx, JavaThread::exception_oop_offset()), 0);
 
-  __ popl(rcx);
+  __ popl(ecx);
 
-  // rax,: exception oop
-  // rcx: exception handler
-  // rdx: exception pc
-  __ jmp (rcx);
+  // eax: exception oop
+  // ecx: exception handler
+  // edx: exception pc
+  __ jmp (ecx);
 
   // -------------
   // make sure all code is generated

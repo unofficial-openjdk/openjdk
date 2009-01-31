@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_ValueMap.cpp	1.29 07/05/05 17:05:08 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.

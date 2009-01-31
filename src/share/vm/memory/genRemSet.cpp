@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)genRemSet.cpp	1.11 07/05/05 17:05:50 JVM"
 #endif
 /*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.

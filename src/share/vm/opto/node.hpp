@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)node.hpp	1.221 07/05/17 17:44:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -59,7 +59,6 @@ class CountedLoopEndNode;
 class FastLockNode;
 class FastUnlockNode;
 class IfNode;
-class InitializeNode;
 class JVMState;
 class JumpNode;
 class JumpProjNode;
@@ -539,7 +538,6 @@ public:
         DEFINE_CLASS_ID(NeverBranch, MultiBranch, 2)
       DEFINE_CLASS_ID(Start,       Multi, 2)
       DEFINE_CLASS_ID(MemBar,      Multi, 3)
-        DEFINE_CLASS_ID(Initialize,    MemBar, 0)
 
     DEFINE_CLASS_ID(Mach,  Node, 1)
       DEFINE_CLASS_ID(MachReturn, Mach, 0)
@@ -689,7 +687,6 @@ public:
   DEFINE_CLASS_QUERY(If)
   DEFINE_CLASS_QUERY(IfFalse)
   DEFINE_CLASS_QUERY(IfTrue)
-  DEFINE_CLASS_QUERY(Initialize)
   DEFINE_CLASS_QUERY(Jump)
   DEFINE_CLASS_QUERY(JumpProj)
   DEFINE_CLASS_QUERY(Load)

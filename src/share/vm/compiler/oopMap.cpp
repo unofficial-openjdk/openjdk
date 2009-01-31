@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)oopMap.cpp	1.151 07/05/05 17:05:23 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -192,10 +192,6 @@ void OopMap::set_derived_oop(VMReg reg, VMReg derived_from_local_register ) {
   } else {
     set_xxx(reg, OopMapValue::derived_oop_value, derived_from_local_register);
   }
-}
-
-void OopMap::set_stack_obj(VMReg reg) {
-  set_xxx(reg, OopMapValue::stack_obj, VMRegImpl::Bad());
 }
 
 // OopMapSet
@@ -405,7 +401,7 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
       if ( loc != NULL ) {
         if ( omv.type() == OopMapValue::oop_value ) {
 #ifdef ASSERT
-          if (COMPILER2_PRESENT(!DoEscapeAnalysis &&) !Universe::heap()->is_in_or_null(*loc)) {
+          if (!Universe::heap()->is_in_or_null(*loc)) {
             tty->print_cr("# Found non oop pointer.  Dumping state at failure");
             // try to dump out some helpful debugging information
             trace_codeblob_maps(fr, reg_map);
@@ -424,17 +420,6 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
       }
     }
   }
-
-#ifdef COMPILER2
-  if (DoEscapeAnalysis) {
-    for (OopMapStream oms(map, OopMapValue::stack_obj); !oms.is_done(); oms.next()) {
-      omv = oms.current();
-      assert(omv.is_stack_loc(), "should refer to stack location");
-      oop loc = (oop) fr->oopmapreg_to_location(omv.reg(),reg_map);
-      oop_fn->do_oop(&loc);
-    }
-  }
-#endif // COMPILER2
 }
 
 
@@ -527,9 +512,6 @@ void print_register_type(OopMapValue::oop_types x, VMReg optional) {
   case OopMapValue::derived_oop_value:
     tty->print("Derived_oop_" );
     optional->print();
-    break;
-  case OopMapValue::stack_obj:
-    tty->print("Stack");
     break;
   default:
     ShouldNotReachHere();

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jniFastGetField_i486.cpp	1.10 07/05/05 17:04:18 JVM"
 #endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -64,52 +64,53 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
 
   Label slow;
 
-  // stack layout:    offset from rsp (in words):
+  // stack layout:    offset from esp (in words):
   //  return pc        0
   //  jni env          1
   //  obj              2
   //  jfieldID         3
 
-  ExternalAddress counter(SafepointSynchronize::safepoint_counter_addr());
-  __ mov32 (rcx, counter);
-  __ testb (rcx, 1);
+  address counter_addr = SafepointSynchronize::safepoint_counter_addr();
+  Address ca((int)counter_addr, relocInfo::none);
+  __ movl (ecx, ca);
+  __ testb (ecx, 1);
   __ jcc (Assembler::notZero, slow);
   if (os::is_MP()) {
-    __ movl (rax, rcx);
-    __ andl (rax, 1);                         // rax, must end up 0
-    __ movl (rdx, Address(rsp, rax, Address::times_1, 2*wordSize));
-                                              // obj, notice rax, is 0.
-                                              // rdx is data dependent on rcx.
+    __ movl (eax, ecx);
+    __ andl (eax, 1);                         // eax must end up 0
+    __ movl (edx, Address(esp, eax, Address::times_1, 2*wordSize));
+                                              // obj, notice eax is 0.
+                                              // edx is data dependent on ecx.
   } else {
-    __ movl (rdx, Address(rsp, 2*wordSize));  // obj
+    __ movl (edx, Address(esp, 2*wordSize));  // obj
   }
-  __ movl (rax, Address(rsp, 3*wordSize));  // jfieldID
-  __ movl (rdx, Address(rdx, 0));           // *obj
-  __ shrl (rax, 2);                         // offset
+  __ movl (eax, Address(esp, 3*wordSize));  // jfieldID
+  __ movl (edx, Address(edx));              // *obj
+  __ shrl (eax, 2);                         // offset
 
   assert(count < LIST_CAPACITY, "LIST_CAPACITY too small");
   speculative_load_pclist[count] = __ pc();
   switch (type) {
-    case T_BOOLEAN: __ movzxb (rax, Address(rdx, rax, Address::times_1)); break;
-    case T_BYTE:    __ movsxb (rax, Address(rdx, rax, Address::times_1)); break;
-    case T_CHAR:    __ movzxw (rax, Address(rdx, rax, Address::times_1)); break;
-    case T_SHORT:   __ movsxw (rax, Address(rdx, rax, Address::times_1)); break;
-    case T_INT:     __ movl   (rax, Address(rdx, rax, Address::times_1)); break;
+    case T_BOOLEAN: __ movzxb (eax, Address(edx, eax, Address::times_1)); break;
+    case T_BYTE:    __ movsxb (eax, Address(edx, eax, Address::times_1)); break;
+    case T_CHAR:    __ movzxw (eax, Address(edx, eax, Address::times_1)); break;
+    case T_SHORT:   __ movsxw (eax, Address(edx, eax, Address::times_1)); break;
+    case T_INT:     __ movl   (eax, Address(edx, eax, Address::times_1)); break;
     default:        ShouldNotReachHere();
   }
 
   Address ca1;
   if (os::is_MP()) {
-    __ lea(rdx, counter);
-    __ xorl(rdx, rax);
-    __ xorl(rdx, rax);
-    __ cmp32(rcx, Address(rdx, 0));
-    // ca1 is the same as ca because
-    // rax, ^ counter_addr ^ rax, = address
-    // ca1 is data dependent on rax,.
+    __ movl (edx, eax);
+    __ xorl (edx, (int)counter_addr);
+    __ xorl (edx, eax);
+    ca1 = Address(edx);                // ca1 is the same as ca because
+                                       // eax ^ counter_addr ^ eax = address
+                                       // ca1 is data dependent on eax.
   } else {
-    __ cmp32(rcx, counter);
+    ca1 = ca;
   }
+  __ cmpl (ecx, ca1);
   __ jcc (Assembler::notEqual, slow);
 
 #ifndef _WINDOWS
@@ -130,7 +131,7 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
     case T_INT:     slow_case_addr = jni_GetIntField_addr();
   }
   // tail call
-  __ jump (ExternalAddress(slow_case_addr));
+  __ jmp (slow_case_addr, relocInfo::none);
 
   __ flush ();
 
@@ -178,54 +179,55 @@ address JNI_FastGetField::generate_fast_get_long_field() {
 
   Label slow;
 
-  // stack layout:    offset from rsp (in words):
-  //  old rsi          0
+  // stack layout:    offset from esp (in words):
+  //  old esi          0
   //  return pc        1
   //  jni env          2
   //  obj              3
   //  jfieldID         4
 
-  ExternalAddress counter(SafepointSynchronize::safepoint_counter_addr());
-
-  __ pushl (rsi);
-  __ mov32 (rcx, counter);
-  __ testb (rcx, 1);
+  address counter_addr = SafepointSynchronize::safepoint_counter_addr();
+  Address ca((int)counter_addr, relocInfo::none);
+  __ pushl (esi);
+  __ movl (ecx, ca);
+  __ testb (ecx, 1);
   __ jcc (Assembler::notZero, slow);
   if (os::is_MP()) {
-    __ movl (rax, rcx);
-    __ andl (rax, 1);                         // rax, must end up 0
-    __ movl (rdx, Address(rsp, rax, Address::times_1, 3*wordSize));
-                                              // obj, notice rax, is 0.
-                                              // rdx is data dependent on rcx.
+    __ movl (eax, ecx);
+    __ andl (eax, 1);                         // eax must end up 0
+    __ movl (edx, Address(esp, eax, Address::times_1, 3*wordSize));
+                                              // obj, notice eax is 0.
+                                              // edx is data dependent on ecx.
   } else {
-    __ movl (rdx, Address(rsp, 3*wordSize));  // obj
+    __ movl (edx, Address(esp, 3*wordSize));  // obj
   }
-  __ movl (rsi, Address(rsp, 4*wordSize));  // jfieldID
-  __ movl (rdx, Address(rdx, 0));           // *obj
-  __ shrl (rsi, 2);                         // offset
+  __ movl (esi, Address(esp, 4*wordSize));  // jfieldID
+  __ movl (edx, Address(edx));              // *obj
+  __ shrl (esi, 2);                         // offset
 
   assert(count < LIST_CAPACITY-1, "LIST_CAPACITY too small");
   speculative_load_pclist[count++] = __ pc();
-  __ movl (rax, Address(rdx, rsi, Address::times_1));
+  __ movl (eax, Address(edx, esi, Address::times_1));
   speculative_load_pclist[count] = __ pc();
-  __ movl (rdx, Address(rdx, rsi, Address::times_1, 4));
+  __ movl (edx, Address(edx, esi, Address::times_1, 4));
 
+  Address ca1;
   if (os::is_MP()) {
-    __ lea  (rsi, counter);
-    __ xorl (rsi, rdx);
-    __ xorl (rsi, rax);
-    __ xorl (rsi, rdx);
-    __ xorl (rsi, rax);
-    __ cmp32(rcx, Address(rsi, 0));
-    // ca1 is the same as ca because
-    // rax, ^ rdx ^ counter_addr ^ rax, ^ rdx = address
-    // ca1 is data dependent on both rax, and rdx.
+    __ movl (esi, eax);
+    __ xorl (esi, edx);
+    __ xorl (esi, (int)counter_addr);
+    __ xorl (esi, eax);
+    __ xorl (esi, edx);
+    ca1 = Address(esi);        // ca1 is the same as ca because
+                               // eax ^ edx ^ counter_addr ^ eax ^ edx = address
+                               // ca1 is data dependent on both eax and edx.
   } else {
-    __ cmp32(rcx, counter);
+    ca1 = ca;
   }
+  __ cmpl (ecx, ca1);
   __ jcc (Assembler::notEqual, slow);
 
-  __ popl (rsi);
+  __ popl (esi);
 
 #ifndef _WINDOWS
   __ ret (0);
@@ -237,10 +239,10 @@ address JNI_FastGetField::generate_fast_get_long_field() {
   slowcase_entry_pclist[count-1] = __ pc();
   slowcase_entry_pclist[count++] = __ pc();
   __ bind (slow);
-  __ popl (rsi);
+  __ popl (esi);
   address slow_case_addr = jni_GetLongField_addr();;
   // tail call
-  __ jump (ExternalAddress(slow_case_addr));
+  __ jmp (slow_case_addr, relocInfo::none);
 
   __ flush ();
 
@@ -267,52 +269,53 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
 
   Label slow_with_pop, slow;
 
-  // stack layout:    offset from rsp (in words):
+  // stack layout:    offset from esp (in words):
   //  return pc        0
   //  jni env          1
   //  obj              2
   //  jfieldID         3
 
-  ExternalAddress counter(SafepointSynchronize::safepoint_counter_addr());
-
-  __ mov32 (rcx, counter);
-  __ testb (rcx, 1);
+  address counter_addr = SafepointSynchronize::safepoint_counter_addr();
+  Address ca((int)counter_addr, relocInfo::none);
+  __ movl (ecx, ca);
+  __ testb (ecx, 1);
   __ jcc (Assembler::notZero, slow);
   if (os::is_MP()) {
-    __ movl (rax, rcx);
-    __ andl (rax, 1);                         // rax, must end up 0
-    __ movl (rdx, Address(rsp, rax, Address::times_1, 2*wordSize));
-                                              // obj, notice rax, is 0.
-                                              // rdx is data dependent on rcx.
+    __ movl (eax, ecx);
+    __ andl (eax, 1);                         // eax must end up 0
+    __ movl (edx, Address(esp, eax, Address::times_1, 2*wordSize));
+                                              // obj, notice eax is 0.
+                                              // edx is data dependent on ecx.
   } else {
-    __ movl (rdx, Address(rsp, 2*wordSize)); // obj
+    __ movl (edx, Address(esp, 2*wordSize)); // obj
   }
-  __ movl (rax, Address(rsp, 3*wordSize));  // jfieldID
-  __ movl (rdx, Address(rdx, 0));           // *obj
-  __ shrl (rax, 2);                         // offset
+  __ movl (eax, Address(esp, 3*wordSize));  // jfieldID
+  __ movl (edx, Address(edx));              // *obj
+  __ shrl (eax, 2);                         // offset
 
   assert(count < LIST_CAPACITY, "LIST_CAPACITY too small");
   speculative_load_pclist[count] = __ pc();
   switch (type) {
-    case T_FLOAT:  __ fld_s (Address(rdx, rax, Address::times_1)); break;
-    case T_DOUBLE: __ fld_d (Address(rdx, rax, Address::times_1)); break;
+    case T_FLOAT:  __ fld_s (Address(edx, eax, Address::times_1)); break;
+    case T_DOUBLE: __ fld_d (Address(edx, eax, Address::times_1)); break;
     default:       ShouldNotReachHere();
   }
 
   Address ca1;
   if (os::is_MP()) {
-    __ fst_s (Address(rsp, -4));
-    __ lea(rdx, counter);
-    __ movl (rax, Address(rsp, -4));
-    __ xorl(rdx, rax);
-    __ xorl(rdx, rax);
-    __ cmp32(rcx, Address(rdx, 0));
-                                          // rax, ^ counter_addr ^ rax, = address
+    __ fst_s (Address(esp, -4));
+    __ movl (eax, Address(esp, -4));
+    __ movl (edx, eax);
+    __ xorl (edx, (int)counter_addr);
+    __ xorl (edx, eax);
+    ca1 = Address(edx);                   // ca1 is the same as ca because
+                                          // eax ^ counter_addr ^ eax = address
                                           // ca1 is data dependent on the field
                                           // access.
   } else {
-    __ cmp32(rcx, counter);
+    ca1 = ca;
   }
+  __ cmpl (ecx, ca1);
   __ jcc (Assembler::notEqual, slow_with_pop);
 
 #ifndef _WINDOWS
@@ -335,7 +338,7 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
     default:       ShouldNotReachHere();
   }
   // tail call
-  __ jump (ExternalAddress(slow_case_addr));
+  __ jmp (slow_case_addr, relocInfo::none);
 
   __ flush ();
 

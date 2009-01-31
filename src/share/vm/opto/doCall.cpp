@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)doCall.cpp	1.206 07/05/17 15:57:45 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -151,8 +151,8 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
           (profile.morphism() == 2 && UseBimorphicInlining)) {
         // receiver_method = profile.method();
         // Profiles do not suggest methods now.  Look it up in the major receiver.
-        receiver_method = call_method->resolve_invoke(jvms->method()->holder(),
-                                                      profile.receiver(0));
+        ciInstanceKlass* ik = profile.receiver(0)->as_instance_klass();
+        receiver_method = call_method->resolve_invoke(jvms->method()->holder(), ik);
       }
       if (receiver_method != NULL) {
         // The single majority receiver sufficiently outweighs the minority.
@@ -163,8 +163,8 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
           CallGenerator* next_hit_cg = NULL;
           ciMethod* next_receiver_method = NULL;
           if (profile.morphism() == 2 && UseBimorphicInlining) { 
-            next_receiver_method = call_method->resolve_invoke(jvms->method()->holder(),
-                                                               profile.receiver(1));
+            ciInstanceKlass* next_ik = profile.receiver(1)->as_instance_klass();
+            next_receiver_method = call_method->resolve_invoke(jvms->method()->holder(), next_ik);
             if (next_receiver_method != NULL) {
               next_hit_cg = this->call_generator(next_receiver_method, 
                                   vtable_index, !call_is_virtual, jvms, 
@@ -312,8 +312,8 @@ void Parse::do_call() {
 
   // Try to get the most accurate receiver type
   if (is_virtual_or_interface) {
-    Node*             receiver_node = stack(sp() - nargs);
-    const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
+    Node*              receiver_node = stack(sp() - nargs);
+    const TypeInstPtr* receiver_type = _gvn.type(receiver_node)->isa_instptr();
     ciMethod* optimized_virtual_method = optimize_inlining(method(), bci(), klass, dest_method, receiver_type);
 
     // Have the call been sufficiently improved such that it is no longer a virtual?
@@ -768,7 +768,7 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
 
 // Identify possible target method and inlining style
 ciMethod* Parse::optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass, 
-                                   ciMethod *dest_method, const TypeOopPtr* receiver_type) {
+                                   ciMethod *dest_method, const TypeInstPtr* receiver_type) {
   // only use for virtual or interface calls
 
   // If it is obviously final, do not bother to call find_monomorphic_target,
@@ -783,17 +783,6 @@ ciMethod* Parse::optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* k
   bool actual_receiver_is_exact = false;
   ciInstanceKlass* actual_receiver = klass;
   if (receiver_type != NULL) {
-    // Array methods are all inherited from Object, and are monomorphic.
-    if (receiver_type->isa_aryptr() &&
-        dest_method->holder() == env()->Object_klass()) {
-      return dest_method;
-    }
-
-    // All other interesting cases are instance klasses.
-    if (!receiver_type->isa_instptr()) {
-      return NULL;
-    }
-
     ciInstanceKlass *ikl = receiver_type->klass()->as_instance_klass();
     if (ikl->is_loaded() && ikl->is_initialized() && !ikl->is_interface() &&
         (ikl == actual_receiver || ikl->is_subclass_of(actual_receiver))) {

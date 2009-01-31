@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)os_win32_amd64.cpp	1.18 07/05/05 17:04:55 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -51,7 +51,8 @@ LONG HandleExceptionFromCodeCache(
   IN PEXCEPTION_RECORD ExceptionRecord,
   IN ULONG64 EstablisherFrame,
   IN OUT PCONTEXT ContextRecord,
-  IN OUT PDISPATCHER_CONTEXT DispatcherContext) {
+  IN OUT PDISPATCHER_CONTEXT DispatcherContext)
+{
   EXCEPTION_POINTERS ep;
   LONG result;
 
@@ -106,7 +107,7 @@ bool os::register_code_area(char *low, char *high) {
   MacroAssembler* masm = new MacroAssembler(&cb);
   pDCD = (pDynamicCodeData) masm->pc();
 
-  masm->jump(ExternalAddress((address)&HandleExceptionFromCodeCache));
+  masm->jmp((address)&HandleExceptionFromCodeCache, relocInfo::none);
   masm->flush();
 
   // Create an Unwind Structure specifying no unwind info 
@@ -115,12 +116,11 @@ bool os::register_code_area(char *low, char *high) {
   punwind->Version = 1;
   punwind->Flags = UNW_FLAG_EHANDLER; 
   punwind->SizeOfProlog = 0;
-  punwind->CountOfCodes = 0;
+  punwind->CountOfCodes = 1;
   punwind->FrameRegister = 0;
   punwind->FrameOffset = 0;
   punwind->ExceptionHandler = (char *)(&(pDCD->ExceptionHandlerInstr[0])) - 
                               (char*)low;
-  punwind->ExceptionData[0] = 0;
 
   // This structure describes the covered dynamic code area.
   // Addresses are relative to the beginning on the code cache area 

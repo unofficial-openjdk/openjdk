@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)dict2.hpp	1.16 07/05/05 17:05:01 JVM"
 #endif
 /*
  * Copyright 1998-2000 Sun Microsystems, Inc.  All Rights Reserved.

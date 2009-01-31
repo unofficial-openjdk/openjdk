@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jvmtiEnvBase.hpp	1.68 07/05/23 10:53:43 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -55,11 +55,6 @@ class JvmtiEnvBase : public CHeapObj {
   static volatile int      _dying_thread_env_iteration_count;
 
  public:  
-
-  enum {
-    JDK15_JVMTI_VERSION = JVMTI_VERSION_1_0 +  33,  /* version: 1.0.33  */
-    JDK16_JVMTI_VERSION = JVMTI_VERSION_1_1 + 102   /* version: 1.1.102 */
-  };
 
   static jvmtiPhase  get_phase()                    { return _phase; }
   static void  set_phase(jvmtiPhase phase)          { _phase = phase; }

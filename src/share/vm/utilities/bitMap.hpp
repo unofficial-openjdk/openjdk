@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)bitMap.hpp	1.45 07/05/05 17:07:06 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -116,10 +116,6 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
   }
 
  public:
-
-  // Constructs a bitmap with no map, and size 0.
-  BitMap() : _map(NULL), _size(0) {}
-
   // Construction
   BitMap(idx_t* map, idx_t size_in_bits);
 

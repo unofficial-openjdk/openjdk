@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)mulnode.cpp	1.133 07/05/05 17:06:16 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -410,13 +410,6 @@ Node *AndINode::Identity( PhaseTransform *phase ) {
   const TypeInt *t2 = phase->type( in(2) )->isa_int();
   if( t2 && t2->is_con() ) {
     int con = t2->get_con();
-    // Masking off high bits which are always zero is useless.
-    const TypeInt* t1 = phase->type( in(1) )->isa_int();
-    if (t1 != NULL && t1->_lo >= 0) {
-      jint t1_support = ((jint)1 << (1 + log2_intptr(t1->_hi))) - 1;
-      if ((t1_support & con) == t1_support)
-        return load;
-    }
     uint lop = load->Opcode();      
     if( lop == Op_LoadC &&
         con == 0x0000FFFF )     // Already zero-extended
@@ -543,13 +536,6 @@ Node *AndLNode::Identity( PhaseTransform *phase ) {
   const TypeLong *t2 = phase->type( in(2) )->isa_long();
   if( t2 && t2->is_con() ) {
     jlong con = t2->get_con();
-    // Masking off high bits which are always zero is useless.
-    const TypeLong* t1 = phase->type( in(1) )->isa_long();
-    if (t1 != NULL && t1->_lo >= 0) {
-      jlong t1_support = ((jlong)1 << (1 + log2_long(t1->_hi))) - 1;
-      if ((t1_support & con) == t1_support)
-        return usr;
-    }
     uint lop = usr->Opcode();
     // Masking off the high bits of a unsigned-shift-right is not 
     // needed either.
@@ -683,27 +669,11 @@ const Type *LShiftINode::Value( PhaseTransform *phase ) const {
   const TypeInt *r1 = t1->is_int(); // Handy access
   const TypeInt *r2 = t2->is_int(); // Handy access
 
-  if (!r2->is_con())
+  if( !r1->is_con() || !r2->is_con() )
     return TypeInt::INT;
 
   uint shift = r2->get_con();
   shift &= BitsPerJavaInteger-1;  // semantics of Java shifts
-  // Shift by a multiple of 32 does nothing:
-  if (shift == 0)  return t1;
-
-  // If the shift is a constant, shift the bounds of the type,
-  // unless this could lead to an overflow.
-  if (!r1->is_con()) {
-    jint lo = r1->_lo, hi = r1->_hi;
-    if (((lo << shift) >> shift) == lo &&
-        ((hi << shift) >> shift) == hi) {
-      // No overflow.  The range shifts up cleanly.
-      return TypeInt::make((jint)lo << (jint)shift,
-                           (jint)hi << (jint)shift,
-                           MAX2(r1->_widen,r2->_widen));
-    }
-    return TypeInt::INT;
-  }
 
   return TypeInt::make( (jint)r1->get_con() << (jint)shift );
 }
@@ -792,27 +762,11 @@ const Type *LShiftLNode::Value( PhaseTransform *phase ) const {
   const TypeLong *r1 = t1->is_long(); // Handy access
   const TypeInt  *r2 = t2->is_int();  // Handy access
 
-  if (!r2->is_con())
+  if( !r1->is_con() || !r2->is_con() )
     return TypeLong::LONG;
 
   uint shift = r2->get_con();
   shift &= (BitsPerJavaInteger*2)-1;  // semantics of Java shifts
-  // Shift by a multiple of 64 does nothing:
-  if (shift == 0)  return t1;
-
-  // If the shift is a constant, shift the bounds of the type,
-  // unless this could lead to an overflow.
-  if (!r1->is_con()) {
-    jlong lo = r1->_lo, hi = r1->_hi;
-    if (((lo << shift) >> shift) == lo &&
-        ((hi << shift) >> shift) == hi) {
-      // No overflow.  The range shifts up cleanly.
-      return TypeLong::make((jlong)lo << (jint)shift,
-                            (jlong)hi << (jint)shift,
-                            MAX2(r1->_widen,r2->_widen));
-    }
-    return TypeLong::LONG;
-  }
 
   return TypeLong::make( (jlong)r1->get_con() << (jint)shift );
 }
@@ -1102,14 +1056,9 @@ Node *URShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( in1_op == Op_AndI ) {
     const TypeInt *t3 = phase->type( andi->in(2) )->isa_int();
     if( t3 && t3->is_con() ) { // Right input is a constant
-      jint mask2 = t3->get_con();
-      mask2 >>= con;  // *signed* shift downward (high-order zeroes do not help)
+      const jint mask2 = t3->get_con();
       Node *newshr = phase->transform( new (phase->C, 3) URShiftINode(andi->in(1), in(2)) );
-      return new (phase->C, 3) AndINode(newshr, phase->intcon(mask2));
-      // The negative values are easier to materialize than positive ones.
-      // A typical case from address arithmetic is ((x & ~15) >> 4).
-      // It's better to change that to ((x >> 4) & ~0) versus
-      // ((x >> 4) & 0x0FFFFFFF).  The difference is greatest in LP64.
+      return new (phase->C, 3) AndINode(newshr, phase->intcon( (mask2 >> con) & mask ));
     }
   }
 
@@ -1235,10 +1184,9 @@ Node *URShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( andi->Opcode() == Op_AndL ) {
     const TypeLong *t3 = phase->type( andi->in(2) )->isa_long();
     if( t3 && t3->is_con() ) { // Right input is a constant
-      jlong mask2 = t3->get_con();
-      mask2 >>= con;  // *signed* shift downward (high-order zeroes do not help)
+      const jlong mask2 = t3->get_con();
       Node *newshr = phase->transform( new (phase->C, 3) URShiftLNode(andi->in(1), in(2)) );
-      return new (phase->C, 3) AndLNode(newshr, phase->longcon(mask2));
+      return new (phase->C, 3) AndLNode(newshr, phase->longcon((mask2 >> con) & mask));
     }
   }
 

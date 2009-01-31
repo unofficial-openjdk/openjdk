@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)concurrentMarkSweepThread.hpp	1.38 07/05/05 17:06:46 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)modRefBarrierSet.hpp	1.16 07/05/05 17:05:53 JVM"
 #endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.

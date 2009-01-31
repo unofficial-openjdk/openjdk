@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)register_i486.cpp	1.16 07/05/05 17:04:19 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -26,27 +26,17 @@
  */
 
 #include "incls/_precompiled.incl"
-#ifndef AMD64
 #include "incls/_register_i486.cpp.incl"
+
+
 const int ConcreteRegisterImpl::max_gpr = RegisterImpl::number_of_registers;
-#else
-#include "incls/_register_amd64.cpp.incl"
-const int ConcreteRegisterImpl::max_gpr = RegisterImpl::number_of_registers << 1;
-#endif // AMD64
-
-
 const int ConcreteRegisterImpl::max_fpr = ConcreteRegisterImpl::max_gpr + 
                                                                  2 * FloatRegisterImpl::number_of_registers;
 const int ConcreteRegisterImpl::max_xmm = ConcreteRegisterImpl::max_fpr + 
                                                                  2 * XMMRegisterImpl::number_of_registers;
 const char* RegisterImpl::name() const {
   const char* names[number_of_registers] = {
-#ifndef AMD64
     "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"
-#else
-    "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
-    "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"
-#endif // AMD64
   };
   return is_valid() ? names[encoding()] : "noreg";
 }
@@ -61,9 +51,6 @@ const char* FloatRegisterImpl::name() const {
 const char* XMMRegisterImpl::name() const {
   const char* names[number_of_registers] = {
     "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"
-#ifdef AMD64
-    ,"xmm8",  "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
-#endif // AMD64
   };
   return is_valid() ? names[encoding()] : "xnoreg";
 }

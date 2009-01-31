@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame_i486.cpp	1.216 07/05/05 17:04:15 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -75,11 +75,12 @@ bool frame::safe_for_sender(JavaThread *thread) {
   return false;
 }
 
+
 void frame::patch_pc(Thread* thread, address pc) { 
   if (TracePcPatching) {
-    tty->print_cr("patch_pc at address  0x%x [0x%x -> 0x%x] ", &((address *)sp())[-1], ((address *)sp())[-1], pc);
+    tty->print_cr("patch_pc at address  0x%x [0x%x -> 0x%x] ", &((address *)_sp)[-1], ((address *)_sp)[-1], pc);
   }
-  ((address *)sp())[-1] = pc; 
+  ((address *)_sp)[-1] = pc; 
   _cb = CodeCache::find_blob(pc);
   if (_cb != NULL && _cb->is_nmethod() && ((nmethod*)_cb)->is_deopt_pc(_pc)) {
     address orig = (((nmethod*)_cb)->get_original_pc(this));
@@ -94,43 +95,16 @@ void frame::patch_pc(Thread* thread, address pc) {
 
 bool frame::is_interpreted_frame() const  {
   return Interpreter::contains(pc());
-
 }
 
-int frame::frame_size() const {
+int frame::frame_size() const 
+{
   RegisterMap map(JavaThread::current(), false);
   frame sender = this->sender(&map);
   return sender.sp() - sp();
 }
 
-intptr_t* frame::entry_frame_argument_at(int offset) const {
-  // convert offset to index to deal with tsi
-  int index = (Interpreter::expr_offset_in_bytes(offset)/wordSize);
-  // Entry frame's arguments are always in relation to unextended_sp()
-  return &unextended_sp()[index];
-}
-
 // sender_sp
-#ifdef CC_INTERP
-intptr_t* frame::interpreter_frame_sender_sp() const {
-  assert(is_interpreted_frame(), "interpreted frame expected");
-  // QQQ why does this specialize method exist if frame::sender_sp() does same thing?
-  // seems odd and if we always know interpreted vs. non then sender_sp() is really
-  // doing too much work.
-  return get_interpreterState()->sender_sp();
-}
-
-// monitor elements
-
-BasicObjectLock* frame::interpreter_frame_monitor_begin() const {
-  return get_interpreterState()->monitor_base();
-}
-
-BasicObjectLock* frame::interpreter_frame_monitor_end() const {
-  return (BasicObjectLock*) get_interpreterState()->stack_base();
-}
-
-#else // CC_INTERP
 
 intptr_t* frame::interpreter_frame_sender_sp() const {
   assert(is_interpreted_frame(), "interpreted frame expected");
@@ -141,6 +115,7 @@ void frame::set_interpreter_frame_sender_sp(intptr_t* sender_sp) {
   assert(is_interpreted_frame(), "interpreted frame expected");
   int_at_put(interpreter_frame_sender_sp_offset, (jint) sender_sp);
 }
+
 
 // monitor elements
 
@@ -160,11 +135,10 @@ void frame::interpreter_frame_set_monitor_end(BasicObjectLock* value) {
   *((BasicObjectLock**)addr_at(interpreter_frame_monitor_block_top_offset)) = value;
 }
 
-// Used by template based interpreter deoptimization
+// Used by deoptimization
 void frame::interpreter_frame_set_last_sp(intptr_t* sp) {
     *((intptr_t**)addr_at(interpreter_frame_last_sp_offset)) = sp;
 }
-#endif // CC_INTERP
 
 frame frame::sender_for_entry_frame(RegisterMap* map) const {
   assert(map != NULL, "map must be set");
@@ -172,7 +146,7 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   // frame of that chunk as the sender
   JavaFrameAnchor* jfa = entry_frame_call_wrapper()->anchor();
   assert(!entry_frame_is_first(), "next Java fp must be non zero");
-  assert(jfa->last_Java_sp() > sp(), "must be above this frame on stack");  
+  assert(jfa->last_Java_sp() > _sp, "must be above this frame on stack");  
   map->clear(); 
   assert(map->include_argument_oops(), "should be set by clear");
   if (jfa->last_Java_pc() != NULL ) {
@@ -187,8 +161,10 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   // sp is the raw sp from the sender after adapter or interpreter extension
   intptr_t* sp = (intptr_t*) addr_at(sender_sp_offset);
 
-  // This is the sp before any possible extension (adapter/locals).
-  intptr_t* unextended_sp = interpreter_frame_sender_sp();
+  // This is the sp before any possible extension. This is handled via 
+  // _interpreter_sp_adjustment on sparc.
+
+  intptr_t* unextended_sp = (intptr_t*) at(interpreter_frame_sender_sp_offset);
 
   // The interpreter and compiler(s) always save EBP in a known
   // location on entry. We must record where that location is
@@ -199,7 +175,7 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   // code, on entry will be enough.
 #ifdef COMPILER2
   if (map->update_map()) {
-    map->set_location(rbp->as_VMReg(), (address) addr_at(link_offset));
+    map->set_location(ebp->as_VMReg(), (address) addr_at(link_offset));
   }
 #endif /* COMPILER2 */
   return frame(sp, unextended_sp, link(), sender_pc());
@@ -236,7 +212,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     // Since the prolog does the save and restore of epb there is no oopmap
     // for it so we must fill in its location as if there was an oopmap entry
     // since if our caller was compiled code there could be live jvm state in it.
-    map->set_location(rbp->as_VMReg(), (address) (sender_sp - frame::sender_sp_offset));
+    map->set_location(ebp->as_VMReg(), (address) (sender_sp - frame::sender_sp_offset));
   }
 
   assert(sender_sp != sp(), "must have changed");
@@ -276,9 +252,6 @@ void frame::pd_gc_epilog() {
 }
 
 bool frame::is_interpreted_frame_valid() const {
-// QQQ
-#ifdef CC_INTERP
-#else
   assert(is_interpreted_frame(), "Not an interpreted frame");
   // These are reasonable sanity checks
   if (fp() == 0 || (int(fp()) & 0x3) != 0) {
@@ -298,16 +271,10 @@ bool frame::is_interpreted_frame_valid() const {
   if (fp() - sp() > 4096) {  // stack frames shouldn't be large.
     return false;
   }
-#endif
   return true;
 }
 
 BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result) {
-#ifdef CC_INTERP
-  // Needed for JVMTI. The result should always be in the interpreterState object
-  assert(false, "NYI");
-  interpreterState istate = get_interpreterState();
-#endif // CC_INTERP
   assert(is_interpreted_frame(), "interpreted frame expected");
   methodOop method = interpreter_frame_method();
   BasicType type = method->result_type();
@@ -330,11 +297,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
     case T_ARRAY   : {
       oop obj;
       if (method->is_native()) {
-#ifdef CC_INTERP
-        obj = istate->_oop_temp;
-#else
         obj = (oop) at(interpreter_frame_oop_temp_offset);
-#endif // CC_INTERP
       } else {
         oop* obj_p = (oop*)tos_addr;
         obj = (obj_p == NULL) ? (oop)NULL : *obj_p;

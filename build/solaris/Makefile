@@ -53,9 +53,8 @@ endif
 include $(GAMMADIR)/build/$(OSNAME)/makefiles/rules.make
 
 ifndef LP64
-ifndef CC_INTERP
+# uncomment this to make server jvm be tiered vm 
 FORCE_TIERED=1
-endif
 endif
 
 ifdef LP64

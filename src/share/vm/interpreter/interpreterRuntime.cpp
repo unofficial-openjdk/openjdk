@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interpreterRuntime.cpp	1.487 07/05/05 17:05:38 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1077,7 +1077,7 @@ void SignatureHandlerLibrary::add(methodHandle method) {
 	    Disassembler::decode(handler, handler + buffer.code_size());
 #ifndef PRODUCT
 	    tty->print_cr(" --- associated result handler ---");
-	    address rh_begin = Interpreter::result_handler(method()->result_type());
+	    address rh_begin = AbstractInterpreter::result_handler(method()->result_type());
 	    address rh_end = rh_begin;
 	    while (*(int*)rh_end != 0) {
 	      rh_end += sizeof(int);
@@ -1098,13 +1098,13 @@ void SignatureHandlerLibrary::add(methodHandle method) {
     }
     if (handler_index < 0) {
       // use generic signature handler
-      method->set_signature_handler(Interpreter::slow_signature_handler());
+      method->set_signature_handler(AbstractInterpreter::slow_signature_handler());
     } else {
       // set handler
       method->set_signature_handler(_handlers->at(handler_index));
     }
   }
-  assert(method->signature_handler() == Interpreter::slow_signature_handler() ||
+  assert(method->signature_handler() == AbstractInterpreter::slow_signature_handler() ||
 	 _handlers->find(method->signature_handler()) == _fingerprints->find(Fingerprinter(method).fingerprint()),
 	 "sanity check");
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c2_globals.hpp	1.90 07/09/25 22:01:58 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -131,9 +131,6 @@
   notproduct(bool, PrintOptoPeephole, false,                                \
           "Print New compiler peephole replacements")                       \
                                                                             \
-  develop(bool, PrintCFGBlockFreq, false,                                   \
-          "Print CFG block freqencies")                                     \
-                                                                            \
   develop(bool, TraceOptoParse, false,                                      \
           "Trace bytecode parse and control-flow merge")                    \
                                                                             \
@@ -161,18 +158,6 @@
                                                                             \
   develop(bool, UseExactTypes, true,                                        \
           "Use exact types to eliminate array store checks and v-calls")    \
-                                                                            \
-  product(intx, TrackedInitializationLimit, 50,                             \
-          "When initializing fields, track up to this many words")          \
-                                                                            \
-  product(bool, ReduceFieldZeroing, true,                                   \
-          "When initializing fields, try to avoid needless zeroing")        \
-                                                                            \
-  product(bool, ReduceInitialCardMarks, true,                               \
-          "When initializing fields, try to avoid needless card marks")     \
-                                                                            \
-  product(bool, ReduceBulkZeroing, true,                                    \
-          "When bulk-initializing, try to avoid needless zeroing")          \
                                                                             \
   develop_pd(intx, RegisterCostAreaRatio,                                   \
           "Spill selection in reg allocator: scale area by (X/64K) before " \
@@ -226,7 +211,7 @@
   notproduct(bool, TraceLoopUnswitching, false,                             \
           "Trace loop unswitching")                                         \
                                                                             \
-  product(bool, UseSuperWord, true,                                         \
+  product(bool, UseSuperWord, false,                                        \
           "Transform scalar operations into superword operations")          \
                                                                             \
   develop(bool, SuperWordRTDepCheck, false,                                 \
@@ -357,9 +342,6 @@
                                                                             \
   notproduct(bool, PrintEscapeAnalysis, false,                              \
           "Print the results of escape analysis")                           \
-                                                                            \
-  product(bool, EliminateAllocations, true,                                 \
-          "Use escape analysis to eliminate allocations")                   \
                                                                             \
   product(intx, MaxLabelRootDepth, 1100, 				    \
           "Maximum times call Label_Root to prevent stack overflow")        \

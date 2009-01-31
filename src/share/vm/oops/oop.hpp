@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)oop.hpp	1.116 07/05/29 09:44:21 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -254,7 +254,6 @@ class oopDesc {
 #endif // SERIALGC
 
   bool is_perm() const;
-  bool is_perm_or_null() const;
   bool is_perm_and_alloced() const;
   bool is_shared() const;
   bool is_shared_readonly() const;

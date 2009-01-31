@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)icBuffer_amd64.cpp	1.11 07/05/05 17:04:06 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,7 +28,8 @@
 #include "incls/_precompiled.incl"
 #include "incls/_icBuffer_amd64.cpp.incl"
 
-int InlineCacheBuffer::ic_stub_code_size() {
+int InlineCacheBuffer::ic_stub_code_size()
+{
   return NativeMovConstReg::instruction_size +
          NativeJump::instruction_size +
          1;
@@ -37,7 +38,8 @@ int InlineCacheBuffer::ic_stub_code_size() {
 
 void InlineCacheBuffer::assemble_ic_buffer_code(address code_begin,
                                                 oop cached_oop,
-                                                address entry_point) {
+                                                address entry_point) 
+{
   ResourceMark rm;
   CodeBuffer code(code_begin, ic_stub_code_size());
   MacroAssembler* masm = new MacroAssembler(&code);
@@ -47,12 +49,13 @@ void InlineCacheBuffer::assemble_ic_buffer_code(address code_begin,
   // (2) these ICStubs are removed *before* a GC happens, so the roots
   //     disappear
   assert(cached_oop == NULL || cached_oop->is_perm(), "must be perm oop");
-  masm->lea(rax, OopAddress((address) cached_oop));
-  masm->jump(ExternalAddress(entry_point));
+  masm->movq(rax, (int64_t) cached_oop);
+  masm->jmp(entry_point, relocInfo::none);
 }
 
 
-address InlineCacheBuffer::ic_buffer_entry_point(address code_begin) {
+address InlineCacheBuffer::ic_buffer_entry_point(address code_begin) 
+{
   // creation also verifies the object  
   NativeMovConstReg* move = nativeMovConstReg_at(code_begin);
   NativeJump* jump = nativeJump_at(move->next_instruction_address());
@@ -60,7 +63,8 @@ address InlineCacheBuffer::ic_buffer_entry_point(address code_begin) {
 }
 
 
-oop InlineCacheBuffer::ic_buffer_cached_oop(address code_begin) {
+oop InlineCacheBuffer::ic_buffer_cached_oop(address code_begin) 
+{
   // creation also verifies the object  
   NativeMovConstReg* move = nativeMovConstReg_at(code_begin);
   return (oop) move->data();

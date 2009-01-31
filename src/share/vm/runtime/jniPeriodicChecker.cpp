@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jniPeriodicChecker.cpp	1.4 07/05/05 17:06:51 JVM"
 #endif
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.

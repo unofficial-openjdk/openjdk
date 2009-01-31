@@ -48,19 +48,11 @@ HS_BUILD_ID=$(HS_BUILD_VER)
 # Force resources to be rebuilt every time
 $(Res_Files): FORCE
 
-# Kernel doesn't need exported vtbl symbols.
-!if "$(Variant)" == "kernel"
-$(AOUT): $(Res_Files) $(Obj_Files)
-	$(LINK) @<<
-  $(LINK_FLAGS) /out:$@ /implib:$*.lib $(Obj_Files) $(Res_Files)
-<<
-!else
 $(AOUT): $(Res_Files) $(Obj_Files)
 	sh $(WorkSpace)/build/windows/build_vm_def.sh
 	$(LINK) @<<
   $(LINK_FLAGS) /out:$@ /implib:$*.lib /def:vm.def $(Obj_Files) $(Res_Files)
 <<
-!endif
 
 !include $(WorkSpace)/build/windows/makefiles/shared.make
 !include $(WorkSpace)/build/windows/makefiles/sa.make

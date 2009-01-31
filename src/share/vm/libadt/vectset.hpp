@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vectset.hpp	1.22 07/05/05 17:05:41 JVM"
 #endif
 /*
  * Copyright 1997 Sun Microsystems, Inc.  All Rights Reserved.

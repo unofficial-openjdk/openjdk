@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jniFastGetField_amd64.cpp	1.12 07/06/08 18:13:31 JVM"
 #endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -68,8 +68,9 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
 
   Label slow;
 
-  ExternalAddress counter(SafepointSynchronize::safepoint_counter_addr());
-  __ mov32 (rcounter, counter);
+  address counter_addr = SafepointSynchronize::safepoint_counter_addr();
+  Address ca(counter_addr, relocInfo::none);
+  __ movl (rcounter, ca);
   __ movq (robj, c_rarg1);
   __ testb (rcounter, 1);
   __ jcc (Assembler::notZero, slow);
@@ -79,7 +80,7 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
                                                 // robj ^ rcounter ^ rcounter == robj
                                                 // robj is data dependent on rcounter.
   }
-  __ movq (robj, Address(robj, 0));             // *obj
+  __ movq (robj, Address(robj));                // *obj
   __ movq (roffset, c_rarg2);                         
   __ shrq (roffset, 2);                         // offset
 
@@ -95,15 +96,13 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
     default:        ShouldNotReachHere();
   }
 
+  __ movq (rcounter_addr, (int64_t)counter_addr);
+  ca = Address(rcounter_addr);
   if (os::is_MP()) {
-    __ lea(rcounter_addr, counter);
-    // ca is data dependent on rax.
     __ xorq (rcounter_addr, rax);
-    __ xorq (rcounter_addr, rax);
-    __ cmpl (rcounter, Address(rcounter_addr, 0));
-  } else {
-    __ cmp32 (rcounter, counter);
+    __ xorq (rcounter_addr, rax);               // ca is data dependent on rax.
   }
+  __ cmpl (rcounter, ca);
   __ jcc (Assembler::notEqual, slow);
 
   __ ret (0);
@@ -120,7 +119,7 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
     case T_LONG:    slow_case_addr = jni_GetLongField_addr();
   }
   // tail call
-  __ jump (ExternalAddress(slow_case_addr));
+  __ jmp (slow_case_addr, relocInfo::none);
 
   __ flush ();
 
@@ -166,8 +165,9 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
 
   Label slow;
 
-  ExternalAddress counter(SafepointSynchronize::safepoint_counter_addr());
-  __ mov32 (rcounter, counter);
+  address counter_addr = SafepointSynchronize::safepoint_counter_addr();
+  Address ca(counter_addr, relocInfo::none);
+  __ movl (rcounter, ca);
   __ movq (robj, c_rarg1);
   __ testb (rcounter, 1);
   __ jcc (Assembler::notZero, slow);
@@ -177,7 +177,7 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
                                                 // robj ^ rcounter ^ rcounter == robj
                                                 // robj is data dependent on rcounter.
   }
-  __ movq (robj, Address(robj, 0));             // *obj
+  __ movq (robj, Address(robj));                // *obj
   __ movq (roffset, c_rarg2);                         
   __ shrq (roffset, 2);                         // offset
 
@@ -189,16 +189,14 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
     default:        ShouldNotReachHere();
   }
 
+  __ movq (rcounter_addr, (int64_t)counter_addr);
+  ca = Address(rcounter_addr);
   if (os::is_MP()) {
-    __ lea(rcounter_addr, counter);
     __ movdq (rax, xmm0);
-    // counter address is data dependent on xmm0.
     __ xorq (rcounter_addr, rax);
-    __ xorq (rcounter_addr, rax);
-    __ cmpl (rcounter, Address(rcounter_addr, 0));
-  } else {
-    __ cmp32 (rcounter, counter);
+    __ xorq (rcounter_addr, rax);               // ca is data dependent on xmm0.
   }
+  __ cmpl (rcounter, ca);
   __ jcc (Assembler::notEqual, slow);
 
   __ ret (0);
@@ -211,7 +209,7 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
     case T_DOUBLE:    slow_case_addr = jni_GetDoubleField_addr();
   }
   // tail call
-  __ jump (ExternalAddress(slow_case_addr));
+  __ jmp (slow_case_addr, relocInfo::none);
 
   __ flush ();
 

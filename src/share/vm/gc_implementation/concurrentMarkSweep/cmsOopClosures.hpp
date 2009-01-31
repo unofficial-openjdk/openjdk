@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)cmsOopClosures.hpp	1.2 07/05/16 16:53:01 JVM"
 #endif
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,10 +32,8 @@ class ConcurrentMarkSweepGeneration;
 class CMSBitMap;
 class CMSMarkStack;
 class CMSCollector;
-template<class E> class GenericTaskQueue;
-typedef GenericTaskQueue<oop> OopTaskQueue;
-template<class E> class GenericTaskQueueSet;
-typedef GenericTaskQueueSet<oop> OopTaskQueueSet;
+class OopTaskQueue;
+class OopTaskQueueSet;
 class MarkFromRootsClosure;
 class Par_MarkFromRootsClosure;
 

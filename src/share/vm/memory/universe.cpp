@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)universe.cpp	1.359 07/05/29 09:44:16 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -52,18 +52,8 @@ klassOop Universe::_constantPoolKlassObj              = NULL;
 klassOop Universe::_constantPoolCacheKlassObj         = NULL;
 klassOop Universe::_compiledICHolderKlassObj          = NULL;
 klassOop Universe::_systemObjArrayKlassObj            = NULL;
-oop Universe::_int_mirror                             =  NULL;
-oop Universe::_float_mirror                           =  NULL;
-oop Universe::_double_mirror                          =  NULL;
-oop Universe::_byte_mirror                            =  NULL;
-oop Universe::_bool_mirror                            =  NULL;
-oop Universe::_char_mirror                            =  NULL;
-oop Universe::_long_mirror                            =  NULL;
-oop Universe::_short_mirror                           =  NULL;
-oop Universe::_void_mirror                            =  NULL;
-oop Universe::_mirrors[T_VOID+1]                      =  { NULL /*, NULL...*/ };
-oop Universe::_main_thread_group                      = NULL;
-oop Universe::_system_thread_group                    = NULL;
+oop      Universe::_main_thread_group                 = NULL;
+oop      Universe::_system_thread_group               = NULL;
 typeArrayOop Universe::_the_empty_byte_array          = NULL;
 typeArrayOop Universe::_the_empty_short_array         = NULL;
 typeArrayOop Universe::_the_empty_int_array           = NULL;
@@ -131,24 +121,11 @@ void Universe::system_classes_do(void f(klassOop)) {
 }
 
 void Universe::oops_do(OopClosure* f, bool do_all) {
-
-  f->do_oop((oop*) &_int_mirror);
-  f->do_oop((oop*) &_float_mirror);
-  f->do_oop((oop*) &_double_mirror);
-  f->do_oop((oop*) &_byte_mirror);
-  f->do_oop((oop*) &_bool_mirror);
-  f->do_oop((oop*) &_char_mirror);
-  f->do_oop((oop*) &_long_mirror);
-  f->do_oop((oop*) &_short_mirror);
-  f->do_oop((oop*) &_void_mirror);
-
-  // It's important to iterate over these guys even if they are null,
-  // since that's how shared heaps are restored.
-  for (int i = T_BOOLEAN; i < T_VOID+1; i++) {
-    f->do_oop((oop*) &_mirrors[i]);
-  }
-  assert(_mirrors[0] == NULL && _mirrors[T_BOOLEAN - 1] == NULL, "checking");
-
+  // Although most of the SystemDictionary oops are klasses,
+  // a few non-klass objects are defined over there.
+  // They must be treated in all ways like the random objects in Universe.
+  // So adopt them into Universe, by the following cross-module call:
+  SystemDictionary::shared_oops_do(f);
   // %%% Consider moving those "shared oops" over here with the others.
   f->do_oop((oop*)&_boolArrayKlassObj);
   f->do_oop((oop*)&_byteArrayKlassObj);
@@ -485,45 +462,6 @@ class FixupMirrorClosure: public ObjectClosure {
   }
 };
 
-void Universe::initialize_basic_type_mirrors(TRAPS) {
-  if (UseSharedSpaces) {
-    assert(_int_mirror != NULL, "already loaded");
-    assert(_void_mirror == _mirrors[T_VOID], "consistently loaded");
-  } else {
-
-    assert(_int_mirror==NULL, "basic type mirrors already initialized");
-    _int_mirror     = 
-      java_lang_Class::create_basic_type_mirror("int",    T_INT, CHECK);
-    _float_mirror   = 
-      java_lang_Class::create_basic_type_mirror("float",  T_FLOAT,   CHECK);
-    _double_mirror  = 
-      java_lang_Class::create_basic_type_mirror("double", T_DOUBLE,  CHECK);
-    _byte_mirror    = 
-      java_lang_Class::create_basic_type_mirror("byte",   T_BYTE, CHECK);
-    _bool_mirror    = 
-      java_lang_Class::create_basic_type_mirror("boolean",T_BOOLEAN, CHECK);
-    _char_mirror    = 
-      java_lang_Class::create_basic_type_mirror("char",   T_CHAR, CHECK);
-    _long_mirror    = 
-      java_lang_Class::create_basic_type_mirror("long",   T_LONG, CHECK);
-    _short_mirror   = 
-      java_lang_Class::create_basic_type_mirror("short",  T_SHORT,   CHECK);
-    _void_mirror    = 
-      java_lang_Class::create_basic_type_mirror("void",   T_VOID, CHECK);
-  
-    _mirrors[T_INT]     = _int_mirror;
-    _mirrors[T_FLOAT]   = _float_mirror;
-    _mirrors[T_DOUBLE]  = _double_mirror;
-    _mirrors[T_BYTE]    = _byte_mirror;
-    _mirrors[T_BOOLEAN] = _bool_mirror;
-    _mirrors[T_CHAR]    = _char_mirror;
-    _mirrors[T_LONG]    = _long_mirror;
-    _mirrors[T_SHORT]   = _short_mirror;
-    _mirrors[T_VOID]    = _void_mirror;
-    //_mirrors[T_OBJECT]  = instanceKlass::cast(_object_klass)->java_mirror();
-    //_mirrors[T_ARRAY]   = instanceKlass::cast(_object_klass)->java_mirror();
-  }
-}
 
 void Universe::fixup_mirrors(TRAPS) {
   // Bootstrap problem: all classes gets a mirror (java.lang.Class instance) assigned eagerly,
@@ -943,25 +881,43 @@ void Universe::compute_base_vtable_size() {
 }
 
 
-// %%% The Universe::flush_foo methods belong in CodeCache.
-
 // Flushes compiled methods dependent on dependee.
 void Universe::flush_dependents_on(instanceKlassHandle dependee) {  
   assert_lock_strong(Compile_lock);  
-
   if (CodeCache::number_of_nmethods_with_dependencies() == 0) return;
 
   // CodeCache can only be updated by a thread_in_VM and they will all be
   // stopped dring the safepoint so CodeCache will be safe to update without
   // holding the CodeCache_lock.
   
-  DepChange changes(dependee);
+  // Mark all dependee and all its superclasses
+  for (klassOop d = dependee(); d != NULL; d = instanceKlass::cast(d)->super()) {
+    assert(!instanceKlass::cast(d)->is_marked_dependent(), "checking");
+    instanceKlass::cast(d)->set_is_marked_dependent(true);
+  }
+  // Mark transitive interfaces
+  int i;
+  for (i = 0; i < dependee->transitive_interfaces()->length(); i++) {
+    instanceKlass* klass = instanceKlass::cast((klassOop)dependee->transitive_interfaces()->obj_at(i));
+    assert(!klass->is_marked_dependent(), "checking");
+    klass->set_is_marked_dependent(true);
+  }
 
   // Compute the dependent nmethods
-  if (CodeCache::mark_for_deoptimization(changes) > 0) {
+  if (CodeCache::mark_for_deoptimization(dependee()) > 0) {
     // At least one nmethod has been marked for deoptimization 
     VM_Deoptimize op;  
     VMThread::execute(&op);    
+  }
+
+  // Unmark all dependee and all its superclasses
+  for (klassOop e = dependee(); e != NULL; e = instanceKlass::cast(e)->super()) {
+    instanceKlass::cast(e)->set_is_marked_dependent(false);
+  }
+  // Unmark transitive interfaces
+  for (i = 0; i < dependee->transitive_interfaces()->length(); i++) {
+    instanceKlass* klass = instanceKlass::cast((klassOop)dependee->transitive_interfaces()->obj_at(i));
+    klass->set_is_marked_dependent(false);
   }
 }
 

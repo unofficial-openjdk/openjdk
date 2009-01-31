@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)loopnode.hpp	1.143 07/06/29 13:39:53 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -292,13 +292,10 @@ public:
         _has_sfpt:1,            // True if has non-call safepoint
         _rce_candidate:1;       // True if candidate for range check elimination
 
-  Node_List* _required_safept;      // A inner loop cannot delete these safepts;
-
   IdealLoopTree( PhaseIdealLoop* phase, Node *head, Node *tail )
     : _parent(0), _next(0), _child(0),
       _head(head), _tail(tail),
       _phase(phase),
-      _required_safept(NULL),
       _nest(0), _irreducible(0), _has_call(0), _has_sfpt(0), _rce_candidate(0)
   { }
 
@@ -331,14 +328,10 @@ public:
   // Driver for various flavors of iteration splitting
   void iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_new );
 
-  // Given dominators, try to find loops with calls that must always be
-  // executed (call dominates loop tail).  These loops do not need non-call
-  // safepoints (ncsfpt).
-  void check_safepts(VectorSet &visited, Node_List &stack);
-
-  // Allpaths backwards scan from loop tail, terminating each path at first safepoint
-  // encountered.
-  void allpaths_check_safepts(VectorSet &visited, Node_List &stack);
+  // Given dominators, try to find inner loops with calls that must
+  // always be executed (call dominates loop tail).  These loops do
+  // not need a seperate safepoint.
+  void check_inner_safepts( PhaseIdealLoop *phase );
 
   // Convert to counted loops where possible
   void counted_loop( PhaseIdealLoop *phase );
@@ -655,9 +648,6 @@ private:
   Node *compute_idom( Node *region ) const;
   // Recompute dom_depth
   void recompute_dom_depth();
-
-  // Is safept not required by an outer loop?
-  bool is_deleteable_safept(Node* sfpt);
 
 public:
   // Dominators for the sea of nodes

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)classLoader.hpp	1.64 07/05/05 17:06:45 JVM"
 #endif 
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -49,10 +49,7 @@ class ClassPathEntry: public CHeapObj {
  public:
   // Next entry in class path
   ClassPathEntry* next()              { return _next; }
-  void set_next(ClassPathEntry* next) {
-    // may have unlocked readers, so write atomically.
-    OrderAccess::release_store_ptr(&_next, next);
-  }
+  void set_next(ClassPathEntry* next) { _next = next; }
   virtual bool is_jar_file() = 0;
   virtual const char* name() = 0;
   virtual bool is_lazy();
@@ -188,16 +185,12 @@ class ClassLoader: AllStatic {
   static void setup_bootstrap_search_path();
   static void load_zip_library();
   static void create_class_path_entry(char *path, struct stat st, ClassPathEntry **new_entry, bool lazy);
+  static void update_class_path_entry_list(const char *path);
 
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(char* orig, char* out, int len);
  public:
-  // Used by the kernel jvm.
-  static void update_class_path_entry_list(const char *path,
-                                           bool check_for_duplicates);
-  static void print_bootclasspath();
-
   // Timing
   static PerfCounter* perf_accumulated_time()  { return _perf_accumulated_time; }
   static PerfCounter* perf_classes_inited()    { return _perf_classes_inited; }

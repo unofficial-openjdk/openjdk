@@ -163,13 +163,6 @@ CPP_FLAGS=$(CPP_FLAGS) /D _CRT_SECURE_NO_DEPRECATE
 !endif
 !endif
 
-# Compile for space above time.
-!if "$(Variant)" == "kernel"
-PRODUCT_OPT_OPTION   = /O1
-FASTDEBUG_OPT_OPTION = /O1
-DEBUG_OPT_OPTION     = /Od
-!endif
-
 # If NO_OPTIMIZATIONS is defined in the environment, turn everything off
 !ifdef NO_OPTIMIZATIONS
 PRODUCT_OPT_OPTION   = $(DEBUG_OPT_OPTION)

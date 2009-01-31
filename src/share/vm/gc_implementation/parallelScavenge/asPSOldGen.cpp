@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)asPSOldGen.cpp	1.18 07/05/05 17:05:26 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -78,11 +78,7 @@ size_t ASPSOldGen::available_for_expansion() {
   assert(virtual_space()->is_aligned(gen_size_limit()), "not aligned");
   assert(gen_size_limit() >= virtual_space()->committed_size(), "bad gen size");
 
-  ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap(); 
-  const size_t gen_alignment = heap->generation_alignment();
-  size_t result =  gen_size_limit() - virtual_space()->committed_size();
-  size_t result_aligned = align_size_down(result, gen_alignment);
-  return result_aligned;
+  return gen_size_limit() - virtual_space()->committed_size();
 }
 
 size_t ASPSOldGen::available_for_contraction() {
@@ -91,12 +87,12 @@ size_t ASPSOldGen::available_for_contraction() {
     return uncommitted_bytes;
   }
 
+  const size_t alignment = virtual_space()->alignment();
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap(); 
-  const size_t gen_alignment = heap->generation_alignment();
   PSAdaptiveSizePolicy* policy = heap->size_policy();
   const size_t working_size = 
     used_in_bytes() + (size_t) policy->avg_promoted()->padded_average();
-  const size_t working_aligned = align_size_up(working_size, gen_alignment);
+  const size_t working_aligned = align_size_up(working_size, alignment);
   const size_t working_or_min = MAX2(working_aligned, min_gen_size());
   if (working_or_min > reserved().byte_size()) {
     // If the used or minimum gen size (aligned up) is greater
@@ -113,11 +109,9 @@ size_t ASPSOldGen::available_for_contraction() {
   // only reduce the footprint.
 
   size_t result = policy->promo_increment_aligned_down(max_contraction);
-  // Also adjust for inter-generational alignment
-  size_t result_aligned = align_size_down(result, gen_alignment);
   if (PrintAdaptiveSizePolicy && Verbose) {
     gclog_or_tty->print_cr("\nASPSOldGen::available_for_contraction:"
-      " %d K / 0x%x", result_aligned/K, result_aligned);
+      " %d K / 0x%x", result/K, result);
     gclog_or_tty->print_cr(" reserved().byte_size() %d K / 0x%x ", 
       reserved().byte_size()/K, reserved().byte_size());
     size_t working_promoted = (size_t) policy->avg_promoted()->padded_average();
@@ -132,8 +126,8 @@ size_t ASPSOldGen::available_for_contraction() {
     gclog_or_tty->print_cr("	without alignment %d K / 0x%x", 
       policy->promo_increment(max_contraction)/K, 
       policy->promo_increment(max_contraction));
-    gclog_or_tty->print_cr(" alignment 0x%x", gen_alignment);
+    gclog_or_tty->print_cr(" alignment 0x%x", alignment);
   }
-  assert(result_aligned <= max_contraction, "arithmetic is wrong");
-  return result_aligned;
+  assert(result <= max_contraction, "arithmetic is wrong");
+  return result;
 }

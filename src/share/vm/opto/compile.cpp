@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)compile.cpp	1.631 07/05/17 15:57:33 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -763,7 +763,6 @@ void Compile::Init(int aliaslevel) {
   set_root(new (this, 3) RootNode());
   // Now that you have a Root to point to, create the real TOP
   set_cached_top_node( new (this, 1) ConNode(Type::TOP) );
-  set_recent_alloc(NULL, NULL);
 
   // Create Debug Information Recorder to record scopes, oopmaps, etc.
   env()->set_oop_recorder(new OopRecorder(comp_arena()));
@@ -2124,26 +2123,15 @@ bool Compile::final_graph_reshaping() {
           CallNode *call = n->in(0)->in(0)->as_Call();
           if (call->entry_point() == OptoRuntime::rethrow_stub()) {
             expected_kids--;      // Rethrow always has 1 less kid
-          } else if (call->req() > TypeFunc::Parms &&
-                     call->is_CallDynamicJava()) {
+          } else if (call->req() > TypeFunc::Parms) {
             // Check for null receiver. In such case, the optimizer has 
             // detected that the virtual call will always result in a null 
             // pointer exception. The fall-through projection of this CatchNode 
             // will not be populated.
             Node *arg0 = call->in(TypeFunc::Parms);
-            if (arg0->is_Type() &&
+            if (call->is_CallDynamicJava() &&
+                arg0->is_Type() &&
                 arg0->as_Type()->type()->higher_equal(TypePtr::NULL_PTR)) { 
-              expected_kids--;
-            }
-          } else if (call->entry_point() == OptoRuntime::new_array_Java() &&
-                     call->req() > TypeFunc::Parms+1 &&
-                     call->is_CallStaticJava()) {
-            // Check for negative array length. In such case, the optimizer has 
-            // detected that the allocation attempt will always result in an
-            // exception. There is no fall-through projection of this CatchNode .
-            Node *arg1 = call->in(TypeFunc::Parms+1);
-            if (arg1->is_Type() &&
-                arg1->as_Type()->type()->join(TypeInt::POS)->empty()) {
               expected_kids--;
             }
           }

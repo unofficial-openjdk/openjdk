@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)methodDataOop.hpp	1.53 07/05/29 09:44:23 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -188,9 +188,6 @@ public:
   }
   intptr_t cell_at(int index) {
     return _cells[index];
-  }
-  intptr_t* adr_cell_at(int index) {
-    return &_cells[index];
   }
   oop* adr_oop_at(int index) {
     return (oop*)&(_cells[index]);
@@ -576,19 +573,11 @@ public:
   uint taken() {
     return uint_at(taken_off_set);
   }
-  // Saturating counter
-  uint inc_taken() {
-    uint cnt = taken() + 1;
-    // Did we wrap? Will compiler screw us??
-    if (cnt == 0) cnt--;
-    set_uint_at(taken_off_set, cnt);
-    return cnt;
-  }
   
   int displacement() {
     return int_at(displacement_off_set);
   }
-
+  
   // Code generation support
   static ByteSize taken_offset() {
     return cell_offset(taken_off_set);
@@ -867,14 +856,6 @@ public:
   // Direct accessor
   uint not_taken() {
     return uint_at(not_taken_off_set);
-  }
-
-  uint inc_not_taken() {
-    uint cnt = not_taken() + 1;
-    // Did we wrap? Will compiler screw us??
-    if (cnt == 0) cnt--;
-    set_uint_at(not_taken_off_set, cnt);
-    return cnt;
   }
   
   // Code generation support

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)debugInfoRec.cpp	1.54 07/05/05 17:05:20 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -168,8 +168,7 @@ void DebugInformationRecorder::add_new_pc_offset(int pc_offset) {
   }
   assert(_pcs_size > _pcs_length, "There must be room for after expanding");
 
-  _pcs[_pcs_length++] = PcDesc(pc_offset, DebugInformationRecorder::serialized_null,
-			       DebugInformationRecorder::serialized_null);
+  _pcs[_pcs_length++] = PcDesc(pc_offset, DebugInformationRecorder::serialized_null);
 }
 
 
@@ -323,18 +322,6 @@ void DebugInformationRecorder::describe_scope(int         pc_offset,
     stream()->set_position(stream_offset);
     last_pd->set_scope_decode_offset(shared_stream_offset);
   }
-}
-
-void DebugInformationRecorder::dump_object_pool(GrowableArray<ScopeValue*>* objects) {
-  guarantee( _pcs_length > 0, "safepoint must exist before describing scopes");
-  PcDesc* last_pd = &_pcs[_pcs_length-1];
-  if (objects != NULL) {
-    for (int i = objects->length() - 1; i >= 0; i--) {
-      ((ObjectValue*) objects->at(i))->set_visited(false);
-    }
-  }
-  int offset = serialize_scope_values(objects);
-  last_pd->set_obj_decode_offset(offset);
 }
 
 void DebugInformationRecorder::end_scopes(int pc_offset, bool is_safepoint) {

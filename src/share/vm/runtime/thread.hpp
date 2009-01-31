@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)thread.hpp	1.453 07/07/05 17:14:54 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,7 +32,6 @@ class JvmtiThreadState;
 class JvmtiGetLoadedClassesClosure;
 class ThreadStatistics;
 class ConcurrentLocksDump;
-class ParkEvent ; 
 
 class ciEnv;
 class CompileThread;
@@ -40,6 +39,7 @@ class CompileLog;
 class CompileTask;
 class CompileQueue;
 class CompilerCounters;
+class RawMonitor;
 class vframeArray;
 
 class DeoptResourceMark;
@@ -458,16 +458,15 @@ public:
 #ifdef ASSERT
  private:
   // Deadlock detection support for Mutex locks. List of locks own by thread.
-  Monitor *_owned_locks;
+  Mutex *_owned_locks;
   // Mutex::set_owner_implementation is the only place where _owned_locks is modified,
   // thus the friendship
   friend class Mutex;
-  friend class Monitor;
 
  public:  
   void print_owned_locks_on(outputStream* st) const;
   void print_owned_locks() const		 { print_owned_locks_on(tty);	 }
-  Monitor * owned_locks() const			 { return _owned_locks;          }
+  Mutex* owned_locks() const			 { return _owned_locks;          }
   bool owns_locks() const                        { return owned_locks() != NULL; }  
   bool owns_locks_but_compiled_lock() const;
 
@@ -512,34 +511,17 @@ public:
  public:
   volatile intptr_t _Stalled ; 
   volatile int _TypeTag ; 
-  ParkEvent * _ParkEvent ;                     // for synchronized()
-  ParkEvent * _SleepEvent ;                    // for Thread.sleep
-  ParkEvent * _MutexEvent ;                    // for native internal Mutex/Monitor
-  ParkEvent * _MuxEvent ;                      // for low-level muxAcquire-muxRelease
-  int NativeSyncRecursion ;                    // diagnostic
-
+  class ParkEvent * _ParkEvent ; 
   volatile int _OnTrap ;                       // Resume-at IP delta
-  jint _hashStateW ;                           // Marsaglia Shift-XOR thread-local RNG
-  jint _hashStateX ;                           // thread-specific hashCode generator state
-  jint _hashStateY ; 
-  jint _hashStateZ ; 
+  int _hashStateW ; 
+  int _hashStateX ;                            // thread-specific hashCode generator state
+  int _hashStateY ; 
+  int _hashStateZ ; 
   void * _schedctl ; 
-
   intptr_t _ScratchA, _ScratchB ;              // Scratch locations for fast-path sync code
+
   static ByteSize ScratchA_offset()            { return byte_offset_of(Thread, _ScratchA ); }
   static ByteSize ScratchB_offset()            { return byte_offset_of(Thread, _ScratchB ); }
-
-  volatile jint rng [4] ;                      // RNG for spin loop
-
-  // Low-level leaf-lock primitives used to implement synchronization
-  // and native monitor-mutex infrastructure.  
-  // Not for general synchronization use.
-  static void SpinAcquire (volatile int * Lock, const char * Name) ; 
-  static void SpinRelease (volatile int * Lock) ; 
-  static void muxAcquire  (volatile intptr_t * Lock, const char * Name) ; 
-  static void muxAcquireW (volatile intptr_t * Lock, ParkEvent * ev) ; 
-  static void muxRelease  (volatile intptr_t * Lock) ; 
-
 };
 
 // Inline implementation of Thread::current()
@@ -1566,7 +1548,6 @@ class Threads: AllStatic {
   static void convert_vm_init_libraries_to_agents();
   static void create_vm_init_libraries();
   static void create_vm_init_agents();
-  static void shutdown_vm_agents();
   static bool destroy_vm();
   // Supported VM versions via JNI
   // Includes JNI_VERSION_1_1
@@ -1677,16 +1658,15 @@ public:
 // unpark threads. 
 //
 // The base-class, PlatformEvent, is platform-specific while the ParkEvent is
-// platform-independent.  PlatformEvent provides park(), unpark(), etc., and
-// is abstract -- that is, a PlatformEvent should never be instantiated except
-// as part of a ParkEvent.  
+// platform-independent.  PlatformEvent provides park(), unpark(), etc.  
 // Equivalently we could have defined a platform-independent base-class that 
 // exported Allocate(), Release(), etc.  The platform-specific class would extend 
 // that base-class, adding park(), unpark(), etc.  
-// 
-// A word of caution: The JVM uses 2 very similar constructs:
+//
+// A word of caution: The JVM uses 3 very similar constructs:
 // 1. ParkEvent are used for Java-level "monitor" synchronization.
 // 2. Parkers are used by JSR166-JUC park-unpark. 
+// 3. interrupt_event() is used for threads blocked in Thread.sleep().
 //
 // We'll want to eventually merge these redundant facilities and use ParkEvent.
 
@@ -1700,19 +1680,17 @@ class ParkEvent : public os::PlatformEvent {
     intptr_t RawThreadIdentity ;        // LWPID etc
     volatile int Incarnation ;
 
-    // diagnostic : keep track of last thread to wake this thread.
-    // this is useful for construction of dependency graphs.
-    void * LastWaker ; 
-
   public:
-    // MCS-CLH list linkage and Native Mutex/Monitor
+    // MCS-CLH list linkage
     ParkEvent * volatile ListNext ; 
     ParkEvent * volatile ListPrev ; 
     volatile intptr_t OnList ; 
     volatile int TState ; 
-    volatile int Notified ;             // for native monitor construct
-    volatile int IsWaiting ;            // Enqueued on WaitSet
 
+    // diagnostic : keep track of last thread to wake this thread.
+    // this is useful for construction of dependency graphs.
+    void * LastWaker ; 
+   
 
   private:
     static ParkEvent * volatile FreeList ; 
@@ -1734,16 +1712,7 @@ class ParkEvent : public os::PlatformEvent {
        ListPrev       = NULL ; 
        OnList         = 0 ; 
        TState         = 0 ; 
-       Notified       = 0 ;
-       IsWaiting      = 0 ;  
     }
-
-    // We use placement-new to force ParkEvent instances to be
-    // aligned on 256-byte address boundaries.  This ensures that the least
-    // significant byte of a ParkEvent address is always 0.  
-
-    void * operator new (size_t sz) ; 
-    void operator delete (void * a) ; 
 
   public:
     static ParkEvent * Allocate (Thread * t) ; 

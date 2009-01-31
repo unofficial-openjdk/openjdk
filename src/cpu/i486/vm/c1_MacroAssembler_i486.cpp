@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_MacroAssembler_i486.cpp	1.57 07/05/17 15:46:25 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -31,7 +31,7 @@
 int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr, Register scratch, Label& slow_case) {
   const int aligned_mask = 3;
   const int hdr_offset = oopDesc::mark_offset_in_bytes();
-  assert(hdr == rax, "hdr must be rax, for the cmpxchg instruction");
+  assert(hdr == eax, "hdr must be eax for the cmpxchg instruction");
   assert(hdr != obj && hdr != disp_hdr && obj != disp_hdr, "registers must be different");
   assert(BytesPerWord == 4, "adjust aligned_mask and code");
   Label done;
@@ -54,7 +54,7 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr
   // and mark it as unlocked
   orl(hdr, markOopDesc::unlocked_value);
   // save unlocked object header into the displaced header location on the stack
-  movl(Address(disp_hdr, 0), hdr);
+  movl(Address(disp_hdr), hdr);
   // test if object header is still the same (i.e. unlocked), and if so, store the
   // displaced header address in the object header - if it is not the same, get the
   // object header instead
@@ -62,28 +62,27 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr
   cmpxchg(disp_hdr, Address(obj, hdr_offset));
   // if the object header was the same, we're done
   if (PrintBiasedLockingStatistics) {
-    cond_inc32(Assembler::equal,
-               ExternalAddress((address)BiasedLocking::fast_path_entry_count_addr()));
+    cond_incl(Assembler::equal, Address((int) BiasedLocking::fast_path_entry_count_addr(), relocInfo::none));
   }
   jcc(Assembler::equal, done);
   // if the object header was not the same, it is now in the hdr register
   // => test if it is a stack pointer into the same stack (recursive locking), i.e.:
   //
   // 1) (hdr & aligned_mask) == 0
-  // 2) rsp <= hdr
-  // 3) hdr <= rsp + page_size
+  // 2) esp <= hdr
+  // 3) hdr <= esp + page_size
   //
   // these 3 tests can be done by evaluating the following expression:
   //
-  // (hdr - rsp) & (aligned_mask - page_size)
+  // (hdr - esp) & (aligned_mask - page_size)
   //
   // assuming both the stack pointer and page_size have their least
   // significant 2 bits cleared and page_size is a power of 2
-  subl(hdr, rsp);
+  subl(hdr, esp);
   andl(hdr, aligned_mask - os::vm_page_size());
   // for recursive locking, the result is zero => save it in the displaced header
   // location (NULL in the displaced hdr location indicates recursive locking)
-  movl(Address(disp_hdr, 0), hdr);
+  movl(Address(disp_hdr), hdr);
   // otherwise we don't care about the result and handle locking via runtime call
   jcc(Assembler::notZero, slow_case);
   // done
@@ -95,7 +94,7 @@ int C1_MacroAssembler::lock_object(Register hdr, Register obj, Register disp_hdr
 void C1_MacroAssembler::unlock_object(Register hdr, Register obj, Register disp_hdr, Label& slow_case) {
   const int aligned_mask = 3;
   const int hdr_offset = oopDesc::mark_offset_in_bytes();
-  assert(disp_hdr == rax, "disp_hdr must be rax, for the cmpxchg instruction");
+  assert(disp_hdr == eax, "disp_hdr must be eax for the cmpxchg instruction");
   assert(hdr != obj && hdr != disp_hdr && obj != disp_hdr, "registers must be different");
   assert(BytesPerWord == 4, "adjust aligned_mask and code");
   Label done;
@@ -107,7 +106,7 @@ void C1_MacroAssembler::unlock_object(Register hdr, Register obj, Register disp_
   }
 
   // load displaced header
-  movl(hdr, Address(disp_hdr, 0));
+  movl(hdr, Address(disp_hdr));
   // if the loaded hdr is NULL we had recursive locking
   testl(hdr, hdr);
   // if we had recursive locking, we are done
@@ -194,7 +193,7 @@ void C1_MacroAssembler::initialize_body(Register obj, Register len_in_bytes, int
     jcc(Assembler::zero, done);
     bind(even);
   }
-  // initialize remaining object fields: rdx is a multiple of 2 now
+  // initialize remaining object fields: edx is a multiple of 2 now
   { Label loop;
     bind(loop);
     movl(Address(obj, index, Address::times_8, hdr_size_in_bytes - 1*BytesPerWord), t1);
@@ -209,7 +208,7 @@ void C1_MacroAssembler::initialize_body(Register obj, Register len_in_bytes, int
 
 
 void C1_MacroAssembler::allocate_object(Register obj, Register t1, Register t2, int header_size, int object_size, Register klass, Label& slow_case) {
-  assert(obj == rax, "obj must be in rax, for cmpxchg");
+  assert(obj == eax, "obj must be in eax for cmpxchg");
   assert(obj != t1 && obj != t2 && t1 != t2, "registers must be different"); // XXX really?
   assert(header_size >= 0 && object_size >= header_size, "illegal sizes");
 
@@ -247,7 +246,7 @@ void C1_MacroAssembler::initialize_object(Register obj, Register klass, Register
     // initialize last object field if constant size is odd
     if (((con_size_in_bytes - hdr_size_in_bytes) & 4) != 0) 
       movl(Address(obj, con_size_in_bytes - (1*BytesPerWord)), t1_zero);
-    // initialize remaining object fields: rdx is a multiple of 2
+    // initialize remaining object fields: edx is a multiple of 2
     { Label loop;
       bind(loop);
       movl(Address(obj, index, Address::times_8, 
@@ -260,15 +259,17 @@ void C1_MacroAssembler::initialize_object(Register obj, Register klass, Register
   }
 
   if (DTraceAllocProbes) { 
-    assert(obj == rax, "must be");
-    call(RuntimeAddress(Runtime1::entry_for(Runtime1::dtrace_object_alloc_id)));
+    assert(obj == eax, "must be");
+    call(CAST_FROM_FN_PTR(address, 
+      Runtime1::entry_for(Runtime1::dtrace_object_alloc_id)),
+      relocInfo::runtime_call_type);
   }
 
   verify_oop(obj);
 }
 
 void C1_MacroAssembler::allocate_array(Register obj, Register len, Register t1, Register t2, int header_size, Address::ScaleFactor f, Register klass, Label& slow_case) {
-  assert(obj == rax, "obj must be in rax, for cmpxchg");
+  assert(obj == eax, "obj must be in eax for cmpxchg");
   assert_different_registers(obj, len, t1, t2, klass);
 
   // determine alignment mask
@@ -293,8 +294,9 @@ void C1_MacroAssembler::allocate_array(Register obj, Register len, Register t1, 
   initialize_body(obj, arr_size, header_size * BytesPerWord, len_zero);
 
   if (DTraceAllocProbes) { 
-    assert(obj == rax, "must be");
-    call(RuntimeAddress(Runtime1::entry_for(Runtime1::dtrace_object_alloc_id)));
+    assert(obj == eax, "must be");
+    call(CAST_FROM_FN_PTR(address, Runtime1::entry_for(Runtime1::dtrace_object_alloc_id)),
+         relocInfo::runtime_call_type);
   }
 
   verify_oop(obj);
@@ -311,8 +313,7 @@ void C1_MacroAssembler::inline_cache_check(Register receiver, Register iCache) {
   cmpl(iCache, Address(receiver, oopDesc::klass_offset_in_bytes())); 
   // if icache check fails, then jump to runtime routine
   // Note: RECEIVER must still contain the receiver!
-  jump_cc(Assembler::notEqual,
-          RuntimeAddress(SharedRuntime::get_ic_miss_stub()));
+  jcc(Assembler::notEqual, SharedRuntime::get_ic_miss_stub(), relocInfo::runtime_call_type); 
   assert(offset() - start_offset == 9, "check alignment in emit_method_entry");
 }
 
@@ -328,7 +329,7 @@ void C1_MacroAssembler::method_exit(bool restore_frame) {
 void C1_MacroAssembler::build_frame(int frame_size_in_bytes) {
   // Make sure there is enough stack space for this method's activation.
   // Note that we do this before doing an enter(). This matches the
-  // ordering of C2's stack overflow check / rsp decrement and allows
+  // ordering of C2's stack overflow check / esp decrement and allows
   // the SharedRuntime stack overflow handling to be consistent
   // between the two compilers.
   generate_stack_overflow_check(frame_size_in_bytes);
@@ -340,7 +341,7 @@ void C1_MacroAssembler::build_frame(int frame_size_in_bytes) {
     empty_FPU_stack();
   }
 #endif // TIERED
-  decrement(rsp, frame_size_in_bytes); // does not emit code for frame_size == 0
+  decrement(esp, frame_size_in_bytes); // does not emit code for frame_size == 0
 }
 
 
@@ -361,7 +362,7 @@ void C1_MacroAssembler::verified_entry() {
 
 void C1_MacroAssembler::verify_stack_oop(int stack_offset) {
   if (!VerifyOops) return;
-  verify_oop_addr(Address(rsp, stack_offset));
+  verify_oop_addr(Address(esp, stack_offset));
 }
 
 void C1_MacroAssembler::verify_not_null_oop(Register r) {
@@ -374,14 +375,14 @@ void C1_MacroAssembler::verify_not_null_oop(Register r) {
   verify_oop(r);
 }
 
-void C1_MacroAssembler::invalidate_registers(bool inv_rax, bool inv_rbx, bool inv_rcx, bool inv_rdx, bool inv_rsi, bool inv_rdi) {
+void C1_MacroAssembler::invalidate_registers(bool inv_eax, bool inv_ebx, bool inv_ecx, bool inv_edx, bool inv_esi, bool inv_edi) {
 #ifdef ASSERT
-  if (inv_rax) movl(rax, 0xDEAD);
-  if (inv_rbx) movl(rbx, 0xDEAD);
-  if (inv_rcx) movl(rcx, 0xDEAD);
-  if (inv_rdx) movl(rdx, 0xDEAD);
-  if (inv_rsi) movl(rsi, 0xDEAD);
-  if (inv_rdi) movl(rdi, 0xDEAD);
+  if (inv_eax) movl(eax, 0xDEAD);
+  if (inv_ebx) movl(ebx, 0xDEAD);
+  if (inv_ecx) movl(ecx, 0xDEAD);
+  if (inv_edx) movl(edx, 0xDEAD);
+  if (inv_esi) movl(esi, 0xDEAD);
+  if (inv_edi) movl(edi, 0xDEAD);
 #endif
 }
 

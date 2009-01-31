@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)parse2.cpp	1.359 07/05/05 17:06:23 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -897,11 +897,6 @@ void Parse::do_ifnull(BoolTest::mask btest) {
       tty->print_cr("Never-taken backedge stops compilation at bci %d",bci());
 #endif
     repush_if_args(); // to gather stats on loop
-    // We need to mark this branch as taken so that if we recompile we will
-    // see that it is possible. In the tiered system the interpreter doesn't
-    // do profiling and by the time we get to the lower tier from the interpreter
-    // the path may be cold again. Make sure it doesn't look untaken
-    profile_taken_branch(target_bci, !ProfileInterpreter);
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL, "cold");
@@ -975,11 +970,6 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
       tty->print_cr("Never-taken backedge stops compilation at bci %d",bci());
 #endif
     repush_if_args(); // to gather stats on loop
-    // We need to mark this branch as taken so that if we recompile we will
-    // see that it is possible. In the tiered system the interpreter doesn't
-    // do profiling and by the time we get to the lower tier from the interpreter
-    // the path may be cold again. Make sure it doesn't look untaken
-    profile_taken_branch(target_bci, !ProfileInterpreter);
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL, "cold");
@@ -1077,15 +1067,6 @@ void Parse::adjust_map_after_if(BoolTest::mask btest, Node* c, float prob,
     // We do not simply inspect for a null constant, since a node may
     // optimize to 'null' later on.
     repush_if_args();
-    // We need to mark this branch as taken so that if we recompile we will
-    // see that it is possible. In the tiered system the interpreter doesn't
-    // do profiling and by the time we get to the lower tier from the interpreter
-    // the path may be cold again. Make sure it doesn't look untaken
-    if (is_fallthrough) {
-      profile_not_taken_branch(!ProfileInterpreter);
-    } else {
-      profile_taken_branch(iter().get_dest(), !ProfileInterpreter);
-    }
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL,
@@ -1517,9 +1498,9 @@ void Parse::do_one_bytecode() {
     c = pop();                  // Oop to store
     b = pop();                  // index (already used)
     a = pop();                  // the array itself
-    const Type* elemtype  = _gvn.type(a)->is_aryptr()->elem();
     const TypeAryPtr* adr_type = TypeAryPtr::OOPS;
-    Node* store = store_oop_to_array(control(), a, d, adr_type, c, elemtype, T_OBJECT);
+    Node* store = store_to_memory(control(), d, c, T_OBJECT, adr_type);
+    store_barrier(store, T_ARRAY, a, d, c);
     break;
   }
   case Bytecodes::_lastore: {

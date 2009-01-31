@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)constantPoolOop.hpp	1.104 07/05/17 15:55:26 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,11 +35,17 @@
 // the entry in the constant pool is a klass or String object and
 // not a symbolOop.
 
+#ifdef CC_INTERP
+class cInterpreter;
+#endif /* CC_INTERP */
+
 class SymbolHashMap;
 
 class constantPoolOopDesc : public arrayOopDesc {
   friend class VMStructs;
-  friend class BytecodeInterpreter;  // Directly extracts an oop in the pool for fast instanceof/checkcast
+#ifdef CC_INTERP
+  friend class cInterpreter;  // Directly extracts an oop in the pool for fast instanceof/checkcast
+#endif /* CC_INTERP */
  private:
   typeArrayOop         _tags; // the tag array describing the constant pool's contents
   constantPoolCacheOop _cache;         // the cache holding interpreter runtime information

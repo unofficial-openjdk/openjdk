@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)superword.cpp	1.6 07/09/25 22:02:47 JVM"
 #endif
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -473,11 +473,13 @@ bool SuperWord::stmts_can_pack(Node* s1, Node* s2, int align) {
   if (isomorphic(s1, s2)) {
     if (independent(s1, s2)) {
       if (!exists_at(s1, 0) && !exists_at(s2, 1)) {
-        int s1_align = alignment(s1);
-        int s2_align = alignment(s2);
-        if (s1_align == top_align || s1_align == align) {
-          if (s2_align == top_align || s2_align == align + data_size(s1)) {
-            return true;
+        if (!s1->is_Mem() || are_adjacent_refs(s1, s2)) {
+          int s1_align = alignment(s1);
+          int s2_align = alignment(s2);
+          if (s1_align == top_align || s1_align == align) {
+            if (s2_align == top_align || s2_align == align + data_size(s1)) {
+              return true;
+            }
           }
         }
       }
@@ -1732,12 +1734,6 @@ SWPointer::SWPointer(MemNode* mem, SuperWord* slp) :
   assert(valid(), "Usable");
 }
 
-// Following is used to create a temporary object during
-// the pattern match of an address expression.
-SWPointer::SWPointer(SWPointer* p) :
-  _mem(p->_mem), _slp(p->_slp),  _base(NULL),  _adr(NULL),
-  _scale(0), _offset(0), _invar(NULL), _negate_invar(false) {}
-
 //------------------------scaled_iv_plus_offset--------------------
 // Match: k*iv + offset
 // where: k is a constant that maybe zero, and
@@ -1793,25 +1789,6 @@ bool SWPointer::scaled_iv(Node* n) {
       _scale = 1 << n->in(2)->get_int();
       return true;
     }
-  } else if (opc == Op_ConvI2L) {
-    if (scaled_iv_plus_offset(n->in(1))) {
-      return true;
-    }
-  } else if (opc == Op_LShiftL) {
-    if (!has_iv() && _invar == NULL) {
-      // Need to preserve the current _offset value, so
-      // create a temporary object for this expression subtree.
-      // Hacky, so should re-engineer the address pattern match.
-      SWPointer tmp(this);
-      if (tmp.scaled_iv_plus_offset(n->in(1))) {
-        if (tmp._invar == NULL) {
-          int mult = 1 << n->in(2)->get_int();
-          _scale   = tmp._scale  * mult;
-          _offset += tmp._offset * mult;
-          return true;
-        }
-      }
-    }
   }
   return false;
 }
@@ -1824,16 +1801,6 @@ bool SWPointer::offset_plus_k(Node* n, bool negate) {
   if (opc == Op_ConI) {
     _offset += negate ? -(n->get_int()) : n->get_int();
     return true;
-  } else if (opc == Op_ConL) {
-    // Okay if value fits into an int
-    const TypeLong* t = n->find_long_type();
-    if (t->higher_equal(TypeLong::INT)) {
-      jlong loff = n->get_long();
-      jint  off  = (jint)loff;
-      _offset += negate ? -off : loff;
-      return true;
-    }
-    return false;
   }
   if (_invar != NULL) return false; // already have an invariant
   if (opc == Op_AddI) {

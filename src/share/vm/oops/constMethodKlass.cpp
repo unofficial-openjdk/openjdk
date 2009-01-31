@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)constMethodKlass.cpp	1.24 07/05/29 09:44:18 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -67,7 +67,7 @@ constMethodOop constMethodKlass::allocate(int byte_code_size,
     CollectedHeap::permanent_obj_allocate(h_k, size, CHECK_NULL);
   assert(!cm->is_parsable(), "Not yet safely parsable");
   No_Safepoint_Verifier no_safepoint;
-  cm->set_interpreter_kind(Interpreter::invalid);
+  cm->set_interpreter_kind(AbstractInterpreter::invalid);
   cm->init_fingerprint();
   cm->set_method(NULL);
   cm->set_stackmap_data(NULL);

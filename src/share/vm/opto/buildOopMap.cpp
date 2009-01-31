@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)buildOopMap.cpp	1.37 07/05/05 17:06:11 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)cfgnode.cpp	1.260 07/05/17 15:57:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1579,31 +1579,12 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         // Accumulate type for resulting Phi
         type = type->meet(in(i)->in(AddPNode::Base)->bottom_type());
       }
-      Node* base = NULL;
       if (doit) {
-        // Check for neighboring AddP nodes in a tree.
-        // If they have a base, use that it.
-        for (DUIterator_Fast kmax, k = this->fast_outs(kmax); k < kmax; k++) {
-          Node* u = this->fast_out(k);
-          if (u->is_AddP()) {
-            Node* base2 = u->in(AddPNode::Base);
-            if (base2 != NULL && !base2->is_top()) {
-              if (base == NULL)
-                base = base2;
-              else if (base != base2)
-                { doit = false; break; }
-            }
-          }
+        Node* base = new (phase->C, in(0)->req()) PhiNode(in(0), type, NULL);
+        for (uint i = 1; i < req(); i++) {
+          base->init_req(i, in(i)->in(AddPNode::Base));
         }
-      }
-      if (doit) {
-        if (base == NULL) {
-          base = new (phase->C, in(0)->req()) PhiNode(in(0), type, NULL);
-          for (uint i = 1; i < req(); i++) {
-            base->init_req(i, in(i)->in(AddPNode::Base));
-          }
-          phase->is_IterGVN()->register_new_node_with_optimizer(base);
-        }
+        phase->is_IterGVN()->register_new_node_with_optimizer(base);
         return new (phase->C, 4) AddPNode(base, base, y);
       }
     }

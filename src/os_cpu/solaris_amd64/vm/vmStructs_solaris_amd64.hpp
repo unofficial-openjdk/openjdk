@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %U% %E% JVM"
+#pragma ident "@(#)vmStructs_solaris_amd64.hpp	1.8 17:04:51 07/05/05 JVM"
 #endif
 /*
  * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmError_solaris.cpp	1.12 07/05/05 17:04:43 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,6 +32,75 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+extern char** environ;
+
+// Run the specified command in a separate process. Return its exit value,
+// or -1 on failure (e.g. can't fork a new process). 
+// Unlike system(), this function can be called from signal handler. It
+// doesn't block SIGINT et al.
+int VMError::fork_and_exec(char* cmd) {
+  char * argv[4];
+  argv[0] = (char *)"sh";
+  argv[1] = (char *)"-c";
+  argv[2] = cmd;
+  argv[3] = NULL;
+
+  // fork is async-safe, fork1 is not so can't use in signal handler
+  pid_t pid;
+  Thread* t = ThreadLocalStorage::get_thread_slow();
+  if (t != NULL && t->is_inside_signal_handler()) {
+    pid = fork();
+  } else {
+    pid = fork1();
+  }
+
+  if (pid < 0) {
+    // fork failed
+    warning("fork failed: %s", strerror(errno));
+    return -1;
+
+  } else if (pid == 0) {
+    // child process
+
+    // try to be consistent with system(), which uses "/usr/bin/sh" on Solaris
+    execve("/usr/bin/sh", argv, environ);
+
+    // execve failed
+    _exit(-1);
+
+  } else  {
+    // copied from J2SE ..._waitForProcessExit() in UNIXProcess_md.c; we don't
+    // care about the actual exit code, for now.
+
+    int status;
+
+    // Wait for the child process to exit.  This returns immediately if
+    // the child has already exited. */
+    while (waitpid(pid, &status, 0) < 0) {
+        switch (errno) {
+        case ECHILD: return 0;
+        case EINTR: break;
+        default: return -1;
+        }
+    }
+
+    if (WIFEXITED(status)) {
+       // The child exited normally; get its exit code.
+       return WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+       // The child exited because of a signal
+       // The best value to return is 0x80 + signal number,
+       // because that is what all Unix shells do, and because
+       // it allows callers to distinguish between process exit and
+       // process death by signal.
+       return 0x80 + WTERMSIG(status);
+    } else {
+       // Unknown exit code; pass it through
+       return status;
+    }
+  }
+}
+
 void VMError::show_message_box(char *buf, int buflen) {
   bool yes;
   do {
@@ -53,8 +122,7 @@ void VMError::show_message_box(char *buf, int buflen) {
       // yes, user asked VM to launch debugger
       jio_snprintf(buf, buflen, "dbx - %d", os::current_process_id());
 
-      os::fork_and_exec(buf);
-      yes = false;
+      fork_and_exec(buf);
     }
   } while (yes);
 }

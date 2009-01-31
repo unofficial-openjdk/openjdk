@@ -62,9 +62,8 @@ endif
 include $(GAMMADIR)/build/$(OSNAME)/makefiles/rules.make
 
 ifneq ($(SRCARCH), amd64)
-ifndef CC_INTERP
+# uncomment this to make server jvm be tiered vm for testing in prt
 FORCE_TIERED=1
-endif
 endif
 
 ifdef LP64

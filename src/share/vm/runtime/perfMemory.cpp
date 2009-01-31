@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)perfMemory.cpp	1.27 07/05/05 17:06:53 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.

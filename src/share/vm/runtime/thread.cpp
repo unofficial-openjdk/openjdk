@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)thread.cpp	1.809 07/06/01 01:36:09 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -146,7 +146,7 @@ Thread::Thread() {
   _SR_lock = new Monitor(Mutex::suspend_resume, "SR_lock", true);
   _suspend_flags = 0;
 
-  // thread-specific hashCode stream generator state - Marsaglia shift-xor form
+  // thread-specific hashCode stream generator state. 
   _hashStateX = os::random() ; 
   _hashStateY = 842502087 ; 
   _hashStateZ = 0x8767 ;    // (int)(3579807591LL & 0xffff) ; 
@@ -156,18 +156,7 @@ Thread::Thread() {
   _schedctl = NULL ; 
   _Stalled  = 0 ; 
   _TypeTag  = 0x2BAD ; 
-
-  // Many of the following fields are effectively final - immutable
-  // Note that nascent threads can't use the Native Monitor-Mutex
-  // construct until the _MutexEvent is initialized ...
-  // CONSIDER: instead of using a fixed set of purpose-dedicated ParkEvents 
-  // we might instead use a stack of ParkEvents that we could provision on-demand.  
-  // The stack would act as a cache to avoid calls to ParkEvent::Allocate() 
-  // and ::Release()
-  _ParkEvent   = ParkEvent::Allocate (this) ; 
-  _SleepEvent  = ParkEvent::Allocate (this) ; 
-  _MutexEvent  = ParkEvent::Allocate (this) ;  
-  _MuxEvent    = ParkEvent::Allocate (this) ; 
+  _ParkEvent = ParkEvent::Allocate (this) ; 
 
 #ifdef CHECK_UNHANDLED_OOPS
   if (CheckUnhandledOops) {
@@ -219,12 +208,11 @@ Thread::~Thread() {
   delete last_handle_mark();
   assert(last_handle_mark() == NULL, "check we have reached the end");
 
-  // It's possible we can encounter a null _ParkEvent, etc., in stillborn threads.
-  // We NULL out the fields for good hygiene. 
-  ParkEvent::Release (_ParkEvent)   ; _ParkEvent   = NULL ; 
-  ParkEvent::Release (_SleepEvent)  ; _SleepEvent  = NULL ; 
-  ParkEvent::Release (_MutexEvent)  ; _MutexEvent  = NULL ; 
-  ParkEvent::Release (_MuxEvent)    ; _MuxEvent    = NULL ; 
+  // It's possible we can encounter a null _ParkEvent in stillborn threads.
+  if (_ParkEvent != NULL) {
+     ParkEvent::Release (_ParkEvent) ; 
+     _ParkEvent = NULL ; 
+  }
 
   delete handle_area();
 
@@ -726,7 +714,7 @@ void Thread::print_on_error(outputStream* st, char* buf, int buflen) const {
 
 #ifdef ASSERT
 void Thread::print_owned_locks_on(outputStream* st) const {  
-  Monitor *cur = _owned_locks;
+  Mutex *cur = _owned_locks;
   if (cur == NULL) {
     st->print(" (no locks) ");
   } else {
@@ -741,7 +729,7 @@ void Thread::print_owned_locks_on(outputStream* st) const {
 static int ref_use_count  = 0;
 
 bool Thread::owns_locks_but_compiled_lock() const {
-  for(Monitor *cur = _owned_locks; cur; cur = cur->next()) {
+  for(Mutex *cur = _owned_locks; cur; cur = cur->next()) {
     if (cur != Compile_lock) return true;
   }
   return false;
@@ -768,7 +756,7 @@ void Thread::check_for_valid_safepoint_state(bool potential_vm_operation) {
         && !Universe::is_bootstrapping()) {
       // Make sure we do not hold any locks that the VM thread also uses.
       // This could potentially lead to deadlocks      
-      for(Monitor *cur = _owned_locks; cur; cur = cur->next()) {
+      for(Mutex *cur = _owned_locks; cur; cur = cur->next()) {
         // Threads_lock is special, since the safepoint synchronization will not start before this is
         // acquired. Hence, a JavaThread cannot be holding it at a safepoint. So is VMOperationRequest_lock,
         // since it is used to transfer control between JavaThreads and the VMThread
@@ -2846,6 +2834,8 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // crash Linux VM, see notes in os_linux.cpp.
   main_thread->create_stack_guard_pages();
 
+  HandleMark hm;
+
   // Initialize Java-Leve synchronization subsystem
   ObjectSynchronizer::Initialize() ; 
 
@@ -2856,8 +2846,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     *canTryAgain = false; // don't let caller call JNI_CreateJavaVM again
     return status;
   }
-
-  HandleMark hm;  
 
   { MutexLocker mu(Threads_lock);
     Threads::add(main_thread);
@@ -3108,28 +3096,6 @@ static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_sym
       // Try to load the agent from the standard dll directory
       hpi::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), name);
       library = hpi::dll_load(buffer, ebuf, sizeof ebuf);
-#ifdef KERNEL
-      // Download instrument dll
-      if (library == NULL && strcmp(name, "instrument") == 0) {
-        char *props = Arguments::get_kernel_properties();
-        char *home  = Arguments::get_java_home();
-        const char *fmt   = "%s/bin/java %s -Dkernel.background.download=false"
-                      " sun.jkernel.DownloadManager -download client_jvm";
-        int length = strlen(props) + strlen(home) + strlen(fmt) + 1;
-        char *cmd = AllocateHeap(length);
-        jio_snprintf(cmd, length, fmt, home, props);
-        int status = os::fork_and_exec(cmd);
-        FreeHeap(props);
-        FreeHeap(cmd);
-        if (status == -1) {
-          warning(cmd);
-          vm_exit_during_initialization("fork_and_exec failed: %s",
-                                         strerror(errno));
-        }
-        // when this comes back the instrument.dll should be where it belongs.
-        library = hpi::dll_load(buffer, ebuf, sizeof ebuf);
-      }
-#endif // KERNEL
       if (library == NULL) { // Try the local directory
         char ns[1] = {0};
         hpi::dll_build_name(buffer, sizeof(buffer), ns, name);
@@ -3212,33 +3178,6 @@ void Threads::create_vm_init_agents() {
     }
   }
   JvmtiExport::enter_primordial_phase();
-}
-
-extern "C" {
-  typedef void (JNICALL *Agent_OnUnload_t)(JavaVM *);
-}
-
-void Threads::shutdown_vm_agents() {
-  // Send any Agent_OnUnload notifications
-  const char *on_unload_symbols[] = AGENT_ONUNLOAD_SYMBOLS;
-  extern struct JavaVM_ main_vm;
-  for (AgentLibrary* agent = Arguments::agents(); agent != NULL; agent = agent->next()) {
-
-    // Find the Agent_OnUnload function.
-    for (uint symbol_index = 0; symbol_index < ARRAY_SIZE(on_unload_symbols); symbol_index++) {
-      Agent_OnUnload_t unload_entry = CAST_TO_FN_PTR(Agent_OnUnload_t,
-               hpi::dll_lookup(agent->os_lib(), on_unload_symbols[symbol_index]));
-
-      // Invoke the Agent_OnUnload function
-      if (unload_entry != NULL) {
-        JavaThread* thread = JavaThread::current();
-        ThreadToNativeFromVM ttn(thread);
-        HandleMark hm(thread);
-        (*unload_entry)(&main_vm);
-        break;
-      }
-    }
-  }
 }
 
 // Called for after the VM is initialized for -Xrun libraries which have not been converted to agent libraries
@@ -3750,13 +3689,12 @@ void Threads::print_on_error(outputStream* st, Thread* current, char* buf, int b
 
 
 // Lifecycle management for TSM ParkEvents.
-// ParkEvents are type-stable (TSM).  
-// In our particular implementation they happen to be immortal.
+// ParkEvents are type-stable (TSM). 
 // 
 // We manage concurrency on the FreeList with a CAS-based
 // detach-modify-reattach idiom that avoids the ABA problems
 // that would otherwise be present in a simple CAS-based
-// push-pop implementation.   (push-one and pop-all)  
+// push-pop implementation. 
 //
 // Caveat: Allocate() and Release() may be called from threads
 // other than the thread associated with the Event!
@@ -3776,7 +3714,7 @@ volatile int ParkEvent::ListLock = 0 ;
 ParkEvent * volatile ParkEvent::FreeList = NULL ; 
 
 ParkEvent * ParkEvent::Allocate (Thread * t) { 
-  // In rare cases -- JVM_RawMonitor* operations -- we can find t == null.
+  guarantee (t != NULL, "invariant") ; 
   ParkEvent * ev ; 
 
   // Start by trying to recycle an existing but unassociated
@@ -3784,7 +3722,7 @@ ParkEvent * ParkEvent::Allocate (Thread * t) {
   for (;;) { 
     ev = FreeList ; 
     if (ev == NULL) break ; 
-    // 1: Detach - sequester or privatize the list
+    // 1: Detach
     // Tantamount to ev = Swap (&FreeList, NULL)
     if (Atomic::cmpxchg_ptr (NULL, &FreeList, ev) != ev) {
        continue ; 
@@ -3819,56 +3757,38 @@ ParkEvent * ParkEvent::Allocate (Thread * t) {
     guarantee (ev->AssociatedWith == NULL, "invariant") ; 
   } else {
     // Do this the hard way -- materialize a new ParkEvent.
-    // In rare cases an allocating thread might detach a long list -- 
-    // installing null into FreeList -- and then stall or be obstructed.  
-    // A 2nd thread calling Allocate() would see FreeList == null.
-    // The list held privately by the 1st thread is unavailable to the 2nd thread.
-    // In that case the 2nd thread would have to materialize a new ParkEvent,
-    // even though free ParkEvents existed in the system.  In this case we end up 
-    // with more ParkEvents in circulation than we need, but the race is 
-    // rare and the outcome is benign.  Ideally, the # of extant ParkEvents 
-    // is equal to the maximum # of threads that existed at any one time.
-    // Because of the race mentioned above, segments of the freelist 
-    // can be transiently inaccessible.  At worst we may end up with the 
-    // # of ParkEvents in circulation slightly above the ideal.  
-    // Note that if we didn't have the TSM/immortal constraint, then
-    // when reattaching, above, we could trim the list.  
+    // In rare cases an allocating thread might detach
+    // a long list -- installing null into FreeList --and 
+    // then stall.  Another thread calling Allocate() would see 
+    // FreeList == null and then invoke the ctor.  In this case we 
+    // end up with more ParkEvents in circulation than we need, but 
+    // the race is rare and the outcome is benign.  
+    // Ideally, the # of extant ParkEvents is equal to the
+    // maximum # of threads that existed at any one time.
+    // Because of the race mentioned above, segments of the
+    // freelist can be transiently inaccessible.  At worst
+    // we may end up with the # of ParkEvents in circulation
+    // slightly above the ideal.  
     ev = new ParkEvent () ; 
-    guarantee ((intptr_t(ev) & 0xFF) == 0, "invariant") ; 
   }
-  ev->reset() ;                     // courtesy to caller
   ev->AssociatedWith = t ;          // Associate ev with t
   ev->FreeNext       = NULL ; 
   return ev ; 
 }
 
+
+
 void ParkEvent::Release (ParkEvent * ev) {
   if (ev == NULL) return ; 
+  guarantee (ev->AssociatedWith != NULL, "invariant") ; 
   guarantee (ev->FreeNext == NULL      , "invariant") ; 
   ev->AssociatedWith = NULL ; 
   for (;;) { 
     // Push ev onto FreeList
-    // The mechanism is "half" lock-free.
     ParkEvent * List = FreeList ; 
     ev->FreeNext = List ; 
     if (Atomic::cmpxchg_ptr (ev, &FreeList, List) == List) break ; 
   }
-}
-
-// Override operator new and delete so we can ensure that the
-// least significant byte of ParkEvent addresses is 0.
-// Beware that excessive address alignment is undesirable
-// as it can result in D$ index usage imbalance as 
-// well as bank access imbalance on Niagara-like platforms,
-// although Niagara's hash function should help.  
-
-void * ParkEvent::operator new (size_t sz) {
-  return (void *) ((intptr_t (CHeapObj::operator new (sz + 256)) + 256) & -256) ; 
-}
-
-void ParkEvent::operator delete (void * a) { 
-  // ParkEvents are type-stable and immortal ...
-  ShouldNotReachHere();
 }
 
 

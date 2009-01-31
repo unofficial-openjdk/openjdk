@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jvm.cpp	1.567 07/08/20 16:28:14 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -612,7 +612,7 @@ JVM_ENTRY(jclass, JVM_FindPrimitiveClass(JNIEnv* env, const char* utf))
   oop mirror = NULL;
   BasicType t = name2type(utf);
   if (t != T_ILLEGAL && t != T_OBJECT && t != T_ARRAY) {
-    mirror = Universe::java_mirror(t);
+    mirror = SystemDictionary::java_mirror(t);
   }
   if (mirror == NULL) {
     THROW_MSG_0(vmSymbols::java_lang_ClassNotFoundException(), (char*) utf);
@@ -3980,14 +3980,14 @@ JVM_ENTRY(jobject, JVM_NewInstance(JNIEnv *env, jclass cls))
     // Do class based checks
     if (java_lang_Class::is_primitive(mirror())) {
       const char* msg = "";
-      if      (mirror == Universe::bool_mirror())   msg = "java/lang/Boolean";
-      else if (mirror == Universe::char_mirror())   msg = "java/lang/Character";
-      else if (mirror == Universe::float_mirror())  msg = "java/lang/Float";
-      else if (mirror == Universe::double_mirror()) msg = "java/lang/Double";
-      else if (mirror == Universe::byte_mirror())   msg = "java/lang/Byte";
-      else if (mirror == Universe::short_mirror())  msg = "java/lang/Short";
-      else if (mirror == Universe::int_mirror())    msg = "java/lang/Integer";
-      else if (mirror == Universe::long_mirror())   msg = "java/lang/Long";
+      if      (mirror == SystemDictionary::bool_mirror())   msg = "java/lang/Boolean";
+      else if (mirror == SystemDictionary::char_mirror())   msg = "java/lang/Character";
+      else if (mirror == SystemDictionary::float_mirror())  msg = "java/lang/Float";
+      else if (mirror == SystemDictionary::double_mirror()) msg = "java/lang/Double";
+      else if (mirror == SystemDictionary::byte_mirror())   msg = "java/lang/Byte";
+      else if (mirror == SystemDictionary::short_mirror())  msg = "java/lang/Short";
+      else if (mirror == SystemDictionary::int_mirror())    msg = "java/lang/Integer";
+      else if (mirror == SystemDictionary::long_mirror())   msg = "java/lang/Long";
       THROW_MSG_0(vmSymbols::java_lang_NullPointerException(), msg);
     }
 
@@ -4492,11 +4492,6 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
   // consider to expose this new capability in the sun.rt.jvmCapabilities jvmstat
   // counter defined in runtimeService.cpp.
   info->is_attachable = AttachListener::is_attach_supported();
-#ifdef KERNEL
-  info->is_kernel_jvm = 1; // true;
-#else  // KERNEL
-  info->is_kernel_jvm = 0; // false;
-#endif // KERNEL
 }
 JVM_END
 

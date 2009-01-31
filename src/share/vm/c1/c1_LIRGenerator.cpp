@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LIRGenerator.cpp	1.22 07/05/17 15:49:41 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -810,10 +810,9 @@ LIR_Opr LIRGenerator::round_item(LIR_Opr opr) {
 
 
 LIR_Opr LIRGenerator::force_to_spill(LIR_Opr value, BasicType t) {
-  assert(type2size[t] == type2size[value->type()], "size mismatch");
   if (!value->is_register()) {
     // force into a register
-    LIR_Opr r = new_register(value->type());
+    LIR_Opr r = new_register(t);
     __ move(value, r);
     value = r;
   }
@@ -989,6 +988,34 @@ ciObject* LIRGenerator::get_jobject_constant(Value value) {
     return oc->constant_value();
   }
   return NULL;
+}
+
+
+void LIRGenerator::write_barrier(LIR_Opr addr) {
+  if (addr->is_address()) {
+    LIR_Address* address = (LIR_Address*)addr;
+    LIR_Opr ptr = new_register(T_OBJECT);
+    if (!address->index()->is_valid() && address->disp() == 0) {
+      __ move(address->base(), ptr);
+    } else {
+      __ leal(addr, ptr);
+    }
+    addr = ptr;
+  }
+  assert(addr->is_register(), "must be a register at this point");
+
+  LIR_Opr tmp = new_register(T_OBJECT);
+  if (TwoOperandLIRForm) {
+    __ move(addr, tmp);
+    __ unsigned_shift_right(tmp, CardTableModRefBS::card_shift, tmp);
+  } else {
+    __ unsigned_shift_right(addr, CardTableModRefBS::card_shift, tmp);
+  }
+  if (can_inline_as_constant(card_table_base())) {
+    __ move(LIR_OprFact::intConst(0), new LIR_Address(tmp, card_table_base()->as_jint(), T_BYTE));
+  } else {
+    __ move(LIR_OprFact::intConst(0), new LIR_Address(tmp, load_constant(card_table_base()), T_BYTE));
+  }
 }
 
 
@@ -1240,58 +1267,6 @@ LIR_Opr LIRGenerator::load_constant(LIR_Const* c) {
   return result;
 }
 
-// Various barriers
-
-void LIRGenerator::post_barrier(LIR_OprDesc* addr, LIR_OprDesc* new_val) {
-  switch (Universe::heap()->barrier_set()->kind()) {
-    case BarrierSet::CardTableModRef:
-    case BarrierSet::CardTableExtension:
-      CardTableModRef_post_barrier(addr,  new_val);
-      break;
-    case BarrierSet::ModRef: 
-    case BarrierSet::Other:
-      // No post barriers
-      break;
-    default      : 
-      ShouldNotReachHere();
-    }
-}
-
-void LIRGenerator::CardTableModRef_post_barrier(LIR_OprDesc* addr, LIR_OprDesc* new_val) {
-
-  BarrierSet* bs = Universe::heap()->barrier_set();
-  assert(sizeof(*((CardTableModRefBS*)bs)->byte_map_base) == sizeof(jbyte), "adjust this code");
-  LIR_Const* card_table_base = new LIR_Const(((CardTableModRefBS*)bs)->byte_map_base);
-  if (addr->is_address()) {
-    LIR_Address* address = addr->as_address_ptr();
-    LIR_Opr ptr = new_register(T_OBJECT);
-    if (!address->index()->is_valid() && address->disp() == 0) {
-      __ move(address->base(), ptr);
-    } else {
-      assert(address->disp() != max_jint, "lea doesn't support patched addresses!");
-      __ leal(addr, ptr);
-    }
-    addr = ptr;
-  }
-  assert(addr->is_register(), "must be a register at this point");
-
-  LIR_Opr tmp = new_pointer_register();
-  if (TwoOperandLIRForm) {
-    __ move(addr, tmp);
-    __ unsigned_shift_right(tmp, CardTableModRefBS::card_shift, tmp);
-  } else {
-    __ unsigned_shift_right(addr, CardTableModRefBS::card_shift, tmp);
-  }
-  if (can_inline_as_constant(card_table_base)) {
-    __ move(LIR_OprFact::intConst(0),
-	      new LIR_Address(tmp, card_table_base->as_jint(), T_BYTE));
-  } else {
-    __ move(LIR_OprFact::intConst(0),
-	      new LIR_Address(tmp, load_constant(card_table_base),
-			      T_BYTE));
-  }
-}
-
 
 //------------------------field access--------------------------------------
 
@@ -1327,7 +1302,6 @@ void LIRGenerator::do_StoreField(StoreField* x) {
   bool needs_patching = x->needs_patching();
   bool is_volatile = x->field()->is_volatile();
   BasicType field_type = x->field_type();
-  bool is_oop = (field_type == T_ARRAY || field_type == T_OBJECT);
 
   CodeEmitInfo* info = NULL;
   if (needs_patching) {
@@ -1400,8 +1374,8 @@ void LIRGenerator::do_StoreField(StoreField* x) {
     __ store(value.result(), address, info, patch_code);
   }
 
-  if (is_oop) {
-    post_barrier(object.result(), value.result());
+  if (field_type == T_ARRAY || field_type == T_OBJECT) {
+    write_barrier(object.result());
   }
 
   if (is_volatile && os::is_MP()) {
@@ -1703,14 +1677,12 @@ void LIRGenerator::do_UnsafeGetRaw(UnsafeGetRaw* x) {
   assert(!x->has_index() || idx.value() == x->index(), "should match");
 
   LIR_Opr base_op = base.result();
-#ifndef _LP64
   if (x->base()->type()->tag() == longTag) {
     base_op = new_register(T_INT);
     __ convert(Bytecodes::_l2i, base.result(), base_op);
   } else {
     assert(x->base()->type()->tag() == intTag, "must be");
   }
-#endif
 
   BasicType dst_type = x->basic_type();
   LIR_Opr index_op = idx.result();
@@ -1768,15 +1740,8 @@ void LIRGenerator::do_UnsafePutRaw(UnsafePutRaw* x) {
 
   set_no_result(x);
 
-  LIR_Opr base_op = base.result();
-#ifndef _LP64
-  if (x->base()->type()->tag() == longTag) {
-    base_op = new_register(T_INT);
-    __ convert(Bytecodes::_l2i, base.result(), base_op);
-  } else {
-    assert(x->base()->type()->tag() == intTag, "must be");
-  }
-#endif
+  LIR_Opr intBase = new_register(T_INT);
+  __ convert(Bytecodes::_l2i, base.result(), intBase);
 
   LIR_Opr index_op = idx.result();
   if (log2_scale != 0) {
@@ -1786,7 +1751,7 @@ void LIRGenerator::do_UnsafePutRaw(UnsafePutRaw* x) {
     __ shift_left(index_op, log2_scale, index_op);
   }
 
-  LIR_Address* addr = new LIR_Address(base_op, index_op, x->basic_type());
+  LIR_Address* addr = new LIR_Address(intBase, index_op, x->basic_type());
   __ move(value.result(), addr);
 }
 
@@ -2217,7 +2182,7 @@ void LIRGenerator::do_Invoke(Invoke* x) {
 
   // emit invoke code
   bool optimized = x->target_is_loaded() && x->target_is_final();
-  assert(receiver->is_illegal() || receiver->is_equal(LIR_Assembler::receiverOpr()), "must match");
+  assert(receiver->is_illegal() || receiver->is_equivalent(LIR_Assembler::receiverOpr()), "must match");
 
   switch (x->code()) {
     case Bytecodes::_invokestatic:

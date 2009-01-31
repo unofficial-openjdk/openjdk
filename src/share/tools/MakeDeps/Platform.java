@@ -169,7 +169,7 @@ public abstract class Platform {
 
     /** max is 31 on mac, so warn */
     public int fileNameLengthLimit() {
-	return 45;
+	return 40;
     }
 
     public int defaultGrandIncludeThreshold() {

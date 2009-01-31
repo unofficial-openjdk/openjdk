@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)cardTableModRefBS.hpp	1.51 07/05/29 09:44:14 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,7 +43,9 @@ class DirtyCardToOopClosure;
 
 class CardTableModRefBS: public ModRefBarrierSet {
   // Some classes get to look at some private stuff.
-  friend class BytecodeInterpreter;
+#ifdef CC_INTERP
+  friend class cInterpreter;
+#endif
   friend class VMStructs;
   friend class CardTableRS;
   friend class CheckForUnmarkedOops; // Needs access to raw card bytes.

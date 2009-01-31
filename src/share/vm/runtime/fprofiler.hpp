@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)fprofiler.hpp	1.54 07/05/05 17:06:47 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -27,7 +27,6 @@
 
 // a simple flat profiler for Java
 
-
 // Forward declaration of classes defined in this header file
 class ThreadProfiler;
 class ThreadProfilerMark;
@@ -51,15 +50,13 @@ public:
   // For now, the only thread-specific region is the class loader.
   enum Region { noRegion, classLoaderRegion, extraRegion, maxRegion };
 
-  ThreadProfilerMark(Region)  KERNEL_RETURN;
-  ~ThreadProfilerMark()       KERNEL_RETURN;
+  ThreadProfilerMark(Region);
+  ~ThreadProfilerMark();
 
 private:
   ThreadProfiler* _pp;
   Region _r;
 };
-
-#ifndef FPROF_KERNEL
 
 class IntervalData VALUE_OBJ_CLASS_SPEC {
   // Just to keep these things all together
@@ -105,29 +102,27 @@ public:
   static void print_header(outputStream* st);
   void print_data(outputStream* st);
 };
-#endif // FPROF_KERNEL
 
 class ThreadProfiler: public CHeapObj {
 public:
-  ThreadProfiler()    KERNEL_RETURN;
-  ~ThreadProfiler()   KERNEL_RETURN;
+  ThreadProfiler();
+  ~ThreadProfiler();
 
   // Resets the profiler
-  void reset()        KERNEL_RETURN;
+  void reset();
 
   // Activates the profiler for a certain thread
-  void engage()       KERNEL_RETURN;
+  void engage();
 
   // Deactivates the profiler
-  void disengage()    KERNEL_RETURN;
+  void disengage();
 
   // Prints the collected profiling information
-  void print(const char* thread_name) KERNEL_RETURN;
+  void print(const char* thread_name);
 
   // Garbage Collection Support
-  void oops_do(OopClosure* f)         KERNEL_RETURN;
+  void oops_do(OopClosure* f);
 
-#ifndef FPROF_KERNEL
 private:
   // for recording ticks.
   friend class ProfilerNode;
@@ -211,45 +206,26 @@ private:
   IntervalData* interval_data_ref() {
     return &_interval_data;
   }
-#endif // FPROF_KERNEL
 };
 
 class FlatProfiler: AllStatic {
 public:
-  static void reset() KERNEL_RETURN ;
-  static void engage(JavaThread* mainThread, bool fullProfile) KERNEL_RETURN ;
-  static void disengage() KERNEL_RETURN ;
-  static void print(int unused) KERNEL_RETURN ;
-  static bool is_active() KERNEL_RETURN_(return false;) ;
+  static void reset();
+  static void engage(JavaThread* mainThread, bool fullProfile);
+  static void disengage();
+  static void print(int unused);
+  static bool is_active();
+  static bool full_profile() {
+    return full_profile_flag;
+  }
 
   // This is NULL if each thread has its own thread profiler,
   // else this is the single thread profiler used by all threads.
   // In particular it makes a difference during garbage collection,
   // where you only want to traverse each thread profiler once.
-  static ThreadProfiler* get_thread_profiler() KERNEL_RETURN_(return NULL;);
-
-  // Garbage Collection Support
-  static void oops_do(OopClosure* f) KERNEL_RETURN ;
-
-  // Support for disassembler to inspect the PCRecorder
-
-  // Returns the start address for a given pc
-  // NULL is returned if the PCRecorder is inactive
-  static address bucket_start_for(address pc) KERNEL_RETURN_(return NULL;);
-
-  enum { MillisecsPerTick = 10 };   // ms per profiling ticks
-
-  // Returns the number of ticks recorded for the bucket
-  // pc belongs to.
-  static int bucket_count_for(address pc) KERNEL_RETURN_(return 0;);
-
-#ifndef FPROF_KERNEL
+  static ThreadProfiler* get_thread_profiler();
 
  private:
-  static bool full_profile() {
-    return full_profile_flag;
-  }
-
   friend class ThreadProfiler;
   // the following group of ticks cover everything that's not attributed to individual Java methods
   static int  received_gc_ticks;      // ticks during which gc was active
@@ -302,6 +278,24 @@ public:
   static void record_vm_tick();
   static void record_thread_ticks();
 
+ public:
+  enum { MillisecsPerTick = 10 };   // ms per profiling ticks
+
+  // Garbage Collection Support
+ public:
+   static void oops_do(OopClosure* f);
+
+ public:
+  // Support for disassembler to inspect the PCRecorder
+
+  // Returns the start address for a given pc
+  // NULL is returned if the PCRecorder is inactive
+  static address bucket_start_for(address pc);
+
+  // Returns the number of ticks recorded for the bucket
+  // pc belongs to.
+  static int bucket_count_for(address pc);
+
   // For interval analysis
  private:
   static int interval_ticks_previous;  // delivered_ticks from the last interval
@@ -310,6 +304,6 @@ public:
   static void interval_reset();       // reset interval data.
   enum {interval_print_size = 10};
   static IntervalData* interval_data;
-#endif // FPROF_KERNEL
 };
+
 

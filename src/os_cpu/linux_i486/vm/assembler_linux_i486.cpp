@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_linux_i486.cpp	1.17 07/05/05 17:04:48 JVM"
 #endif
 /*
  * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,19 +28,14 @@
 #include "incls/_precompiled.incl"
 #include "incls/_assembler_linux_i486.cpp.incl"
 
-void MacroAssembler::int3() {
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+void Assembler::int3() {
+  call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
 }
 
 void MacroAssembler::get_thread(Register thread) {
-  movl(thread, rsp);
+  movl(thread, esp);
   shrl(thread, PAGE_SHIFT);
-
-  ExternalAddress tls_base((address)ThreadLocalStorage::sp_map_addr());
-  Address index(noreg, thread, Address::times_4);
-  ArrayAddress tls(tls_base, index);
-
-  movptr(thread, tls);
+  movl(thread, Address(noreg, thread, Address::times_4, (int)ThreadLocalStorage::sp_map_addr()));
 }
 
 bool MacroAssembler::needs_explicit_null_check(int offset) {

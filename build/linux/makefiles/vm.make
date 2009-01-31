@@ -149,8 +149,6 @@ mapfile_reorder : mapfile $(REORDERFILE)
 	rm -f $@
 	cat $^ > $@
 
-STATIC_CXX = true
-
 ifeq ($(LINK_INTO),AOUT)
   LIBJVM.o                 =
   LIBJVM_MAPFILE           =
@@ -164,14 +162,8 @@ else
   # JVM is statically linked with libgcc[_s] and libstdc++; this is needed to
   # get around library dependency and compatibility issues. Must use gcc not
   # g++ to link.
-  ifeq ($(STATIC_CXX), true)
-    LFLAGS_VM              += $(STATIC_LIBGCC)
-    LIBS_VM                += $(STATIC_STDCXX)
-  else
-    LIBS_VM                += -lstdc++
-  endif
-
-  LIBS_VM                  += $(LIBS)
+  LFLAGS_VM                += $(STATIC_LIBGCC)
+  LIBS_VM                  += $(STATIC_STDCXX) $(LIBS)
 endif
 
 LINK_VM = $(LINK_LIB.c)

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)runtime.hpp	1.199 07/05/17 16:01:38 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -134,9 +134,6 @@ class OptoRuntime : public AllStatic {
   
   // Allocate storage for a objArray or typeArray
   static void new_array_C(klassOopDesc* array_klass, int len, JavaThread *thread);
-
-  // Post-allocation step for implementing ReduceInitialCardMarks:
-  static void do_eager_card_mark(JavaThread* thread);
 
   // Allocate storage for a multi-dimensional arrays
   // Note: needs to be fixed for arbitrary number of dimensions  

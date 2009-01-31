@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)gcTaskManager.cpp	1.34 07/05/05 17:05:27 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -333,7 +333,7 @@ void GCTaskQueue::print(const char* message) const {
 // 
 
 SynchronizedGCTaskQueue::SynchronizedGCTaskQueue(GCTaskQueue* queue_arg,
-                                                 Monitor *       lock_arg) :
+                                                 Mutex*       lock_arg) :
   _unsynchronized_queue(queue_arg),
   _lock(lock_arg) {
   assert(unsynchronized_queue() != NULL, "null queue");

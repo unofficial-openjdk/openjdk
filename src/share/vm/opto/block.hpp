@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)block.hpp	1.98 07/05/17 15:57:17 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,7 +28,6 @@
 // Optimization - Graph Style
 
 class Block;
-class CFGLoop;
 class MachCallNode;
 class Matcher;
 class RootNode;
@@ -81,22 +80,11 @@ public:
 };
 
 
-class CFGElement : public ResourceObj {
- public:  
-  float _freq; // Execution frequency (estimate)
-
-  CFGElement() : _freq(0.0f) {}
-  virtual bool is_block() { return false; }
-  virtual bool is_loop()  { return false; }
-  Block*   as_Block() { assert(is_block(), "must be block"); return (Block*)this; }
-  CFGLoop* as_CFGLoop()  { assert(is_loop(),  "must be loop");  return (CFGLoop*)this;  }
-};
-
 //------------------------------Block------------------------------------------
 // This class defines a Basic Block.
 // Basic blocks are used during the output routines, and are not used during
 // any optimization pass.  They are created late in the game.
-class Block : public CFGElement {
+class Block : public ResourceObj {
  public:
   // Nodes in this block, in order
   Node_List _nodes;
@@ -128,12 +116,6 @@ class Block : public CFGElement {
   uint _dom_depth;              // Depth in dominator tree for fast LCA
   Block* _idom;                 // Immediate dominator block
 
-  CFGLoop *_loop;               // Loop to which this block belongs
-  uint _rpo;			// Number in reverse post order walk 
-
-  virtual bool is_block() { return true; }
-  float succ_prob(uint i); // return probability of i'th successor
-
   Block* dom_lca(Block* that);  // Compute LCA in dominator tree.
 #ifdef ASSERT
   bool dominates(Block* that) {
@@ -152,6 +134,19 @@ class Block : public CFGElement {
   // It is currently also used to scale such frequencies relative to 
   // FreqCountInvocations relative to the old value of 1500.
 #define BLOCK_FREQUENCY(f) ((f * (float) 1500) / FreqCountInvocations)
+
+  // Execution frequency (estimate)
+  float _freq;
+  float _cnt;
+
+#ifdef ASSERT
+  // Validate _cnt and _freq
+  bool has_valid_counts() const { 
+    if (_freq <= 0.0f) return false;
+    if ((_cnt <= 0.0f) && (_cnt != COUNT_UNKNOWN)) return false;
+    return true;
+  }
+#endif
 
   // Register Pressure (estimate) for Splitting heuristic
   uint _reg_pressure;
@@ -208,13 +203,13 @@ class Block : public CFGElement {
   // Create a new Block with given head Node.
   // Creates the (empty) predecessor arrays.
   Block( Arena *a, Node *headnode ) 
-    : CFGElement(),
-      _nodes(a), 
+    : _nodes(a), 
       _succs(a), 
       _num_succs(0), 
       _pre_order(0), 
       _idom(0), 
-      _loop(NULL), 
+      _freq(0.0f), 
+      _cnt(COUNT_UNKNOWN), 
       _reg_pressure(0), 
       _ihrp_index(1), 
       _freg_pressure(0), 
@@ -283,11 +278,7 @@ class Block : public CFGElement {
     return _succs[i]->non_connector();
   }
 
-  // Examine block's code shape to predict if it is not commonly executed. 
-  bool has_uncommon_code() const;
-
-  // Use frequency calculations and code shape to predict if the block
-  // is uncommon.
+  // True if block is way uncommon
   bool is_uncommon( Block_Array &bbs ) const;
 
 #ifndef PRODUCT
@@ -339,7 +330,6 @@ class PhaseCFG : public Phase {
   Block_Array _bbs;             // Map Nodes to owning Basic Block
   Block *_broot;                // Basic block of root
   uint _rpo_ctr;
-  CFGLoop* _root_loop;
   
   // Per node latency estimation, valid only during GCM
   GrowableArray<uint> _node_latency;
@@ -393,8 +383,6 @@ class PhaseCFG : public Phase {
   // fake exit path to infinite loops.  At this late stage they need to turn
   // into Goto's so that when you enter the infinite loop you indeed hang.
   void convert_NeverBranch_to_Goto(Block *b);
-
-  CFGLoop* create_loop_tree();
 
   // Insert a node into a block, and update the _bbs
   void insert( Block *b, uint idx, Node *n ) { 
@@ -451,63 +439,3 @@ public:
 
 };
 
-//----------------------------BlockProbPair---------------------------
-// Ordered pair of Node*.
-class BlockProbPair VALUE_OBJ_CLASS_SPEC {
-protected:
-  Block* _target;      // block target
-  float  _prob;        // probability of edge to block
-public:
-  BlockProbPair() : _target(NULL), _prob(0.0) {}
-  BlockProbPair(Block* b, float p) : _target(b), _prob(p) {}
-
-  Block* get_target() const { return _target; }
-  float get_prob() const { return _prob; }
-};
-
-//------------------------------CFGLoop-------------------------------------------
-class CFGLoop : public CFGElement {
-  int _id;
-  int _depth;
-  CFGLoop *_parent;      // root of loop tree is the method level "pseudo" loop, it's parent is null
-  CFGLoop *_sibling;     // null terminated list
-  CFGLoop *_child;       // first child, use child's sibling to visit all immediately nested loops
-  GrowableArray<CFGElement*> _members; // list of members of loop
-  GrowableArray<BlockProbPair> _exits; // list of successor blocks and their probabilities
-  float _exit_prob;       // probability any loop exit is taken on a single loop iteration
-  void update_succ_freq(Block* b, float freq);
-
- public:
-  CFGLoop(int id) : 
-    CFGElement(), 
-    _id(id), 
-    _depth(0), 
-    _parent(NULL), 
-    _sibling(NULL), 
-    _child(NULL), 
-    _exit_prob(0.0f) {}
-  CFGLoop* parent() { return _parent; }
-  void push_pred(Block* blk, int i, Block_List& worklist, Block_Array& node_to_blk);
-  void add_member(CFGElement *s) { _members.push(s); }
-  void add_nested_loop(CFGLoop* cl);
-  Block* head() {
-    assert(_members.at(0)->is_block(), "head must be a block");
-    Block* hd = _members.at(0)->as_Block();
-    assert(hd->_loop == this, "just checking");
-    assert(hd->head()->is_Loop(), "must begin with loop head node");
-    return hd;
-  }
-  Block* backedge_block(); // Return the block on the backedge of the loop (else NULL)
-  void compute_loop_depth(int depth);
-  void compute_freq(); // compute frequency with loop assuming head freq 1.0f
-  void scale_freq();   // scale frequency by loop trip count (including outer loops)
-  bool in_loop_nest(Block* b);
-  float trip_count() const { return 1.0f / _exit_prob; }
-  virtual bool is_loop()  { return true; }
-  int id() { return _id; }
-
-#ifndef PRODUCT
-  void dump( ) const;
-  void dump_tree() const;
-#endif
-};

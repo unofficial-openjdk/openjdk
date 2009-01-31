@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)javaFrameAnchor_i486.hpp	1.18 07/05/05 17:04:18 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -69,13 +69,14 @@ public:
 
   intptr_t* last_Java_sp(void) const             { return _last_Java_sp; }
 
+  // These are only used by friends. Using the mutators in the wrong order is dangerous.
+
 private: 
 
   static ByteSize last_Java_fp_offset()          { return byte_offset_of(JavaFrameAnchor, _last_Java_fp); }
 
 public:
 
-  void set_last_Java_sp(intptr_t* sp)            { _last_Java_sp = sp; }
 
   intptr_t*   last_Java_fp(void)                     { return _last_Java_fp; }
   // Assert (last_Java_sp == NULL || fp == NULL)

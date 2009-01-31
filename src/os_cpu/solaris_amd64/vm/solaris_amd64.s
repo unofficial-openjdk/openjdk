@@ -1,4 +1,4 @@
-.ident	"%W% %E% %U% JVM"
+.ident	"@(#)solaris_amd64.s	1.8 07/05/05 17:04:50 JVM"
 /
 / Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
 / DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.

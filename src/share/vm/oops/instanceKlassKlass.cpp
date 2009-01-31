@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)instanceKlassKlass.cpp	1.156 07/05/29 09:44:20 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -473,6 +473,23 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
 
 // Printing
 
+static outputStream* printing_stream = NULL;
+
+static void print_nonstatic_field(fieldDescriptor* fd, oop obj) {
+  assert(printing_stream != NULL, "Invalid printing stream");
+  printing_stream->print("   - ");
+  fd->print_on(printing_stream);
+  printing_stream->cr();
+}
+
+static void print_static_field(fieldDescriptor* fd, oop obj) {
+  assert(printing_stream != NULL, "Invalid printing stream");
+  printing_stream->print("   - ");
+  fd->print_on_for(printing_stream, obj);
+  printing_stream->cr();
+}
+
+
 static const char* state_names[] = {
   "unparseable_by_gc", "allocated", "loaded", "linked", "being_initialized", "fully_initialized", "initialization_error"
 };
@@ -567,11 +584,11 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   st->print(" - vtable length      %d  (start addr: " INTPTR_FORMAT ")", ik->vtable_length(), ik->start_of_vtable());  st->cr();  
   st->print(" - itable length      %d (start addr: " INTPTR_FORMAT ")", ik->itable_length(), ik->start_of_itable()); st->cr();
   st->print_cr(" - static fields:");
-  FieldPrinter print_static_field(st);
-  ik->do_local_static_fields(&print_static_field);
+  printing_stream = st;
+  ik->do_local_static_fields(print_static_field, obj);
   st->print_cr(" - non-static fields:");
-  FieldPrinter print_nonstatic_field(st, obj);
-  ik->do_nonstatic_fields(&print_nonstatic_field);
+  ik->do_nonstatic_fields(print_nonstatic_field, NULL);
+  printing_stream = NULL;
 
   st->print(" - static oop maps:     ");
   if (ik->static_oop_field_size() > 0) {

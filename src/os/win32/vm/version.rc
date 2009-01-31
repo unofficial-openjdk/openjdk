@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)version.rc	1.7 07/08/15 20:12:20 JVM"
 #endif
 //
 // Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.

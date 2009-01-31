@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmStructs.cpp	1.186 07/08/20 18:05:45 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -244,7 +244,6 @@ static inline uint64_t cast_uint64_t(size_t x)
      static_field(Universe,                    _constantPoolCacheKlassObj,                    klassOop)                              \
      static_field(Universe,                    _compiledICHolderKlassObj,                     klassOop)                              \
      static_field(Universe,                    _systemObjArrayKlassObj,                       klassOop)                              \
-     static_field(Universe,                    _mirrors[0],                                   oop)                                  \
      static_field(Universe,                    _main_thread_group,                            oop)                                   \
      static_field(Universe,                    _system_thread_group,                          oop)                                   \
      static_field(Universe,                    _the_empty_byte_array,                         typeArrayOop)                          \
@@ -489,6 +488,7 @@ static inline uint64_t cast_uint64_t(size_t x)
       static_field(SystemDictionary,            _vector_klass,                                 klassOop)                             \
       static_field(SystemDictionary,            _hashtable_klass,                              klassOop)                             \
       static_field(SystemDictionary,            _box_klasses[0],                               klassOop)                             \
+      static_field(SystemDictionary,            _mirrors[0],                                   oop)                                  \
       static_field(SystemDictionary,            _java_system_loader,                           oop)                                  \
                                                                                                                                      \
   /*******************/                                                                                                              \

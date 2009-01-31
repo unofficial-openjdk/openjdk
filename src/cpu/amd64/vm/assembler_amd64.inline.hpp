@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_amd64.inline.hpp	1.13 07/05/05 17:04:04 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -25,11 +25,35 @@
  *  
  */
 
-inline void Assembler::emit_long64(jlong x) {
+inline void Assembler::emit_long64(jlong x)
+{
   *(jlong*) _code_pos = x;
   _code_pos += sizeof(jlong);
   code_section()->set_end(_code_pos);
 }
+
+inline bool Assembler::is_reachable(Address adr) 
+{
+  if ( !adr.is_rip_relative() ) return true;
+  int64_t disp;
+  if (adr.is_far()) {
+    if (adr.reloc() != relocInfo::external_word_type &&
+        adr.reloc() != relocInfo::runtime_call_type ) {
+      return false;
+    }
+    // For external_word_type/runtime_call_type if it is reachable from where we
+    // are now (possibly a temp buffer) and where we might end up
+    // anywhere in the codeCache then we are always reachable.
+    // This would have to change if we ever save/restore shared code
+    // to be more pessimistic.
+    disp = (int64_t)adr._target - ((int64_t)CodeCache::low_bound() + sizeof(int));
+    if (!is_simm32(disp)) return false;
+    disp = (int64_t)adr._target - ((int64_t)CodeCache::high_bound() + sizeof(int));
+    if (!is_simm32(disp)) return false;
+  }
+  disp = (int64_t)adr._target - ((int64_t)_code_pos + sizeof(int));
+  return is_simm32(disp);
+} 
 
 inline void MacroAssembler::pd_patch_instruction(address branch, address target) {
   unsigned char op = branch[0];
@@ -71,19 +95,3 @@ inline void MacroAssembler::pd_print_patched_instruction(address branch) {
   tty->print("%s (unresolved)", s);
 }
 #endif // ndef PRODUCT
-
-inline void MacroAssembler::movptr(Address dst, intptr_t src) {
-#ifdef _LP64
-  Assembler::mov64(dst, src);
-#else
-  Assembler::movl(dst, src);
-#endif // _LP64
-}
-
-inline void MacroAssembler::movptr(Register dst, intptr_t src) {
-#ifdef _LP64
-  Assembler::mov64(dst, src);
-#else
-  Assembler::movl(dst, src);
-#endif // _LP64
-}

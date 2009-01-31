@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)arguments.cpp	1.333 07/09/25 22:04:01 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1253,6 +1253,12 @@ NOT_WINDOWS(
       FLAG_SET_DEFAULT(CacheTimeMillis, true);
     }
 )
+#ifdef COMPILER2
+    if (FLAG_IS_DEFAULT(UseSuperWord)) {
+      // Generate SIMD instructions
+      FLAG_SET_DEFAULT(UseSuperWord, true);
+    }
+#endif /* COMPILER2 */
   }
 }
 
@@ -1672,11 +1678,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
           size_t len2 = strlen(pos+1) + 1; // options start after ':'.  Final zero must be copied.
           options = (char*)memcpy(NEW_C_HEAP_ARRAY(char, len2), pos+1, len2);
         }
-#ifdef JVMTI_KERNEL
-        if ((strcmp(name, "hprof") == 0) || (strcmp(name, "jdwp") == 0)) {
-          warning("profiling and debugging agents are not supported with Kernel VM");
-        } else
-#endif // JVMTI_KERNEL
         add_init_library(name, options);
       }
     // -agentlib and -agentpath
@@ -1692,13 +1693,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         if(pos != NULL) {
           options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(pos + 1) + 1), pos + 1);
         }
-#ifdef JVMTI_KERNEL
-        if ((strcmp(name, "hprof") == 0) || (strcmp(name, "jdwp") == 0)) {
-          warning("profiling and debugging agents are not supported with Kernel VM");
-        } else
-#endif // JVMTI_KERNEL
         add_init_agent(name, options, is_absolute_path);
-
       }
     // -javaagent
     } else if (match_option(option, "-javaagent:", &tail)) {
@@ -1836,12 +1831,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
 	  // EVM option, ignore silently for compatibility
     // -Xprof
     } else if (match_option(option, "-Xprof", &tail)) {
-#ifndef FPROF_KERNEL
       _has_profile = true;
-#else // FPROF_KERNEL
-      // do we have to exit?
-      warning("Kernel VM does not support flat profiling.");
-#endif // FPROF_KERNEL
     // -Xaprof
     } else if (match_option(option, "-Xaprof", &tail)) {
       _has_alloc_profile = true;
@@ -1892,9 +1882,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
 #elif defined(COMPILER2)
       vm_exit_during_initialization(
           "Dumping a shared archive is not supported on the Server JVM.", NULL);
-#elif defined(KERNEL)
-      vm_exit_during_initialization(
-          "Dumping a shared archive is not supported on the Kernel JVM.", NULL);
 #else
       FLAG_SET_CMDLINE(bool, DumpSharedSpaces, true);
       set_mode_flags(_int);	// Prevent compilation, which creates objects
@@ -2223,9 +2210,6 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
     // not specified.
     set_mode_flags(_int);
   }
-  if (CompileThreshold == 0) {
-    set_mode_flags(_int);
-  }
 
 #ifdef TIERED
   // If we are using tiered compilation in the tiered vm then c1 will
@@ -2439,9 +2423,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
 #ifdef SERIALGC
   set_serial_gc_flags();
 #endif // SERIALGC
-#ifdef KERNEL
-  no_shared_spaces();
-#endif // KERNEL
   
   // Set some flags for ParallelGC if needed.
   set_parallel_gc_flags();
@@ -2462,10 +2443,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   // Set flags if Aggressive optimization flags (-XX:+AggressiveOpts) enabled.
   set_aggressive_opts_flags();
 
-#ifdef CC_INTERP
-  // Biased locking is not implemented with c++ interpreter
+#ifdef IA64
+  // Biased locking is not implemented on IA64
   FLAG_SET_DEFAULT(UseBiasedLocking, false);
-#endif /* CC_INTERP */
+#endif /* IA64 */
 
   if (PrintCommandLineFlags) {
     CommandLineFlags::printSetFlags();
@@ -2560,36 +2541,6 @@ void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, c
       
   PropertyList_add(plist, k, v);
 }
-
-#ifdef KERNEL
-char *Arguments::get_kernel_properties() {
-  // Find properties starting with kernel and append them to string
-  // We need to find out how long they are first because the URL's that they
-  // might point to could get long.
-  int length = 0;
-  SystemProperty* prop;
-  for (prop = _system_properties; prop != NULL; prop = prop->next()) {
-    if (strncmp(prop->key(), "kernel.", 7 ) == 0) {
-      length += (strlen(prop->key()) + strlen(prop->value()) + 5);  // "-D ="
-    }
-  }
-  // Add one for null terminator.
-  char *props = AllocateHeap(length + 1, "get_kernel_properties");
-  if (length != 0) {
-    int pos = 0;
-    for (prop = _system_properties; prop != NULL; prop = prop->next()) {
-      if (strncmp(prop->key(), "kernel.", 7 ) == 0) {
-        jio_snprintf(&props[pos], length-pos,
-                     "-D%s=%s ", prop->key(), prop->value());
-        pos = strlen(props);
-      }
-    }
-  }
-  // null terminate props in case of null
-  props[length] = '\0';
-  return props;
-}
-#endif // KERNEL
 
 // Copies src into buf, replacing "%%" with "%" and "%p" with pid
 // Returns true if all of the source pointed by src has been copied over to

@@ -22,7 +22,7 @@
 # 
 
 #
-# %W% %E% %U%
+# @(#)TEST.ROOT	1.7 07/05/05 17:07:14
 #
 
 # This file identifies the root of the test-suite hierarchy.

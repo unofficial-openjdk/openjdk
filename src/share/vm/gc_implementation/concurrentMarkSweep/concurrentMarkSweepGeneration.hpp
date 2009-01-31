@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)concurrentMarkSweepGeneration.hpp	1.161 07/07/17 11:44:43 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -918,10 +918,10 @@ class CMSCollector: public CHeapObj {
   CollectorCounters* counters()    { return _gc_counters; }
 
   // timer stuff
-  void    startTimer() { assert(!_timer.is_active(), "Error"); _timer.start();   }
-  void    stopTimer()  { assert( _timer.is_active(), "Error"); _timer.stop();    }
-  void    resetTimer() { assert(!_timer.is_active(), "Error"); _timer.reset();   }
-  double  timerValue() { assert(!_timer.is_active(), "Error"); return _timer.seconds(); }
+  void    startTimer() { _timer.start();   }
+  void    stopTimer()  { _timer.stop();    }
+  void    resetTimer() { _timer.reset();   }
+  double  timerValue() { return _timer.seconds(); }
 
   int  yields()          { return _numYields; }
   void resetYields()     { _numYields = 0;    }

@@ -110,15 +110,23 @@ encode %{
 // This name is KNOWN by the ADLC and cannot be changed.
 // The ADLC forces a 'TypeRawPtr::BOTTOM' output type
 // for this guy.
-instruct tlsLoadP(r15_RegP dst)
+instruct tlsLoadP(rRegP dst)
 %{
   match(Set dst (ThreadLocal));
   effect(DEF dst);
 
-  size(0);
-  format %{ "# TLS is in R15" %}
-  ins_encode( /*empty encoding*/ );
+  format %{ "movq    $dst, R15_TLS\t# tlsLoad" %}
+  ins_encode(enc_copy_wide(dst, R15));
   ins_pipe(ialu_reg_reg);
+%}
+
+instruct TLS(rRegP dst)
+%{
+  match(Set dst (ThreadLocal));
+
+  expand %{
+    tlsLoadP(dst);
+  %}
 %}
 
 // Die now

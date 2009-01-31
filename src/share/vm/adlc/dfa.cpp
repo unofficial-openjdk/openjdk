@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)dfa.cpp	1.83 07/05/05 17:04:59 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.

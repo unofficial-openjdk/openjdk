@@ -23,7 +23,7 @@
 //
 
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)archDesc.cpp	1.273 07/05/05 17:05:01 JVM"
 #endif
 
 // archDesc.cpp - Internal format for architecture definition

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vm_version_i486.cpp	1.68 07/07/13 14:59:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -70,27 +70,27 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     //
     // void getPsrInfo(VM_Version::CpuidInfo* cpuid_info);
     //
-    __ pushl(rbp);
-    __ movl(rbp, Address(rsp, 8)); // cpuid_info address
-    __ pushl(rbx);
-    __ pushl(rsi);
-    __ pushfd();		// preserve rbx, and flags
-    __ popl(rax);
-    __ pushl(rax);
-    __ movl(rcx, rax);
+    __ pushl(ebp);
+    __ movl(ebp, Address(esp, 8)); // cpuid_info address
+    __ pushl(ebx);
+    __ pushl(esi);
+    __ pushfd();		// preserve ebx and flags
+    __ popl(eax);
+    __ pushl(eax);
+    __ movl(ecx, eax);
     //
     // if we are unable to change the AC flag, we have a 386
     //
-    __ xorl(rax, EFL_AC);
-    __ pushl(rax);
+    __ xorl(eax, EFL_AC);
+    __ pushl(eax);
     __ popfd();
     __ pushfd();
-    __ popl(rax);
-    __ cmpl(rax, rcx);
+    __ popl(eax);
+    __ cmpl(eax, ecx);
     __ jccb(Assembler::notEqual, detect_486);
 
-    __ movl(rax, CPU_FAMILY_386);
-    __ movl(Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())), rax);
+    __ movl(eax, CPU_FAMILY_386);
+    __ movl(Address(ebp, in_bytes(VM_Version::std_cpuid1_offset())), eax);
     __ jmp(done);
 
     //
@@ -98,120 +98,120 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     // not support the "cpuid" instruction.
     //
     __ bind(detect_486);
-    __ movl(rax, rcx);
-    __ xorl(rax, EFL_ID);
-    __ pushl(rax);
+    __ movl(eax, ecx);
+    __ xorl(eax, EFL_ID);
+    __ pushl(eax);
     __ popfd();
     __ pushfd();
-    __ popl(rax);
-    __ cmpl(rcx, rax);
+    __ popl(eax);
+    __ cmpl(ecx, eax);
     __ jccb(Assembler::notEqual, detect_586);
 
     __ bind(cpu486);
-    __ movl(rax, CPU_FAMILY_486);
-    __ movl(Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())), rax);
+    __ movl(eax, CPU_FAMILY_486);
+    __ movl(Address(ebp, in_bytes(VM_Version::std_cpuid1_offset())), eax);
     __ jmp(done);
 
     //
     // at this point, we have a chip which supports the "cpuid" instruction
     //
     __ bind(detect_586);
-    __ xorl(rax, rax);
+    __ xorl(eax, eax);
     __ cpuid();
-    __ orl(rax, rax);
+    __ orl(eax, eax);
     __ jcc(Assembler::equal, cpu486);	// if cpuid doesn't support an input
 					// value of at least 1, we give up and
 					// assume a 486
-    __ leal(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid0_offset())));
-    __ movl(Address(rsi, 0), rax);
-    __ movl(Address(rsi, 4), rbx);
-    __ movl(Address(rsi, 8), rcx);
-    __ movl(Address(rsi,12), rdx);
+    __ leal(esi, Address(ebp, in_bytes(VM_Version::std_cpuid0_offset())));
+    __ movl(Address(esi, 0), eax);
+    __ movl(Address(esi, 4), ebx);
+    __ movl(Address(esi, 8), ecx);
+    __ movl(Address(esi,12), edx);
 
-    __ cmpl(rax, 3);     // Is cpuid(0x4) supported?
+    __ cmpl(eax, 3);     // Is cpuid(0x4) supported?
     __ jccb(Assembler::belowEqual, std_cpuid1);
 
     //
     // cpuid(0x4) Deterministic cache params
     //
-    __ movl(rax, 4);     // and rcx already set to 0x0
-    __ xorl(rcx, rcx);
+    __ movl(eax, 4);     // and ecx already set to 0x0
+    __ xorl(ecx, ecx);
     __ cpuid();
-    __ pushl(rax);
-    __ andl(rax, 0x1f);  // Determine if valid cache parameters used
-    __ orl(rax, rax);    // rax,[4:0] == 0 indicates invalid cache
-    __ popl(rax);
+    __ pushl(eax);
+    __ andl(eax, 0x1f);  // Determine if valid cache parameters used
+    __ orl(eax, eax);    // eax[4:0] == 0 indicates invalid cache
+    __ popl(eax);
     __ jccb(Assembler::equal, std_cpuid1);
 
-    __ leal(rsi, Address(rbp, in_bytes(VM_Version::dcp_cpuid4_offset())));
-    __ movl(Address(rsi, 0), rax);
-    __ movl(Address(rsi, 4), rbx);
-    __ movl(Address(rsi, 8), rcx);
-    __ movl(Address(rsi,12), rdx);
+    __ leal(esi, Address(ebp, in_bytes(VM_Version::dcp_cpuid4_offset())));
+    __ movl(Address(esi, 0), eax);
+    __ movl(Address(esi, 4), ebx);
+    __ movl(Address(esi, 8), ecx);
+    __ movl(Address(esi,12), edx);
 
     //
     // Standard cpuid(0x1)
     //
     __ bind(std_cpuid1);
-    __ movl(rax, 1);
+    __ movl(eax, 1);
     __ cpuid();
-    __ leal(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())));
-    __ movl(Address(rsi, 0), rax);
-    __ movl(Address(rsi, 4), rbx);
-    __ movl(Address(rsi, 8), rcx);
-    __ movl(Address(rsi,12), rdx);
+    __ leal(esi, Address(ebp, in_bytes(VM_Version::std_cpuid1_offset())));
+    __ movl(Address(esi, 0), eax);
+    __ movl(Address(esi, 4), ebx);
+    __ movl(Address(esi, 8), ecx);
+    __ movl(Address(esi,12), edx);
 
-    __ movl(rax, 0x80000000);
+    __ movl(eax, 0x80000000);
     __ cpuid();
-    __ cmpl(rax, 0x80000000);     // Is cpuid(0x80000001) supported?
+    __ cmpl(eax, 0x80000000);     // Is cpuid(0x80000001) supported?
     __ jcc(Assembler::belowEqual, done);
-    __ cmpl(rax, 0x80000004);     // Is cpuid(0x80000005) supported?
+    __ cmpl(eax, 0x80000004);     // Is cpuid(0x80000005) supported?
     __ jccb(Assembler::belowEqual, ext_cpuid1);
-    __ cmpl(rax, 0x80000007);     // Is cpuid(0x80000008) supported?
+    __ cmpl(eax, 0x80000007);     // Is cpuid(0x80000008) supported?
     __ jccb(Assembler::belowEqual, ext_cpuid5);
     //
     // Extended cpuid(0x80000008)
     //
-    __ movl(rax, 0x80000008);
+    __ movl(eax, 0x80000008);
     __ cpuid();
-    __ leal(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid8_offset())));
-    __ movl(Address(rsi, 0), rax);
-    __ movl(Address(rsi, 4), rbx);
-    __ movl(Address(rsi, 8), rcx);
-    __ movl(Address(rsi,12), rdx);
+    __ leal(esi, Address(ebp, in_bytes(VM_Version::ext_cpuid8_offset())));
+    __ movl(Address(esi, 0), eax);
+    __ movl(Address(esi, 4), ebx);
+    __ movl(Address(esi, 8), ecx);
+    __ movl(Address(esi,12), edx);
 
     //
     // Extended cpuid(0x80000005)
     //
     __ bind(ext_cpuid5);
-    __ movl(rax, 0x80000005);
+    __ movl(eax, 0x80000005);
     __ cpuid();
-    __ leal(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid5_offset())));
-    __ movl(Address(rsi, 0), rax);
-    __ movl(Address(rsi, 4), rbx);
-    __ movl(Address(rsi, 8), rcx);
-    __ movl(Address(rsi,12), rdx);
+    __ leal(esi, Address(ebp, in_bytes(VM_Version::ext_cpuid5_offset())));
+    __ movl(Address(esi, 0), eax);
+    __ movl(Address(esi, 4), ebx);
+    __ movl(Address(esi, 8), ecx);
+    __ movl(Address(esi,12), edx);
 
     //
     // Extended cpuid(0x80000001)
     //
     __ bind(ext_cpuid1);
-    __ movl(rax, 0x80000001);
+    __ movl(eax, 0x80000001);
     __ cpuid();
-    __ leal(rsi, Address(rbp, in_bytes(VM_Version::ext_cpuid1_offset())));
-    __ movl(Address(rsi, 0), rax);
-    __ movl(Address(rsi, 4), rbx);
-    __ movl(Address(rsi, 8), rcx);
-    __ movl(Address(rsi,12), rdx);
+    __ leal(esi, Address(ebp, in_bytes(VM_Version::ext_cpuid1_offset())));
+    __ movl(Address(esi, 0), eax);
+    __ movl(Address(esi, 4), ebx);
+    __ movl(Address(esi, 8), ecx);
+    __ movl(Address(esi,12), edx);
 
     //
     // return
     //
     __ bind(done);
     __ popfd();
-    __ popl(rsi);
-    __ popl(rbx);
-    __ popl(rbp);
+    __ popl(esi);
+    __ popl(ebx);
+    __ popl(ebp);
     __ ret(0);
 
 #   undef __

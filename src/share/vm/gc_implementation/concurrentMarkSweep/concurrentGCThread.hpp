@@ -158,8 +158,6 @@ class SurrogateLockerThread: public JavaThread {
 
   SurrogateLockerThread();
 
-  bool is_hidden_from_external_view() const     { return true; }
-
   void loop(); // main method
 
   void manipulatePLL(SLT_msg_type msg);

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)pcTasks.hpp	1.19 07/05/05 17:05:26 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.

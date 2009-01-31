@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)threadLS_win32_i486.cpp	1.19 07/05/05 17:04:56 JVM"
 #endif
 /*
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.

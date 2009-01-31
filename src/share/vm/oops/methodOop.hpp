@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)methodOop.hpp	1.219 07/05/17 15:57:04 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -396,7 +396,6 @@ class methodOopDesc : public oopDesc {
   void compute_size_of_parameters(Thread *thread); // word size of parameters (receiver if any + arguments)
   symbolOop klass_name() const;                  // returns the name of the method holder
   BasicType result_type() const;                 // type of the method result
-  int result_type_index() const;                 // type index of the method result
   bool is_returning_oop() const                  { BasicType r = result_type(); return (r == T_OBJECT || r == T_ARRAY); }
   bool is_returning_fp() const                   { BasicType r = result_type(); return (r == T_FLOAT || r == T_DOUBLE); }
 

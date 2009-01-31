@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)globals.hpp	1.967 07/07/13 14:51:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -61,7 +61,6 @@ define_pd_global(intx, CodeCacheMinBlockLength,      1);
 define_pd_global(uintx,PermSize,    ScaleForWordSize(4*M));
 define_pd_global(uintx,MaxPermSize, ScaleForWordSize(64*M));
 define_pd_global(bool, NeverActAsServerClassMachine, true);
-define_pd_global(uintx, DefaultMaxRAM, 		     1*G);
 #define CI_COMPILER_COUNT 0
 #else
 
@@ -390,9 +389,6 @@ class CommandLineFlags {
   develop(bool, VerifyStack, false,                                         \
           "Verify stack of each thread when it is entering a runtime call") \
                                                                             \
-  develop(bool, ForceUnreachable, false,                                    \
-          "(amd64) Make all non code cache addresses to be unreachable with rip-rel forcing use of 64bit literal fixups") \
-                                                                            \
   notproduct(bool, StressDerivedPointers, false,                            \
           "Force scavenge when a derived pointers is detected on stack "    \
           "after rtm call")                                                 \
@@ -501,7 +497,7 @@ class CommandLineFlags {
   develop(bool, ShowSafepointMsgs, false,                                   \
           "Show msg. about safepoint synch.")                               \
                                                                             \
-  product(bool, SafepointTimeout, false,                                    \
+  develop(bool, SafepointTimeout, false,                                    \
           "Time out and warn or fail after SafepointTimeoutDelay "          \
           "milliseconds if failed to reach safepoint")                      \
                                                                             \
@@ -827,6 +823,8 @@ class CommandLineFlags {
   product(intx, FenceInstruction, 0,                                        \
           "(Unsafe,Unstable) Experimental")                                 \
                                                                             \
+  product(intx, AppendRatio, 11, "(Unstable) Monitor queue fairness" )      \
+                                                                            \
   product(intx, SyncFlags, 0, "(Unsafe,Unstable) Experimental Sync flags" ) \
                                                                             \
   product(intx, SyncVerbose, 0, "(Unstable)" )                              \
@@ -841,12 +839,8 @@ class CommandLineFlags {
          " avoid NPTL-FUTEX hang pthread_cond_timedwait" )                  \
                                                                             \
   product(bool, FilterSpuriousWakeups , true,                               \
-	  "Prevent spurious or premature wakeups from object.wait"              \
-	  "(Solaris only)")                                                     \
-                                                                            \
-  product(intx, NativeMonitorTimeout, -1, "(Unstable)" )                    \
-  product(intx, NativeMonitorFlags, 0, "(Unstable)" )                       \
-  product(intx, NativeMonitorSpinLimit, 20, "(Unstable)" )                  \
+	  "Prevent spurious or premature wakeups from object.wait"          \
+	  "(Solaris only)")                                                 \
                                                                             \
   develop(bool, UsePthreads, false,                                         \
           "Use pthread-based instead of libthread-based synchronization "   \
@@ -1576,7 +1570,7 @@ class CommandLineFlags {
   product(bool, AlwaysActAsServerClassMachine, false,                       \
           "Always act like a server-class machine")                         \
                                                                             \
-  product_pd(uintx, DefaultMaxRAM,					    \
+  product(uintx, DefaultMaxRAM, G,					    \
 	  "Maximum real memory size for setting server class heap size")    \
 									    \
   product(uintx, DefaultMaxRAMFraction, 4,				    \
@@ -2211,6 +2205,9 @@ class CommandLineFlags {
   develop(bool, CountCompiledCalls, false,                                  \
           "counts method invocations")                                      \
                                                                             \
+  notproduct(bool, CountVMLocks, false,                                     \
+          "counts VM internal lock attempts and contention")                \
+                                                                            \
   notproduct(bool, CountRuntimeCalls, false,                                \
           "counts VM runtime calls")                                        \
                                                                             \
@@ -2428,7 +2425,7 @@ class CommandLineFlags {
           "Guarantee a safepoint (at least) every so many milliseconds "    \
           "(0 means none)")                                                 \
                                                                             \
-  product(intx, SafepointTimeoutDelay, 10000,                               \
+  develop(intx, SafepointTimeoutDelay, 10000,                               \
           "Delay in milliseconds for option SafepointTimeout")              \
                                                                             \
   product(intx, NmethodSweepFraction, 4,                                    \

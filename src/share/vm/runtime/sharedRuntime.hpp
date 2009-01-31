@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)sharedRuntime.hpp	1.157 07/07/19 12:19:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -107,6 +107,7 @@ class SharedRuntime: AllStatic {
     STACK_OVERFLOW
   };
   static void    throw_AbstractMethodError(JavaThread* thread);
+  static void    throw_IncompatibleClassChangeError(JavaThread* thread);
   static void    throw_ArithmeticException(JavaThread* thread);
   static void    throw_NullPointerException(JavaThread* thread);
   static void    throw_NullPointerException_at_call(JavaThread* thread);
@@ -129,7 +130,6 @@ class SharedRuntime: AllStatic {
   }
 
 #ifdef COMPILER2
-  static void generate_uncommon_trap_blob(void);
   static UncommonTrapBlob* uncommon_trap_blob()                  { return _uncommon_trap_blob; }
 #endif // COMPILER2
 

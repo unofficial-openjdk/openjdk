@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)subnode.cpp	1.159 07/05/05 17:06:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -78,7 +78,7 @@ const Type *SubNode::Value( PhaseTransform *phase ) const {
 
   // Not correct for SubFnode and AddFNode (must check for infinity)
   // Equal?  Subtract is zero
-  if (phase->eqv_uncast(in1, in2))  return add_id();
+  if( phase->eqv(in1, in2) ) return add_id();
 
   // Either input is BOTTOM ==> the result is the local BOTTOM
   if( t1 == Type::BOTTOM || t2 == Type::BOTTOM ) 
@@ -142,19 +142,6 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
         Node *sub2 = phase->transform( new (phase->C, 3) SubINode( in1->in(1), in2 ));
         return new (phase->C, 3) AddINode( sub2, in1->in(2) );
       }
-    }
-  }
-
-
-  // Convert "x - (y+c0)" into "(x-y) - c0"
-  if (op2 == Op_AddI) {
-    Node* in21 = in2->in(1);
-    Node* in22 = in2->in(2);
-    const TypeInt* tcon = phase->type(in22)->isa_int();
-    if (tcon != NULL && tcon->is_con()) {
-      Node* sub2 = phase->transform( new (phase->C, 3) SubINode(in1, in21) );
-      Node* neg_c0 = phase->intcon(- tcon->get_con());
-      return new (phase->C, 3) AddINode(sub2, neg_c0);
     }
   }
 
@@ -270,18 +257,6 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         Node *sub2 = phase->transform( new (phase->C, 3) SubLNode( in11, in2 ));
         return new (phase->C, 3) AddLNode( sub2, in1->in(2) );
       }
-    }
-  }
-
-  // Convert "x - (y+c0)" into "(x-y) - c0"
-  if (op2 == Op_AddL) {
-    Node* in21 = in2->in(1);
-    Node* in22 = in2->in(2);
-    const TypeLong* tcon = phase->type(in22)->isa_long();
-    if (tcon != NULL && tcon->is_con()) {
-      Node* sub2 = phase->transform( new (phase->C, 3) SubLNode(in1, in21) );
-      Node* neg_c0 = phase->longcon(- tcon->get_con());
-      return new (phase->C, 3) AddLNode(sub2, neg_c0);
     }
   }
                        

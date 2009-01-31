@@ -42,14 +42,11 @@ instanceKlass.cpp                       psPromotionManager.inline.hpp
 instanceKlass.cpp                       psScavenge.inline.hpp
 instanceKlass.cpp                       parOopClosures.inline.hpp
 
-instanceKlassKlass.cpp                  cardTableRS.hpp
-instanceKlassKlass.cpp                  oop.pcgc.inline.hpp
 instanceKlassKlass.cpp                  psPromotionManager.inline.hpp
 instanceKlassKlass.cpp                  psScavenge.inline.hpp
-instanceKlassKlass.cpp                  parOopClosures.inline.hpp
 
-instanceRefKlass.cpp                    oop.pcgc.inline.hpp
 instanceRefKlass.cpp                    psPromotionManager.inline.hpp
+instanceRefKlass.cpp                    oop.pcgc.inline.hpp
 instanceRefKlass.cpp                    psScavenge.inline.hpp
 instanceRefKlass.cpp                    parOopClosures.inline.hpp
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)osThread_linux.hpp	1.37 07/05/05 17:04:36 JVM"
 #endif
 /*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -121,10 +121,24 @@ public:
   void set_alt_sig_stack(address val)     { _alt_sig_stack = val; }
   address alt_sig_stack(void)             { return _alt_sig_stack; }
 
+  // ***************************************************************
+  // The interrupt_event is used to implement java.lang.Thread.interrupt,
+  // which on Linux can interrupt sleep and ObjectMonitor::wait().
+  // ***************************************************************
+
 private:
+
+  os::Linux::Event* _interrupt_event;
   Monitor* _startThread_lock;     // sync parent and child in thread creation
 
 public:
+
+  os::Linux::Event* interrupt_event() const {
+    return _interrupt_event;
+  }
+  void set_interrupt_event(os::Linux::Event* ptr) {
+    _interrupt_event = ptr;
+  }
 
   Monitor* startThread_lock() const {
     return _startThread_lock;

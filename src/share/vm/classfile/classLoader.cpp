@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)classLoader.cpp	1.186 07/05/05 17:06:44 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -390,7 +390,7 @@ void ClassLoader::setup_bootstrap_search_path() {
     char* path = NEW_C_HEAP_ARRAY(char, end-start+1);
     strncpy(path, &sys_class_path[start], end-start);
     path[end-start] = '\0';
-    update_class_path_entry_list(path, false);
+    update_class_path_entry_list(path);
     FREE_C_HEAP_ARRAY(char, path);
     while (sys_class_path[end] == os::path_separator()[0]) {
       end++;
@@ -505,31 +505,15 @@ void ClassLoader::add_to_list(ClassPathEntry *new_entry) {
   }
 }
 
-void ClassLoader::update_class_path_entry_list(const char *path,
-                                               bool check_for_duplicates) {
+void ClassLoader::update_class_path_entry_list(const char *path) {
   struct stat st;
   if (os::stat((char *)path, &st) == 0) {
     // File or directory found
     ClassPathEntry* new_entry = NULL;
     create_class_path_entry((char *)path, st, &new_entry, LazyBootClassLoader);
-    // The kernel VM adds dynamically to the end of the classloader path and
-    // doesn't reorder the bootclasspath which would break java.lang.Package
-    // (see PackageInfo).
-    // Add new entry to linked list
-    if (!check_for_duplicates || !contains_entry(new_entry)) {
-      add_to_list(new_entry);
-    }
+    // Add new entry to linked list 
+    add_to_list(new_entry);
   }
-}
-
-void ClassLoader::print_bootclasspath() {
-  ClassPathEntry* e = _first_entry;
-  tty->print("[bootclasspath= ");
-  while (e != NULL) {
-    tty->print("%s ;", e->name());
-    e = e->next();
-  }
-  tty->print_cr("]");
 }
 
 void ClassLoader::load_zip_library() {
@@ -882,8 +866,7 @@ void ClassLoader::create_package_info_table() {
 
 // Initialize the class loader's access to methods in libzip.  Parse and
 // process the boot classpath into a list ClassPathEntry objects.  Once
-// this list has been created, it must not change order (see class PackageInfo)
-// it can be appended to and is by jvmti and the kernel vm.
+// this list has been created, it must not change (see class PackageInfo).
 
 void ClassLoader::initialize() {
   assert(_package_hash_table == NULL, "should have been initialized by now.");

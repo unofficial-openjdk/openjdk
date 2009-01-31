@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)dependencies.hpp	1.11 07/05/05 17:05:18 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -46,8 +46,6 @@ class nmethod;
 class OopRecorder;
 class xmlStream;
 class CompileLog;
-class DepChange;
-class No_Safepoint_Verifier;
 
 class Dependencies: public ResourceObj {
  public:
@@ -290,20 +288,13 @@ class Dependencies: public ResourceObj {
   // Checking old assertions at run-time (in the VM only):
   static klassOop check_evol_method(methodOop m);
   static klassOop check_leaf_type(klassOop ctxk);
-  static klassOop check_abstract_with_unique_concrete_subtype(klassOop ctxk, klassOop conck,
-                                                              DepChange* changes = NULL);
-  static klassOop check_abstract_with_no_concrete_subtype(klassOop ctxk,
-                                                          DepChange* changes = NULL);
-  static klassOop check_concrete_with_no_concrete_subtype(klassOop ctxk,
-                                                          DepChange* changes = NULL);
-  static klassOop check_unique_concrete_method(klassOop ctxk, methodOop uniqm,
-                                               DepChange* changes = NULL);
-  static klassOop check_abstract_with_exclusive_concrete_subtypes(klassOop ctxk, klassOop k1, klassOop k2,
-                                                                  DepChange* changes = NULL);
-  static klassOop check_exclusive_concrete_methods(klassOop ctxk, methodOop m1, methodOop m2,
-                                                   DepChange* changes = NULL);
-  static klassOop check_has_no_finalizable_subclasses(klassOop ctxk,
-                                                      DepChange* changes = NULL);
+  static klassOop check_abstract_with_unique_concrete_subtype(klassOop ctxk, klassOop conck);
+  static klassOop check_abstract_with_no_concrete_subtype(klassOop ctxk);
+  static klassOop check_concrete_with_no_concrete_subtype(klassOop ctxk);
+  static klassOop check_unique_concrete_method(klassOop ctxk, methodOop uniqm);
+  static klassOop check_abstract_with_exclusive_concrete_subtypes(klassOop ctxk, klassOop k1, klassOop k2);
+  static klassOop check_exclusive_concrete_methods(klassOop ctxk, methodOop m1, methodOop m2);
+  static klassOop check_has_no_finalizable_subclasses(klassOop ctxk);
   // A returned klassOop is NULL if the dependency assertion is still
   // valid.  A non-NULL klassOop is a 'witness' to the assertion
   // failure, a point in the class hierarchy where the assertion has
@@ -313,10 +304,6 @@ class Dependencies: public ResourceObj {
   // Note that, when a dependency fails, there may be several possible
   // witnesses to the failure.  The value returned from the check_foo
   // method is chosen arbitrarily.
-
-  // The 'changes' value, if non-null, requests a limited spot-check
-  // near the indicated recent changes in the class hierarchy.
-  // It is used by DepStream::spot_check_dependency_at.
 
   // Detecting possible new assertions:
   static klassOop  find_unique_concrete_subtype(klassOop ctxk);
@@ -410,8 +397,6 @@ class Dependencies: public ResourceObj {
     inline oop recorded_oop_at(int i);
         // => _code? _code->oop_at(i): *_deps->_oop_recorder->handle_at(i)
 
-    klassOop check_dependency_impl(DepChange* changes);
-
   public:
     DepStream(Dependencies* deps)
       : _deps(deps),
@@ -449,12 +434,7 @@ class Dependencies: public ResourceObj {
     }
 
     // The point of the whole exercise:  Is this dep is still OK?
-    klassOop check_dependency() {
-      return check_dependency_impl(NULL);
-    }
-    // A lighter version:  Checks only around recent changes in a class
-    // hierarchy.  (See Universe::flush_dependents_on.)
-    klassOop spot_check_dependency_at(DepChange& changes);
+    klassOop check_dependency();
 
     // Log the current dependency to xtty or compilation log.
     void log_dependency(klassOop witness = NULL);
@@ -463,91 +443,4 @@ class Dependencies: public ResourceObj {
     void print_dependency(klassOop witness = NULL, bool verbose = false);
   };
   friend class Dependencies::DepStream;
-
-  static void print_statistics() PRODUCT_RETURN;
-};
-
-// A class hierarchy change coming through the VM (under the Compile_lock).
-// The change is structured as a single new type with any number of supers
-// and implemented interface types.  Other than the new type, any of the
-// super types can be context types for a relevant dependency, which the
-// new type could invalidate.
-class DepChange : public StackObj {
- private:
-  enum ChangeType {
-    NO_CHANGE = 0,              // an uninvolved klass
-    Change_new_type,            // a newly loaded type
-    Change_new_sub,             // a super with a new subtype
-    Change_new_impl,            // an interface with a new implementation
-    CHANGE_LIMIT,
-    Start_Klass = CHANGE_LIMIT  // internal indicator for ContextStream
-  };
-
-  // each change set is rooted in exactly one new type (at present):
-  KlassHandle _new_type;
-
-  void initialize();
-
- public:
-  // notes the new type, marks it and all its super-types
-  DepChange(KlassHandle new_type)
-    : _new_type(new_type)
-  {
-    initialize();
-  }
-
-  // cleans up the marks
-  ~DepChange();
-
-  klassOop new_type()                   { return _new_type(); }
-
-  // involves_context(k) is true if k is new_type or any of the super types
-  bool involves_context(klassOop k);
-
-  // Usage:
-  // for (DepChange::ContextStream str(changes); str.next(); ) {
-  //   klassOop k = str.klass();
-  //   switch (str.change_type()) {
-  //     ...
-  //   }
-  // }
-  class ContextStream : public StackObj {
-   private:
-    DepChange&       _changes;
-    friend class DepChange;
-
-    // iteration variables:
-    ChangeType            _change_type;
-    klassOop              _klass;
-    objArrayOop           _ti_base;    // i.e., transitive_interfaces
-    int                   _ti_index;
-    int                   _ti_limit;
-
-    // start at the beginning:
-    void start() {
-      klassOop new_type = _changes.new_type();
-      _change_type = (new_type == NULL ? NO_CHANGE: Start_Klass);
-      _klass = new_type;
-      _ti_base = NULL;
-      _ti_index = 0;
-      _ti_limit = 0;
-    }
-
-    ContextStream(DepChange& changes)
-      : _changes(changes)
-    { start(); }
-
-   public:
-    ContextStream(DepChange& changes, No_Safepoint_Verifier& nsv)
-      : _changes(changes)
-      // the nsv argument makes it safe to hold oops like _klass
-    { start(); }
-
-    bool next();
-
-    klassOop   klass()           { return _klass; }
-  };
-  friend class DepChange::ContextStream;
-
-  void print();
 };

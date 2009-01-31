@@ -61,14 +61,7 @@ encode %{
 
   enc_class solaris_breakpoint  %{
     MacroAssembler* masm = new MacroAssembler(&cbuf);    
-    // Really need to fix this
-    masm->pushl(rax);
-    masm->pushl(rcx);
-    masm->pushl(rdx);
-    masm->call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
-    masm->popl(rdx);
-    masm->popl(rcx);
-    masm->popl(rax);
+    masm->call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
   %}
 
   enc_class call_epilog %{
@@ -91,7 +84,7 @@ encode %{
       }
       // jmp EQ around INT3
       // QQQ TODO
-      const int jump_around = 11; // size of call to breakpoint (and register preserve), 1 for CC
+      const int jump_around = 5; // size of call to breakpoint, 1 for CC
       emit_opcode(cbuf,0x74);
       emit_d8(cbuf, jump_around);
       // QQQ temporary
@@ -152,7 +145,7 @@ void emit_break(CodeBuffer &cbuf) {
 
   // Debugger doesn't really catch this but best we can do so far QQQ
   MacroAssembler* masm = new MacroAssembler(&cbuf);
-  masm->call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+  masm->call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
 }
 
 void MachBreakpointNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {

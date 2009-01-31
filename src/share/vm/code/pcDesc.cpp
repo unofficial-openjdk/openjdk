@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)pcDesc.cpp	1.30 07/05/05 17:05:18 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,10 +28,9 @@
 # include "incls/_precompiled.incl"
 # include "incls/_pcDesc.cpp.incl"
 
-PcDesc::PcDesc(int pc_offset, int scope_decode_offset, int obj_decode_offset) {
+PcDesc::PcDesc(int pc_offset, int scope_decode_offset) {
   _pc_offset           = pc_offset;
   _scope_decode_offset = scope_decode_offset;
-  _obj_decode_offset   = obj_decode_offset;
 }
 
 address PcDesc::real_pc(const nmethod* code) const {

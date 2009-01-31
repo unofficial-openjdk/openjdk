@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)deoptimization.hpp	1.91 07/05/05 17:06:46 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -27,8 +27,6 @@
 
 class ProfileData;
 class vframeArray;
-class MonitorValue;
-class ObjectValue;
 
 class Deoptimization : AllStatic {
  public:
@@ -102,18 +100,8 @@ class Deoptimization : AllStatic {
   // executing in a particular CodeBlob if UseBiasedLocking is enabled
   static void revoke_biases_of_monitors(CodeBlob* cb);
 
-#ifdef COMPILER2
-  // Support for restoring non-escaping objects
-  static bool realloc_objects(JavaThread* thread, frame* fr, GrowableArray<ScopeValue*>* objects, TRAPS);
-  static void reassign_type_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, typeArrayOop obj, BasicType type);
-  static void reassign_object_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, objArrayOop obj);
-  static void reassign_fields(frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects);
-  static void relock_objects(frame* fr, RegisterMap* reg_map, GrowableArray<MonitorValue*>* monitors);
-  NOT_PRODUCT(static void print_objects(GrowableArray<ScopeValue*>* objects);)
-#endif // COMPILER2
-
   public:
-  static vframeArray* create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map, GrowableArray<compiledVFrame*>* chunk);
+  static vframeArray* create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map);
  
   // Interface used for unpacking deoptimized frames 
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)type.cpp	1.253 07/05/17 16:02:23 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1708,20 +1708,8 @@ bool TypeTuple::empty(void) const {
 //=============================================================================
 // Convenience common pre-built types.
 
-inline const TypeInt* normalize_array_size(const TypeInt* size) {
-  // Certain normalizations keep us sane when comparing types.
-  // We do not want arrayOop variables to differ only by the wideness
-  // of their index types.  Pick minimum wideness, since that is the
-  // forced wideness of small ranges anyway.
-  if (size->_widen != Type::WidenMin)
-    return TypeInt::make(size->_lo, size->_hi, Type::WidenMin);
-  else
-    return size;
-}
-
 //------------------------------make-------------------------------------------
 const TypeAry *TypeAry::make( const Type *elem, const TypeInt *size) {
-  size = normalize_array_size(size);
   return (TypeAry*)(new TypeAry(elem,size))->hashcons();
 }
 
@@ -1754,9 +1742,7 @@ const Type *TypeAry::xmeet( const Type *t ) const {
 //------------------------------xdual------------------------------------------
 // Dual: compute field-by-field dual
 const Type *TypeAry::xdual() const {
-  const TypeInt* size_dual = _size->dual()->is_int();
-  size_dual = normalize_array_size(size_dual);
-  return new TypeAry( _elem->dual(), size_dual);
+  return new TypeAry( _elem->dual(), _size->dual()->is_int() );
 }
 
 //------------------------------eq---------------------------------------------

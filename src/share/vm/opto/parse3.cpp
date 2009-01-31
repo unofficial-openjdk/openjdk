@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)parse3.cpp	1.266 07/05/05 17:06:22 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -223,18 +223,10 @@ void Parse::do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool 
   if (bt == T_DOUBLE)  val = dstore_rounding(val);
 
   // Store the value.  
-  Node* store;
-  if (bt == T_OBJECT) {
-    const TypePtr* field_type;
-    if (!field->type()->is_loaded()) {
-      field_type = TypeInstPtr::BOTTOM;
-    } else {
-      field_type = TypeOopPtr::make_from_klass(field->type()->as_klass());
-    }
-    store = store_oop_to_object( control(), obj, adr, adr_type, val, field_type, bt);
-  } else {
-    store = store_to_memory( control(), adr, val, bt, adr_type, is_vol );
-  }
+  Node* store = store_to_memory( control(), adr, val, bt, adr_type, is_vol );
+
+  // Object-writes need a store-barrier
+  if (bt == T_OBJECT)  store_barrier(store, T_OBJECT, obj, adr, val);
 
   // If reference is volatile, prevent following volatiles ops from
   // floating up before the volatile write.

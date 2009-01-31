@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmSymbols.hpp	1.162 07/05/17 15:50:40 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -97,8 +97,6 @@
   template(java_lang_Compiler,                        "java/lang/Compiler")                       \
   template(sun_misc_Signal,                           "sun/misc/Signal")                          \
   template(java_lang_AssertionStatusDirectives,       "java/lang/AssertionStatusDirectives")      \
-  template(sun_jkernel_DownloadManager,               "sun/jkernel/DownloadManager")                 \
-  template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
                                                                                                   \
   /* class file format tags */                                                                    \
   template(tag_source_file,                           "SourceFile")                               \

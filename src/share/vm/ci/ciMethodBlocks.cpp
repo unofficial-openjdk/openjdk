@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)ciMethodBlocks.cpp	1.5 07/05/05 17:05:13 JVM"
 #endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_LinearScan.cpp	1.12 07/05/05 17:05:10 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -2547,8 +2547,8 @@ int LinearScan::append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeV
   } else {
     // double-size operands
 
-    ScopeValue* first;
-    ScopeValue* second;
+    LocationValue* first;
+    LocationValue* second;
 
     if (opr->is_double_stack()) {
       Location loc1, loc2;
@@ -2559,11 +2559,6 @@ int LinearScan::append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeV
       second = new LocationValue(loc2);
 
     } else if (opr->is_double_cpu()) {
-#ifdef _LP64
-      VMReg rname_first = opr->as_register_lo()->as_VMReg();
-      first = new LocationValue(Location::new_reg_loc(Location::lng, rname_first));
-      second = &_int_0_scope_value;
-#else
       VMReg rname_first = opr->as_register_lo()->as_VMReg();
       VMReg rname_second = opr->as_register_hi()->as_VMReg();
 
@@ -2576,7 +2571,6 @@ int LinearScan::append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeV
 
       first = new LocationValue(Location::new_reg_loc(Location::normal, rname_first));
       second = new LocationValue(Location::new_reg_loc(Location::normal, rname_second));
-#endif
 
 #ifdef IA32
     } else if (opr->is_double_xmm()) {
@@ -2868,21 +2862,15 @@ void LinearScan::assign_reg_num(LIR_OpList* instructions, IntervalWalker* iw) {
     op->verify();
 #endif
 
-#ifndef _LP64
     // remove useless moves
     if (op->code() == lir_move) {
       assert(op->as_Op1() != NULL, "move must be LIR_Op1");
       LIR_Op1* move = (LIR_Op1*)op;
-      LIR_Opr src = move->in_opr();
-      LIR_Opr dst = move->result_opr();
-      if (dst == src ||
-          !dst->is_pointer() && !src->is_pointer() &&
-          src->is_same_register(dst)) {
+      if (!move->result_opr()->is_pointer() && !move->in_opr()->is_pointer() && move->in_opr()->is_equivalent(move->result_opr()->with_type_of(move->in_opr()))) {
         instructions->at_put(j, NULL);
         has_dead = true;
       }
     }
-#endif
   }
 
   if (has_dead) {
@@ -6199,7 +6187,6 @@ const char* LinearScanStatistic::counter_name(int counter_idx) {
     case counter_move_reg_reg:    return "register->register";
     case counter_move_reg_stack:  return "register->stack";
     case counter_move_stack_reg:  return "stack->register";
-    case counter_move_stack_stack:return "stack->stack";
     case counter_move_reg_mem:    return "register->memory";
     case counter_move_mem_reg:    return "memory->register";
     case counter_move_const_any:  return "constant->any";
@@ -6346,11 +6333,8 @@ void LinearScanStatistic::collect(LinearScan* allocator) {
               ShouldNotReachHere();
             }
           } else if (in->is_stack()) {
-            if (res->is_register()) {
-              inc_counter(counter_move_stack_reg);
-            } else {
-              inc_counter(counter_move_stack_stack);
-            }
+            assert(res->is_register(), "must be");
+            inc_counter(counter_move_stack_reg);
           } else if (in->is_address()) {
             assert(res->is_register(), "must be");
             inc_counter(counter_move_mem_reg);
@@ -6395,6 +6379,7 @@ void LinearScanStatistic::collect(LinearScan* allocator) {
         case lir_logic_or:
         case lir_logic_xor:
         case lir_shl:
+        case lir_shlx:
         case lir_shr:
         case lir_ushr:            inc_counter(counter_alu); break;
 

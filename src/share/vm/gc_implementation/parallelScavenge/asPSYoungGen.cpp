@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)asPSYoungGen.cpp	1.22 07/05/05 17:05:27 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -69,11 +69,7 @@ size_t ASPSYoungGen::available_for_expansion() {
   size_t current_committed_size = virtual_space()->committed_size();
   assert((gen_size_limit() >= current_committed_size),
     "generation size limit is wrong");
-  ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
-  const size_t gen_alignment = heap->generation_alignment();
-  size_t result =  gen_size_limit() - current_committed_size;
-  size_t result_aligned = align_size_down(result, gen_alignment);
-  return result_aligned;
+  return gen_size_limit() - current_committed_size;
 }
 
 // Return the number of bytes the young gen is willing give up.
@@ -108,15 +104,14 @@ size_t ASPSYoungGen::available_for_contraction() {
     // for reasons the "increment" fraction is used.
     PSAdaptiveSizePolicy* policy = heap->size_policy();
     size_t result = policy->eden_increment_aligned_down(max_contraction);
-    size_t result_aligned = align_size_down(result, gen_alignment);
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("ASPSYoungGen::available_for_contraction: %d K",
-	result_aligned/K);
+	result/K);
       gclog_or_tty->print_cr("	max_contraction %d K", max_contraction/K);
       gclog_or_tty->print_cr("	eden_avail %d K", eden_avail/K);
       gclog_or_tty->print_cr("	gen_avail %d K", gen_avail/K);
     }
-    return result_aligned;
+    return result;
 
   }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)os_solaris_sparc.hpp	1.16 07/06/28 16:50:02 JVM"
 #endif
 /*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.

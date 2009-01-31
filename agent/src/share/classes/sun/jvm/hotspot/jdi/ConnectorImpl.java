@@ -25,6 +25,7 @@
 package sun.jvm.hotspot.jdi;
 
 import com.sun.jdi.connect.*;
+import com.sun.tools.jdi.LinkedHashMap;
 import com.sun.jdi.InternalException;
 
 import java.io.*;

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psParallelCompact.cpp	1.51 06/08/28 10:52:10 JVM"
+#pragma ident "@(#)psParallelCompact.cpp	1.61 07/06/08 23:12:00 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -2372,7 +2372,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   ParallelScavengeHeap* heap = gc_heap();
   uint parallel_gc_threads = heap->gc_task_manager()->workers();
-  TaskQueueSetSuper* qset = ParCompactionManager::chunk_array();
+  GenTaskQueueSet* qset = ParCompactionManager::chunk_array()->task_queue_set();
   ParallelTaskTerminator terminator(parallel_gc_threads, qset);
 
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
@@ -2677,7 +2677,7 @@ void PSParallelCompact::compact() {
   PSOldGen* old_gen = heap->old_gen();
   old_gen->start_array()->reset();
   uint parallel_gc_threads = heap->gc_task_manager()->workers();
-  TaskQueueSetSuper* qset = ParCompactionManager::chunk_array();
+  GenTaskQueueSet* qset = ParCompactionManager::chunk_array()->task_queue_set();
   ParallelTaskTerminator terminator(parallel_gc_threads, qset);
 
   GCTaskQueue* q = GCTaskQueue::create();

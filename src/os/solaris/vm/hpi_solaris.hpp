@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)hpi_solaris.hpp	1.29 07/05/05 17:04:40 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,7 +35,6 @@
 #include <sys/filio.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <setjmp.h>
 
 // HPI_FileInterface
 

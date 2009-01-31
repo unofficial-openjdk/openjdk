@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)relocInfo_amd64.cpp	1.13 07/05/05 17:04:08 JVM"
 #endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,8 @@
 #include "incls/_relocInfo_amd64.cpp.incl"
 
 
-void Relocation::pd_set_data_value(address x, intptr_t o) {
+void Relocation::pd_set_data_value(address x, intptr_t o)
+{
   x += o;
   typedef Assembler::WhichOperand WhichOperand;
   WhichOperand which = (WhichOperand) format(); // that is, disp32 or imm64, call32
@@ -47,7 +48,8 @@ void Relocation::pd_set_data_value(address x, intptr_t o) {
 }
 
 
-address Relocation::pd_call_destination(address orig_addr) {
+address Relocation::pd_call_destination(address orig_addr)
+{
   intptr_t adj = 0;
   if (orig_addr != NULL) {
     // We just moved this call instruction from orig_addr to addr().
@@ -61,8 +63,6 @@ address Relocation::pd_call_destination(address orig_addr) {
     return nativeJump_at(addr())->jump_destination() + adj;
   } else if (ni->is_cond_jump()) {
     return nativeGeneralJump_at(addr())->jump_destination() + adj;
-  } else if (ni->is_mov_literal64()) {
-    return (address) ((NativeMovConstReg*)ni)->data();
   } else {
     ShouldNotReachHere();
     return NULL;
@@ -70,7 +70,8 @@ address Relocation::pd_call_destination(address orig_addr) {
 }
 
 
-void Relocation::pd_set_call_destination(address x) {
+void Relocation::pd_set_call_destination(address x)
+{
   NativeInstruction* ni = nativeInstruction_at(addr());
   if (ni->is_call()) {
     nativeCall_at(addr())->set_destination(x);
@@ -86,15 +87,14 @@ void Relocation::pd_set_call_destination(address x) {
     address disp = Assembler::locate_operand(addr(),
                                              Assembler::call32_operand);
     *(jint*) disp += (x - old_dest);
-  } else if (ni->is_mov_literal64()) {
-    ((NativeMovConstReg*)ni)->set_data((intptr_t)x);
   } else {
     ShouldNotReachHere();
   }
 }
 
 
-address Relocation::pd_get_address_from_code() {
+address Relocation::pd_get_address_from_code()
+{
   // All embedded Intel addresses are stored in 32-bit words.
   // Since the addr points at the start of the instruction,
   // we must parse the instruction a bit to find the embedded word.
@@ -115,7 +115,8 @@ address Relocation::pd_get_address_from_code() {
   }
 }
 
-address* Relocation::pd_address_in_code() {
+address* Relocation::pd_address_in_code()
+{
   // All embedded Intel addresses are stored in 32-bit words.
   // Since the addr points at the start of the instruction,
   // we must parse the instruction a bit to find the embedded word.
@@ -137,13 +138,15 @@ address* Relocation::pd_address_in_code() {
 }
 
 
-int Relocation::pd_breakpoint_size() {
+int Relocation::pd_breakpoint_size()
+{
   // minimum breakpoint size, in short words
   return NativeIllegalInstruction::instruction_size / sizeof(short);
 }
 
 void Relocation::pd_swap_in_breakpoint(address x, short* instrs,
-                                       int instrlen) {
+                                       int instrlen)
+{
   Untested("pd_swap_in_breakpoint");
   if (instrs != NULL) {
     assert(instrlen * sizeof(short) ==
@@ -157,7 +160,8 @@ void Relocation::pd_swap_in_breakpoint(address x, short* instrs,
 }
 
 
-void Relocation::pd_swap_out_breakpoint(address x, short* instrs, int instrlen) {
+void Relocation::pd_swap_out_breakpoint(address x, short* instrs, int instrlen)
+{
   Untested("pd_swap_out_breakpoint");
   assert(NativeIllegalInstruction::instruction_size == sizeof(short),
          "right address unit for update");

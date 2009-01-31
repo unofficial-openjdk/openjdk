@@ -326,7 +326,7 @@ c1_Runtime1.cpp                         copy.hpp
 c1_Runtime1.cpp                         disassembler_<arch>.hpp
 c1_Runtime1.cpp                         events.hpp
 c1_Runtime1.cpp                         interfaceSupport.hpp
-c1_Runtime1.cpp                         interpreter.hpp
+c1_Runtime1.cpp                         interpreter_<arch>.hpp
 c1_Runtime1.cpp                         javaCalls.hpp
 c1_Runtime1.cpp                         objArrayKlass.hpp
 c1_Runtime1.cpp                         oop.inline.hpp
@@ -352,7 +352,7 @@ c1_Runtime1_<arch>.cpp                  c1_Defs.hpp
 c1_Runtime1_<arch>.cpp                  c1_MacroAssembler.hpp
 c1_Runtime1_<arch>.cpp                  c1_Runtime1.hpp
 c1_Runtime1_<arch>.cpp                  compiledICHolderOop.hpp
-c1_Runtime1_<arch>.cpp                  interpreter.hpp
+c1_Runtime1_<arch>.cpp                  interpreter_<arch>.hpp
 c1_Runtime1_<arch>.cpp                  jvmtiExport.hpp
 c1_Runtime1_<arch>.cpp                  nativeInst_<arch>.hpp
 c1_Runtime1_<arch>.cpp                  oop.inline.hpp
@@ -395,6 +395,8 @@ codeBlob.cpp                            c1_Runtime1.hpp
 
 compileBroker.cpp                       c1_Compiler.hpp
 
+fprofiler.cpp                           c1_Compiler.hpp
+
 frame.hpp                               c1_Defs.hpp
 
 frame_<arch>.cpp                        c1_Runtime1.hpp
@@ -431,5 +433,6 @@ thread.cpp                              c1_Compiler.hpp
 
 top.hpp                                 c1_globals.hpp
 
-vmStructs.hpp                           c1_Runtime1.hpp
+vmStructs.cpp                           c1_Defs.hpp
+vmStructs.cpp                           c1_Runtime1.hpp
 

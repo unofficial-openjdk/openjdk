@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_linux_amd64.cpp	1.8 07/05/05 17:04:47 JVM"
 #endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,11 +28,14 @@
 #include "incls/_precompiled.incl"
 #include "incls/_assembler_linux_amd64.cpp.incl"
 
-void MacroAssembler::int3() {
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+void Assembler::int3()
+{
+  call(CAST_FROM_FN_PTR(address, os::breakpoint),
+       relocInfo::runtime_call_type);
 }
 
-void MacroAssembler::get_thread(Register thread) {
+void MacroAssembler::get_thread(Register thread)
+{
   // call pthread_getspecific
   // void * pthread_getspecific(pthread_key_t key);
    if (thread != rax) {
@@ -52,7 +55,8 @@ void MacroAssembler::get_thread(Register thread) {
    pushq(r11);
 
    movl(rdi, ThreadLocalStorage::thread_index());
-   call(RuntimeAddress(CAST_FROM_FN_PTR(address, pthread_getspecific)));
+   call(CAST_FROM_FN_PTR(address, pthread_getspecific), 
+        relocInfo::runtime_call_type);
 
    popq(r11);
    popq(rsp);
@@ -71,6 +75,7 @@ void MacroAssembler::get_thread(Register thread) {
 
 // NOTE: since the linux kernel resides at the low end of
 // user address space, no null pointer check is needed.
-bool MacroAssembler::needs_explicit_null_check(int offset) {
+bool MacroAssembler::needs_explicit_null_check(int offset)
+{
   return offset < 0 || offset >= 0x100000;
 }

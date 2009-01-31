@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interpreterRT_i486.cpp	1.54 07/05/05 17:04:16 JVM"
 #endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -55,17 +55,16 @@ void InterpreterRuntime::SignatureHandlerGenerator::generate( uint64_t fingerpri
   // generate code to handle arguments
   iterate(fingerprint);
   // return result handler
-  __ lea(rax,
-         ExternalAddress((address)Interpreter::result_handler(method()->result_type())));
+  __ movl(eax, (int)AbstractInterpreter::result_handler(method()->result_type()));
   // return
   __ ret(0);
   __ flush();
 }
 
 
-Register InterpreterRuntime::SignatureHandlerGenerator::from()       { return rdi; }
-Register InterpreterRuntime::SignatureHandlerGenerator::to()         { return rsp; }
-Register InterpreterRuntime::SignatureHandlerGenerator::temp()       { return rcx; }
+Register InterpreterRuntime::SignatureHandlerGenerator::from()       { return edi; }
+Register InterpreterRuntime::SignatureHandlerGenerator::to()         { return esp; }
+Register InterpreterRuntime::SignatureHandlerGenerator::temp()       { return ecx; }
 
 
 // Implementation of SignatureHandlerLibrary
@@ -120,5 +119,5 @@ IRT_ENTRY(address, InterpreterRuntime::slow_signature_handler(JavaThread* thread
   // handle arguments
   SlowSignatureHandler(m, (address)from, to + 1).iterate(UCONST64(-1));
   // return result handler
-  return Interpreter::result_handler(m->result_type());
+  return AbstractInterpreter::result_handler(m->result_type());
 IRT_END

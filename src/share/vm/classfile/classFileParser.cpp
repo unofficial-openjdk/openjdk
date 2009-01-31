@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)classFileParser.cpp	1.279 07/05/25 15:14:21 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -892,38 +892,44 @@ typeArrayHandle ClassFileParser::parse_exception_table(u4 code_length,
   return exception_handlers;
 }
 
-void ClassFileParser::parse_linenumber_table(
-    u4 code_attribute_length, u4 code_length,
-    CompressedLineNumberWriteStream** write_stream, TRAPS) {
+u_char* ClassFileParser::parse_linenumber_table(u4 code_attribute_length, 
+                                                u4 code_length,
+                                                int* compressed_linenumber_table_size, 
+                                                TRAPS) {
   ClassFileStream* cfs = stream();
-  unsigned int num_entries = cfs->get_u2(CHECK);
-
-  // Each entry is a u2 start_pc, and a u2 line_number
-  unsigned int length_in_bytes = num_entries * (sizeof(u2) + sizeof(u2));
+  cfs->guarantee_more(2, CHECK_NULL);  // linenumber_table_length
+  unsigned int linenumber_table_length = cfs->get_u2_fast();
 
   // Verify line number attribute and table length
-  check_property(
-    code_attribute_length == sizeof(u2) + length_in_bytes,
-    "LineNumberTable attribute has wrong length in class file %s", CHECK);
+  if (_need_verify) {
+    guarantee_property(code_attribute_length ==
+                       (sizeof(u2) /* linenumber table length */ +
+                        linenumber_table_length*(sizeof(u2) /* start_pc */ +
+                        sizeof(u2) /* line_number */)),
+                       "LineNumberTable attribute has wrong length in class file %s", CHECK_NULL);
+  }          
   
-  cfs->guarantee_more(length_in_bytes, CHECK); 
-
-  if ((*write_stream) == NULL) {
-    if (length_in_bytes > fixed_buffer_size) {
-      (*write_stream) = new CompressedLineNumberWriteStream(length_in_bytes);
-    } else {
-      (*write_stream) = new CompressedLineNumberWriteStream(
-        linenumbertable_buffer, fixed_buffer_size);
+  u_char* compressed_linenumber_table = NULL;
+  if (linenumber_table_length > 0) {
+    // initial_size large enough
+    int initial_size = linenumber_table_length * sizeof(u2) * 2;
+    CompressedLineNumberWriteStream c_stream =
+      (initial_size <= fixed_buffer_size) ? 
+      CompressedLineNumberWriteStream(_fixed_buffer, fixed_buffer_size) :
+      CompressedLineNumberWriteStream(initial_size);
+    cfs->guarantee_more(4 * linenumber_table_length, CHECK_NULL);  // bci, line
+    while (linenumber_table_length-- > 0) {
+      u2 bci  = cfs->get_u2_fast(); // start_pc
+      u2 line = cfs->get_u2_fast(); // line_number
+      guarantee_property(bci < code_length,
+                         "Invalid pc in LineNumberTable in class file %s", CHECK_NULL);
+      c_stream.write_pair(bci, line);
     }
+    c_stream.write_terminator();
+    *compressed_linenumber_table_size = c_stream.position();
+    compressed_linenumber_table = c_stream.buffer();
   }
-
-  while (num_entries-- > 0) {
-    u2 bci  = cfs->get_u2_fast(); // start_pc
-    u2 line = cfs->get_u2_fast(); // line_number
-    guarantee_property(bci < code_length,
-        "Invalid pc in LineNumberTable in class file %s", CHECK);
-    (*write_stream)->write_pair(bci, line);
-  }
+  return compressed_linenumber_table;
 }
 
 
@@ -1272,8 +1278,8 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
   typeArrayHandle exception_handlers(THREAD, Universe::the_empty_int_array());
   u2 checked_exceptions_length = 0;
   u2* checked_exceptions_start = NULL;
-  CompressedLineNumberWriteStream* linenumber_table = NULL;
-  int linenumber_table_length = 0;
+  int compressed_linenumber_table_size = 0;
+  u_char* compressed_linenumber_table = NULL;
   int total_lvt_length = 0;
   u2 lvt_cnt = 0;
   u2 lvtt_cnt = 0;
@@ -1388,8 +1394,10 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
         if (LoadLineNumberTables && 
             cp->symbol_at(code_attribute_name_index) == vmSymbols::tag_line_number_table()) {
           // Parse and compress line number table
-          parse_linenumber_table(code_attribute_length, code_length, 
-            &linenumber_table, CHECK_(nullHandle));
+          compressed_linenumber_table = parse_linenumber_table(code_attribute_length, 
+                                                               code_length,
+                                                               &compressed_linenumber_table_size, 
+                                                               CHECK_(nullHandle));
                                          
         } else if (LoadLocalVariableTables && 
                    cp->symbol_at(code_attribute_name_index) == vmSymbols::tag_local_variable_table()) {
@@ -1537,12 +1545,6 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
       cfs->skip_u1(method_attribute_length, CHECK_(nullHandle));
     }      
   }
-
-  if (linenumber_table != NULL) {
-    linenumber_table->write_terminator();
-    linenumber_table_length = linenumber_table->position();
-  }
-
   // Make sure there's at least one Code attribute in non-native/non-abstract method
   if (_need_verify) {
     guarantee_property(access_flags.is_native() || access_flags.is_abstract() || parsed_code_attribute,
@@ -1550,9 +1552,11 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
   }
 
   // All sizing information for a methodOop is finally available, now create it
-  methodOop m_oop  = oopFactory::new_method(
-    code_length, access_flags, linenumber_table_length,
-    total_lvt_length, checked_exceptions_length, CHECK_(nullHandle));
+  methodOop m_oop  = oopFactory::new_method(code_length, access_flags,
+                               compressed_linenumber_table_size, 
+                               total_lvt_length, 
+                               checked_exceptions_length, 
+                               CHECK_(nullHandle));
   methodHandle m (THREAD, m_oop);
 
   ClassLoadingService::add_class_method_size(m_oop->size()*HeapWordSize);
@@ -1598,13 +1602,10 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
   if (code_length > 0) {
     memcpy(m->code_base(), code_start, code_length);
   }
-  
   // Copy line number table
-  if (linenumber_table != NULL) {
-    memcpy(m->compressed_linenumber_table(), 
-           linenumber_table->buffer(), linenumber_table_length);
+  if (compressed_linenumber_table_size > 0) {
+    memcpy(m->compressed_linenumber_table(), compressed_linenumber_table, compressed_linenumber_table_size);
   }
- 
   // Copy checked exceptions
   if (checked_exceptions_length > 0) {
     int size = checked_exceptions_length * sizeof(CheckedExceptionElement) / sizeof(u2);

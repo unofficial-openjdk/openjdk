@@ -41,7 +41,6 @@ default:: includeDB.current Dependencies $(JvmtiGeneratedFiles)
 
 # core plus serial gc
 IncludeDBs_base=$(WorkSpace)/src/share/vm/includeDB_core \
-           $(WorkSpace)/src/share/vm/includeDB_jvmti \
            $(WorkSpace)/src/share/vm/includeDB_gc \
            $(WorkSpace)/src/share/vm/gc_implementation/includeDB_gc_serial
 
@@ -52,8 +51,7 @@ IncludeDBs_gc= $(WorkSpace)/src/share/vm/includeDB_gc_parallel \
            $(WorkSpace)/src/share/vm/gc_implementation/includeDB_gc_parNew \
            $(WorkSpace)/src/share/vm/gc_implementation/includeDB_gc_concurrentMarkSweep
 
-IncludeDBs_core=$(IncludeDBs_base) $(IncludeDBs_gc) \
-                $(WorkSpace)/src/share/vm/includeDB_features
+IncludeDBs_core=$(IncludeDBs_base) $(IncludeDBs_gc)
 
 !if "$(Variant)" == "core"
 IncludeDBs=$(IncludeDBs_core)

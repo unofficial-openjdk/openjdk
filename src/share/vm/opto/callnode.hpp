@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)callnode.hpp	1.192 07/05/17 15:57:24 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -602,7 +602,8 @@ public:
     AllocSize   = TypeFunc::Parms,    // size (in bytes) of the new object
     KlassNode,                        // type (maybe dynamic) of the obj.
     InitialTest,                      // slow-path test (may be constant)
-    ALengthRaw,                       // possibly negative array length
+    EdenTop,                          // eden pointers
+    EdenEnd,
     ALength,                          // array length (or TOP if none)
     ParmLimit
   };
@@ -612,8 +613,9 @@ public:
     fields[AllocSize]   = TypeInt::POS;
     fields[KlassNode]   = TypeInstPtr::NOTNULL;
     fields[InitialTest] = TypeInt::BOOL;
-    fields[ALengthRaw]  = TypeInt::INT;  // length
-    fields[ALength]     = TypeInt::POS;  // length >= 0
+    fields[EdenTop]     = TypeRawPtr::NOTNULL;
+    fields[EdenEnd]     = TypeRawPtr::NOTNULL;
+    fields[ALength]     = TypeInt::INT;  // length >= 0
 
     const TypeTuple *domain = TypeTuple::make(ParmLimit, fields);
 
@@ -628,7 +630,8 @@ public:
 
   virtual uint size_of() const; // Size is bigger
   AllocateNode(Compile* C, const TypeFunc *atype, Node *ctrl, Node *mem, Node *abio,
-               Node *size, Node *klass_node, Node *initial_test);
+               Node *size, Node *klass_node, Node *initial_test,
+               Node *eden_top, Node *eden_end);
   // Expansion modifies the JVMState, so we need to clone it
   virtual void  clone_jvms() {
     set_jvms(jvms()->clone_deep(Compile::current()));
@@ -648,7 +651,6 @@ public:
 
   // Fancy version which uses AddPNode::Ideal_base_and_offset to strip
   // an offset, which is reported back to the caller.
-  // (Note:  AllocateNode::Ideal_allocation is defined in graphKit.cpp.)
   static AllocateNode* Ideal_allocation(Node* ptr, PhaseTransform* phase,
                                         intptr_t& offset);
 
@@ -662,15 +664,6 @@ public:
   int minimum_header_size() {
     return is_AllocateArray() ? sizeof(arrayOopDesc) : sizeof(oopDesc);
   }
-
-  // Return the corresponding initialization barrier (or null if none).
-  // Walks out edges to find it...
-  // (Note: Both InitializeNode::allocation and AllocateNode::initialization
-  // are defined in graphKit.cpp, which sets up the bidirectional relation.)
-  InitializeNode* initialization();
-
-  // Convenience for initialization->maybe_set_complete(phase)
-  bool maybe_set_complete(PhaseGVN* phase);
 };
 
 //------------------------------AllocateArray---------------------------------
@@ -681,14 +674,13 @@ class AllocateArrayNode : public AllocateNode {
 public:
   AllocateArrayNode(Compile* C, const TypeFunc *atype, Node *ctrl, Node *mem, Node *abio,
                     Node* size, Node* klass_node, Node* initial_test,
-                    Node* raw_count_val, Node* count_val
+                    Node* eden_top, Node* eden_end, Node* count_val
                     )
     : AllocateNode(C, atype, ctrl, mem, abio, size, klass_node,
-                   initial_test)
+                   initial_test, eden_top, eden_end)
   {
     init_class_id(Class_AllocateArray);
-    set_req(AllocateNode::ALengthRaw, raw_count_val);
-    set_req(AllocateNode::ALength,        count_val);
+    set_req(AllocateNode::ALength, count_val);
   }
   virtual int Opcode() const;
   virtual uint size_of() const; // Size is bigger

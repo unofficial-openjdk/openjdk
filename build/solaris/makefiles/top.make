@@ -31,7 +31,7 @@
 #   -generate sa-jdi.jar (JDI binding to core files)
 
 # It assumes the following flags are set:
-# CFLAGS Platform_file, Src_Dirs, SYSDEFS, AOUT, Jvm_Obj_Files
+# CFLAGS Platform_file, Src_Dirs, SYSDEFS, AOUT, Obj_Files
 
 # -- D. Ungar (5/97) from a file by Bill Bush
 
@@ -58,14 +58,10 @@ Include_DBs/GC     = $(VM)/includeDB_gc \
                      $(VM)/gc_implementation/includeDB_gc_shared
 
 
-Include_DBs/KERNEL      = $(VM)/includeDB_core $(VM)/includeDB_gc \
+Include_DBs/CORE        = $(VM)/includeDB_core   $(Include_DBs/GC)
+Include_DBs/JKERNEL     = $(VM)/includeDB_core $(VM)/includeDB_gc \
                           $(VM)/gc_implementation/includeDB_gc_serial \
-                          $(VM)/includeDB_jvmti \
                           $(VM)/includeDB_compiler1
-
-Include_DBs/CORE        = $(VM)/includeDB_core   $(Include_DBs/GC) \
-                          $(VM)/includeDB_jvmti \
-                          $(VM)/includeDB_features
 Include_DBs/COMPILER1   = $(Include_DBs/CORE) $(VM)/includeDB_compiler1
 Include_DBs/COMPILER2   = $(Include_DBs/CORE) $(VM)/includeDB_compiler2
 Include_DBs/TIERED      = $(Include_DBs/CORE) $(VM)/includeDB_compiler1 \

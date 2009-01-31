@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)management.cpp	1.82 07/05/05 17:07:05 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -40,7 +40,7 @@ klassOop Management::_memoryManagerMXBean_klass = NULL;
 klassOop Management::_garbageCollectorMXBean_klass = NULL;
 klassOop Management::_managementFactory_klass = NULL;
 
-jmmOptionalSupport Management::_optional_support = {0};
+jmmOptionalSupport Management::_optional_support;
 TimeStamp Management::_stamp;
 
 void management_init() {
@@ -83,10 +83,7 @@ void Management::init() {
   }
   _optional_support.isBootClassPathSupported = 1;
   _optional_support.isObjectMonitorUsageSupported = 1;
-#ifndef SERVICES_KERNEL
-  // This depends on the heap inspector
   _optional_support.isSynchronizerUsageSupported = 1;
-#endif // SERVICES_KERNEL
 }
 
 void Management::initialize(TRAPS) {
@@ -1189,11 +1186,10 @@ JVM_ENTRY(jobjectArray, jmm_DumpThreads(JNIEnv *env, jlongArray thread_ids, jboo
 
   typeArrayOop ta = typeArrayOop(JNIHandles::resolve(thread_ids));
   int num_threads = (ta != NULL ? ta->length() : 0);
-  typeArrayHandle ids_ah(THREAD, ta);
+  ThreadDumpResult dump_result(num_threads);
 
-  ThreadDumpResult dump_result(num_threads);  // can safepoint
-
-  if (ids_ah() != NULL) {
+  if (ta != NULL) {
+    typeArrayHandle ids_ah(THREAD, ta);
 
     // validate the thread id array
     validate_thread_id_array(ids_ah, CHECK_NULL);
@@ -1947,7 +1943,6 @@ JVM_END
 
 // Dump heap - Returns 0 if succeeds.
 JVM_ENTRY(jint, jmm_DumpHeap0(JNIEnv *env, jstring outputfile, jboolean live))
-#ifndef SERVICES_KERNEL
   ResourceMark rm(THREAD);
   oop on = JNIHandles::resolve_external_guard(outputfile);
   if (on == NULL) {
@@ -1964,10 +1959,8 @@ JVM_ENTRY(jint, jmm_DumpHeap0(JNIEnv *env, jstring outputfile, jboolean live))
     const char* errmsg = dumper.error_as_C_string();
     THROW_MSG_(vmSymbols::java_io_IOException(), errmsg, -1);
   }
+
   return 0;
-#else  // SERVICES_KERNEL
-  return -1;
-#endif // SERVICES_KERNEL
 JVM_END
 
 jlong Management::ticks_to_ms(jlong ticks) {

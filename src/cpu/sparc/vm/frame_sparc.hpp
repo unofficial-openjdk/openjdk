@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)frame_sparc.hpp	1.73 07/05/05 17:04:27 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,7 +32,7 @@
 // A frame is comprised of {pc, sp, younger_sp}
 
 
-// Layout of asm interpreter frame:
+// Layout of interpreter frame:
 //
 //  0xfffffff
 //  ......
@@ -88,9 +88,6 @@
 // G5_method is set to method to call, G5_inline_cache_klass may be set,
 // parameters are put in O registers, and also extra parameters
 // must be cleverly copied from the top of stack to the outgoing param area in the frame,
-// ------------------------------ C++ interpreter ----------------------------------------
-// Layout of C++ interpreter frame:
-//
 
 
 
@@ -123,7 +120,7 @@
 
  private:
   intptr_t*  _younger_sp;                 // optional SP of callee (used to locate O7)
-  int        _sp_adjustment_by_callee;   // adjustment in words to SP by callee for making locals contiguous
+  int        _interpreter_sp_adjustment;  // adjustment in words to SP by interpreter for making locals contiguous
    
   // Note:  On SPARC, unlike Intel, the saved PC for a stack frame
   // is stored at a __variable__ distance from that frame's SP.
@@ -141,8 +138,8 @@
     return _younger_sp;
   }
 
-  int callee_sp_adjustment() const { return _sp_adjustment_by_callee; }
-  void set_sp_adjustment_by_callee(int number_of_words) { _sp_adjustment_by_callee = number_of_words; }
+  int interpreter_sp_adjustment() const { return _interpreter_sp_adjustment; }
+  void set_interpreter_sp_adjustment(int number_of_words) { _interpreter_sp_adjustment = number_of_words; }
 
   // Constructors
 
@@ -155,7 +152,7 @@
   // younger frame must also stay flushed.  (The caller is responsible
   // for ensuring this.)
 
-  frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_stack = false);
+  frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_is_interpreted = false);
 
   // make a deficient frame which doesn't know where its PC is:
   enum unpatchable_t { unpatchable };
@@ -225,8 +222,6 @@
   // Interpreter frames
 
  public:
-  // Asm interpreter
-#ifndef CC_INTERP
   enum interpreter_frame_vm_locals {
        // 2 words, also used to save float regs across  calls to C
        interpreter_frame_d_scratch_fp_offset          = -2, 
@@ -243,18 +238,6 @@
 
        interpreter_frame_extra_outgoing_argument_words = 2
   };
-#else
-  enum interpreter_frame_vm_locals {
-       // 2 words, also used to save float regs across  calls to C
-       interpreter_state_ptr_offset                   = 0,  // Is in L0 (Lstate) in save area
-       interpreter_frame_mirror_offset                = 1,  // Is in L1 (Lmirror) in save area (for native calls only)
-
-       // interpreter frame set-up needs to save 2 extra words in outgoing param area
-       // for class and jnienv arguments for native stubs (see nativeStubGen_sparc.cpp_
-
-       interpreter_frame_extra_outgoing_argument_words = 2
-  };
-#endif /* CC_INTERP */
 
   // the compiler frame has many of the same fields as the interpreter frame
   // %%%%% factor out declarations of the shared fields
@@ -267,9 +250,10 @@
 
  private:
 
-  constantPoolCacheOop* frame::interpreter_frame_cpoolcache_addr() const;
-
-#ifndef CC_INTERP
+  // where LcpoolCache is saved:
+  constantPoolCacheOop* interpreter_frame_cpoolcache_addr() const { 
+    return (constantPoolCacheOop*)sp_addr_at(LcpoolCache->sp_offset_in_saved_window());
+  }
 
   // where Lmonitors is saved:
   BasicObjectLock**  interpreter_frame_monitors_addr() const { 
@@ -290,14 +274,6 @@
  private:
   BasicObjectLock* interpreter_frame_monitors()           const  { return *interpreter_frame_monitors_addr(); }
   void interpreter_frame_set_monitors(BasicObjectLock* monitors) {        *interpreter_frame_monitors_addr() = monitors; }
-#else
- public:
-  inline interpreterState get_interpreterState() const {
-    return ((interpreterState)sp_at(interpreter_state_ptr_offset));
-  }
-
-
-#endif /* CC_INTERP */
 
 
 

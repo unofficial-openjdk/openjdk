@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)mutableNUMASpace.cpp	1.8 07/05/05 17:05:35 JVM"
 #endif
 
 /*

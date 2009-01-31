@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)memnode.hpp	1.118 07/05/05 17:06:18 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -63,16 +63,9 @@ protected:
     debug_only(_adr_type=at; adr_type();)
   }
 
-  // Helpers for the optimizer.  Documented in memnode.cpp.
-  static bool detect_ptr_independence(Node* p1, AllocateNode* a1,
-                                      Node* p2, AllocateNode* a2,
-                                      PhaseTransform* phase);
   static bool adr_phi_is_loop_invariant(Node* adr_phi, Node* cast);
 
 public:
-  // This one should probably be a phase-specific function:
-  static bool detect_dominating_control(Node* dom, Node* sub);
-
   // Is this Node a MemNode or some descendent?  Default is YES.
   virtual Node *Ideal_DU_postCCP( PhaseCCP *ccp );
 
@@ -603,19 +596,11 @@ public:
   virtual uint match_edge(uint idx) const;
 
   // Clear the given area of an object or array.
-  // The start offset must always be aligned mod BytesPerInt.
-  // The end offset must always be aligned mod BytesPerLong.
+  // Assume that the end_offset is aligned mod BytesPerLong.
+  // The start_offset (e.g., 8 or 12) must be aligned at least mod BytesPerInt.
   // Return the new memory.
   static Node* clear_memory(Node* control, Node* mem, Node* dest,
                             intptr_t start_offset,
-                            intptr_t end_offset,
-                            PhaseGVN* phase);
-  static Node* clear_memory(Node* control, Node* mem, Node* dest,
-                            intptr_t start_offset,
-                            Node* end_offset,
-                            PhaseGVN* phase);
-  static Node* clear_memory(Node* control, Node* mem, Node* dest,
-                            Node* start_offset,
                             Node* end_offset,
                             PhaseGVN* phase);
 };
@@ -718,92 +703,6 @@ public:
     : MemBarNode(C, alias_idx, precedent) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return 0; } // not matched in the AD file
-};
-
-// Isolation of object setup after an AllocateNode and before next safepoint.
-// (See comment in memnode.cpp near InitializeNode::InitializeNode for semantics.)
-class InitializeNode: public MemBarNode {
-  friend class AllocateNode;
-
-  bool _is_complete;
-
-public:
-  enum {
-    Control    = TypeFunc::Control,
-    Memory     = TypeFunc::Memory,     // MergeMem for states affected by this op
-    RawAddress = TypeFunc::Parms+0,    // the newly-allocated raw address
-    RawStores  = TypeFunc::Parms+1     // zero or more stores (or TOP)
-  };
-
-  InitializeNode(Compile* C, int adr_type, Node* rawoop);
-  virtual int Opcode() const;
-  virtual uint size_of() const { return sizeof(*this); }
-  virtual uint ideal_reg() const { return 0; } // not matched in the AD file
-  virtual const RegMask &in_RegMask(uint) const;  // mask for RawAddress
-
-  // Manage incoming memory edges via a MergeMem on in(Memory):
-  Node* memory(uint alias_idx);
-
-  // The raw memory edge coming directly from the Allocation.
-  // The contents of this memory are *always* all-zero-bits.
-  Node* zero_memory() { return memory(Compile::AliasIdxRaw); }
-
-  // Return the corresponding allocation for this initialization (or null if none).
-  // (Note: Both InitializeNode::allocation and AllocateNode::initialization
-  // are defined in graphKit.cpp, which sets up the bidirectional relation.)
-  AllocateNode* allocation();
-
-  // Anything other than zeroing in this init?
-  bool is_non_zero();
-
-  // An InitializeNode must completed before macro expansion is done.
-  // Completion requires that the AllocateNode must be followed by
-  // initialization of the new memory to zero, then to any initializers.
-  bool is_complete() { return _is_complete; }
-
-  // Mark complete.  (Must not yet be complete.)
-  void set_complete(PhaseGVN* phase);
-
-#ifdef ASSERT
-  // ensure all non-degenerate stores are ordered and non-overlapping
-  bool stores_are_sane(PhaseTransform* phase);
-#endif //ASSERT
-
-  // See if this store can be captured; return offset where it initializes.
-  // Return 0 if the store cannot be moved (any sort of problem).
-  intptr_t can_capture_store(StoreNode* st, PhaseTransform* phase);
-
-  // Capture another store; reformat it to write my internal raw memory.
-  // Return the captured copy, else NULL if there is some sort of problem.
-  Node* capture_store(StoreNode* st, intptr_t start, PhaseTransform* phase);
-
-  // Find captured store which corresponds to the range [start..start+size).
-  // Return my own memory projection (meaning the initial zero bits)
-  // if there is no such store.  Return NULL if there is a problem.
-  Node* find_captured_store(intptr_t start, int size_in_bytes, PhaseTransform* phase);
-
-  // Called when the associated AllocateNode is expanded into CFG.
-  Node* complete_stores(Node* rawctl, Node* rawmem, Node* rawptr,
-                        intptr_t header_size, Node* size_in_bytes,
-                        PhaseGVN* phase);
-
- private:
-  void remove_extra_zeroes();
-
-  // Find out where a captured store should be placed (or already is placed).
-  int captured_store_insertion_point(intptr_t start, int size_in_bytes,
-                                     PhaseTransform* phase);
-
-  static intptr_t get_store_offset(Node* st, PhaseTransform* phase);
-
-  Node* make_raw_address(intptr_t offset, PhaseTransform* phase);
-
-  bool detect_init_independence(Node* n, bool st_is_pinned, int& count);
-
-  void coalesce_subword_stores(intptr_t header_size, Node* size_in_bytes,
-                               PhaseGVN* phase);
-
-  intptr_t find_next_fullword_store(uint i, PhaseGVN* phase);
 };
 
 //------------------------------MergeMem---------------------------------------

@@ -468,7 +468,7 @@ extern bool can_branch_register( Node *bol, Node *cmp );
 %}
 
 source %{
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)sparc.ad	1.454 07/05/17 15:48:27 JVM"
 
 #define __ _masm.
 
@@ -1732,20 +1732,6 @@ bool Matcher::is_short_branch_offset(int offset) {
   return false;
 }
 
-const bool Matcher::isSimpleConstant64(jlong value) {
-  // Will one (StoreL ConL) be cheaper than two (StoreI ConI)?.
-  // Depends on optimizations in MacroAssembler::setx.
-  int hi = (int)(value >> 32);
-  int lo = (int)(value & ~0);
-  return (hi == 0) || (hi == -1) || (lo == 0);
-}
-
-// No scaling for the parameter the ClearArray node.
-const bool Matcher::init_array_count_is_in_bytes = true;
-
-// Threshold size for cleararray.
-const int Matcher::init_array_short_size = 8 * BytesPerLong;
-
 // Should the Matcher clone shifts on addressing modes, expecting them to
 // be subsumed into complex addressing expressions or compute them into
 // registers?  True for Intel but false for most RISCs
@@ -2825,12 +2811,13 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
   // Compiler ensures base is doubleword aligned and cnt is count of doublewords
   enc_class enc_Clear_Array(iRegX cnt, iRegP base, iRegX temp) %{
     MacroAssembler _masm(&cbuf);
-    Register    nof_bytes_arg   = reg_to_register_object($cnt$$reg);
+    Register	nof_dwords_arg   = reg_to_register_object($cnt$$reg);
     Register    nof_bytes_tmp    = reg_to_register_object($temp$$reg);
     Register	base_pointer_arg = reg_to_register_object($base$$reg);
 
     Label loop;
-    __ mov(nof_bytes_arg, nof_bytes_tmp);
+    // DoubleWord (8-byte) count -> byte count
+    __ sllx(nof_dwords_arg, 3, nof_bytes_tmp); 
 
     // Loop and clear, walking backwards through the array.
     // nof_bytes_tmp (if >0) is always the number of bytes to zero
@@ -8639,7 +8626,7 @@ instruct clear_array(iRegX cnt, iRegP base, iRegX temp, Universe dummy, flagsReg
   match(Set dummy (ClearArray cnt base));
   effect(TEMP temp, KILL ccr);
   ins_cost(300);
-  format %{ "MOV    $cnt,$temp\n"
+  format %{ "SLLX   $cnt,3,$temp\t! Convert dwords to bytes\n"
     "loop:   SUBcc  $temp,8,$temp\t! Count down a dword of bytes\n"
     "        BRge   loop\t\t! Clearing loop\n"
     "        STX    G0,[$base+$temp]\t! delay slot" %}

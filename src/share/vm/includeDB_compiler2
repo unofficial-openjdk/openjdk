@@ -125,8 +125,6 @@ bytecodeInfo.cpp                        parse.hpp
 bytecodeInfo.cpp                        systemDictionary.hpp
 bytecodeInfo.cpp                        vmSymbols.hpp
 
-bytecodeInterpreter.hpp                 methodDataOop.hpp
-
 c2_globals.cpp                          c2_globals.hpp
 
 c2_globals.hpp                          c2_globals_<arch>.hpp
@@ -146,6 +144,8 @@ c2compiler.cpp                          c2compiler.hpp
 c2compiler.cpp                          runtime.hpp
 
 c2compiler.hpp                          abstractCompiler.hpp
+
+cInterpreter.hpp                        methodDataOop.hpp
 
 callGenerator.cpp                       addnode.hpp
 callGenerator.cpp                       callGenerator.hpp
@@ -481,11 +481,9 @@ graphKit.hpp                            phaseX.hpp
 graphKit.hpp                            type.hpp
 
 idealKit.cpp                            addnode.hpp
-idealKit.cpp                            callnode.hpp
 idealKit.cpp                            cfgnode.hpp
 idealKit.cpp                            idealKit.hpp
 
-idealKit.hpp                            connode.hpp
 idealKit.hpp                            mulnode.hpp
 idealKit.hpp                            phaseX.hpp
 idealKit.hpp                            subnode.hpp
@@ -961,7 +959,7 @@ runtime_<arch>.cpp                      assembler.hpp
 runtime_<arch>.cpp                      assembler_<arch>.inline.hpp
 runtime_<arch>.cpp                      globalDefinitions.hpp
 runtime_<arch>.cpp                      interfaceSupport.hpp
-runtime_<arch>.cpp                      interpreter.hpp
+runtime_<arch>.cpp                      interpreter_<arch>.hpp
 runtime_<arch>.cpp                      nativeInst_<arch>.hpp
 runtime_<arch>.cpp                      runtime.hpp
 runtime_<arch>.cpp                      sharedRuntime.hpp
@@ -983,6 +981,8 @@ split_if.cpp                            allocation.inline.hpp
 split_if.cpp                            callnode.hpp
 split_if.cpp                            connode.hpp
 split_if.cpp                            loopnode.hpp
+
+stackValue.cpp                          debugInfo.hpp
 
 stubGenerator_<arch>.cpp                runtime.hpp
 

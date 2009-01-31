@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)os.cpp	1.183 07/06/19 03:53:14 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1013,7 +1013,7 @@ bool os::stack_shadow_pages_available(Thread *thread, methodHandle method) {
   // handler or a println uses at least 8k stack of VM and native code
   // respectively.
   const int framesize_in_bytes =
-    Interpreter::size_top_interpreter_activation(method()) * wordSize;
+    AbstractInterpreter::size_top_interpreter_activation(method()) * wordSize;
   int reserved_area = ((StackShadowPages + StackRedPages + StackYellowPages) 
                       * vm_page_size()) + framesize_in_bytes;
   // The very lower end of the stack

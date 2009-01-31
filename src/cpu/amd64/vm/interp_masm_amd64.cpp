@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)interp_masm_amd64.cpp	1.44 07/06/08 18:13:30 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -42,7 +42,7 @@ void InterpreterMacroAssembler::call_VM_leaf_base(address entry_point,
   save_bcp();
   { 
     Label L;
-    cmpq(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int)NULL_WORD);
+    cmpq(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
     jcc(Assembler::equal, L);
     stop("InterpreterMacroAssembler::call_VM_leaf_base:"
          " last_sp != NULL");
@@ -89,7 +89,7 @@ void InterpreterMacroAssembler::call_VM_base(Register oop_result,
 #ifdef ASSERT
   { 
     Label L;
-    cmpq(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int)NULL_WORD);
+    cmpq(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), NULL_WORD);
     jcc(Assembler::equal, L);
     stop("InterpreterMacroAssembler::call_VM_leaf_base:"
          " last_sp != NULL");
@@ -123,7 +123,7 @@ void InterpreterMacroAssembler::check_and_handle_popframe(Register java_thread) 
     // Call Interpreter::remove_activation_preserving_args_entry() to get the
     // address of the same-named entrypoint in the generated interpreter code.
     call_VM_leaf(CAST_FROM_FN_PTR(address, Interpreter::remove_activation_preserving_args_entry));
-    jmp(rax);
+    jmp(rax, relocInfo::runtime_call_type);
     bind(L);
   }
 }
@@ -136,7 +136,7 @@ void InterpreterMacroAssembler::load_earlyret_value(TosState state) {
   const Address val_addr(rcx, JvmtiThreadState::earlyret_value_offset());
   switch (state) {
     case atos: movq(rax, oop_addr);
-               movptr(oop_addr, NULL_WORD);
+               movq(oop_addr, NULL_WORD);
                verify_oop(rax, state);              break;
     case ltos: movq(rax, val_addr);                 break;
     case btos:                                   // fall through
@@ -173,7 +173,7 @@ void InterpreterMacroAssembler::check_and_handle_earlyret(Register java_thread) 
     movq(c_rarg0, Address(r15_thread, JavaThread::jvmti_thread_state_offset()));
     movl(c_rarg0, Address(c_rarg0, JvmtiThreadState::earlyret_tos_offset()));
     call_VM_leaf(CAST_FROM_FN_PTR(address, Interpreter::remove_activation_early_entry), c_rarg0);
-    jmp(rax);
+    jmp(rax, relocInfo::runtime_call_type);
     bind(L);
   }
 }
@@ -304,7 +304,7 @@ void InterpreterMacroAssembler::verify_stack_tag(frame::Tag t) {
     jcc(Assembler::equal, okay);
     // Also compare if the stack value is zero, then the tag might
     // not have been set coming from deopt.
-    cmpq(Address(rsp, 0), 0);
+    cmpq(Address(rsp), 0);
     jcc(Assembler::equal, okay);
     stop("Java Expression stack tag value is bad");
     bind(okay);
@@ -326,27 +326,27 @@ void InterpreterMacroAssembler::pop_ptr(Register r, Register tag) {
 void InterpreterMacroAssembler::pop_i(Register r) {
   // XXX can't use popq currently, upper half non clean
   debug_only(verify_stack_tag(frame::TagValue));
-  movl(r, Address(rsp, 0));
+  movl(r, Address(rsp));
   addq(rsp, wordSize);
   if (TaggedStackInterpreter) addq(rsp, 1 * wordSize);
 }
 
 void InterpreterMacroAssembler::pop_l(Register r) {
   debug_only(verify_stack_tag(frame::TagCategory2));
-  movq(r, Address(rsp, 0));
+  movq(r, Address(rsp));
   addq(rsp, 2 * Interpreter::stackElementSize());
 }
 
-void InterpreterMacroAssembler::pop_f(XMMRegister r) {
+void InterpreterMacroAssembler::pop_f(FloatRegister r) {
   debug_only(verify_stack_tag(frame::TagValue));
-  movflt(r, Address(rsp, 0));
+  movflt(r, Address(rsp));
   addq(rsp, wordSize);
   if (TaggedStackInterpreter) addq(rsp, 1 * wordSize);
 }
 
-void InterpreterMacroAssembler::pop_d(XMMRegister r) {
+void InterpreterMacroAssembler::pop_d(FloatRegister r) {
   debug_only(verify_stack_tag(frame::TagCategory2));
-  movdbl(r, Address(rsp, 0));
+  movdbl(r, Address(rsp));
   addq(rsp, 2 * Interpreter::stackElementSize());
 }
 
@@ -374,16 +374,16 @@ void InterpreterMacroAssembler::push_l(Register r) {
   } else {
     subq(rsp, 2 * wordSize);
   }
-  movq(Address(rsp, 0), r);
+  movq(Address(rsp), r);
 }
 
-void InterpreterMacroAssembler::push_f(XMMRegister r) {
+void InterpreterMacroAssembler::push_f(FloatRegister r) {
   if (TaggedStackInterpreter) pushq(frame::TagValue);
   subq(rsp, wordSize);
-  movflt(Address(rsp, 0), r);
+  movflt(Address(rsp), r);
 }
 
-void InterpreterMacroAssembler::push_d(XMMRegister r) {
+void InterpreterMacroAssembler::push_d(FloatRegister r) {
   if (TaggedStackInterpreter) {
     pushq(frame::TagValue);
     subq(rsp, 1 * wordSize);
@@ -392,7 +392,7 @@ void InterpreterMacroAssembler::push_d(XMMRegister r) {
   } else {
     subq(rsp, 2 * wordSize);
   }
-  movdbl(Address(rsp, 0), r);
+  movdbl(Address(rsp), r);
 }
 
 void InterpreterMacroAssembler::pop(TosState state) {
@@ -450,12 +450,12 @@ void InterpreterMacroAssembler::store_ptr_and_tag(int n, Register val,
 void InterpreterMacroAssembler::tag_local(frame::Tag tag, int n) {
   if (TaggedStackInterpreter) {
     if (tag == frame::TagCategory2) {
-      mov64(Address(r14, Interpreter::local_tag_offset_in_bytes(n+1)), 
+      movq(Address(r14, Interpreter::local_tag_offset_in_bytes(n+1)), 
            (intptr_t)frame::TagValue);
-      mov64(Address(r14, Interpreter::local_tag_offset_in_bytes(n)), 
+      movq(Address(r14, Interpreter::local_tag_offset_in_bytes(n)), 
            (intptr_t)frame::TagValue);
     } else {
-      mov64(Address(r14, Interpreter::local_tag_offset_in_bytes(n)), (intptr_t)tag);
+      movq(Address(r14, Interpreter::local_tag_offset_in_bytes(n)), (intptr_t)tag);
     }
   }
 }
@@ -463,12 +463,12 @@ void InterpreterMacroAssembler::tag_local(frame::Tag tag, int n) {
 void InterpreterMacroAssembler::tag_local(frame::Tag tag, Register idx) {
   if (TaggedStackInterpreter) {
     if (tag == frame::TagCategory2) {
-      mov64(Address(r14, idx, Address::times_8,
+      movq(Address(r14, idx, Address::times_8,
                   Interpreter::local_tag_offset_in_bytes(1)), (intptr_t)frame::TagValue);
-      mov64(Address(r14, idx, Address::times_8,
+      movq(Address(r14, idx, Address::times_8,
                   Interpreter::local_tag_offset_in_bytes(0)), (intptr_t)frame::TagValue);
     } else {
-      mov64(Address(r14, idx, Address::times_8, Interpreter::local_tag_offset_in_bytes(0)),
+      movq(Address(r14, idx, Address::times_8, Interpreter::local_tag_offset_in_bytes(0)),
            (intptr_t)tag);
     }
   }
@@ -617,7 +617,8 @@ void InterpreterMacroAssembler::jump_from_interpreted(Register method, Register 
 
 // The following two routines provide a hook so that an implementation
 // can schedule the dispatch in two parts.  amd64 does not do this.
-void InterpreterMacroAssembler::dispatch_prolog(TosState state, int step) {
+void InterpreterMacroAssembler::dispatch_prolog(TosState state, int step) 
+{
   // Nothing amd64 specific to be done here
 }
 
@@ -644,7 +645,7 @@ void InterpreterMacroAssembler::dispatch_base(TosState state,
   if (verifyoop) {
     verify_oop(rax, state);
   }
-  lea(rscratch1, ExternalAddress((address)table));
+  movq(rscratch1,(int64_t) table);
   jmp(Address(rscratch1, rbx, Address::times_8));
 }
 
@@ -671,7 +672,7 @@ void InterpreterMacroAssembler::dispatch_next(TosState state, int step) {
 
 void InterpreterMacroAssembler::dispatch_via(TosState state, address* table) {
   // load current bytecode
-  load_unsigned_byte(rbx, Address(r13, 0));
+  load_unsigned_byte(rbx, Address(r13));
   dispatch_base(state, table);
 }
 
@@ -872,7 +873,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg) {
     movl(swap_reg, 1);
 
     // Load (object->mark() | 1) into swap_reg %rax
-    orq(swap_reg, Address(obj_reg, 0));
+    orq(swap_reg, Address(obj_reg));
 
     // Save (object->mark() | 1) into BasicLock's displaced header
     movq(Address(lock_reg, mark_offset), swap_reg);
@@ -881,10 +882,9 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg) {
            "displached header must be first word in BasicObjectLock");
 
     if (os::is_MP()) lock();
-    cmpxchgq(lock_reg, Address(obj_reg, 0));  
+    cmpxchgq(lock_reg, Address(obj_reg));  
     if (PrintBiasedLockingStatistics) {
-      cond_inc32(Assembler::zero,
-                 ExternalAddress((address) BiasedLocking::fast_path_entry_count_addr()));
+      cond_incl(Assembler::zero, Address((address) BiasedLocking::fast_path_entry_count_addr(), relocInfo::none));
     }
     jcc(Assembler::zero, done);
 
@@ -904,8 +904,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg) {
     movq(Address(lock_reg, mark_offset), swap_reg);
 
     if (PrintBiasedLockingStatistics) {
-      cond_inc32(Assembler::zero,
-                 ExternalAddress((address) BiasedLocking::fast_path_entry_count_addr()));
+      cond_incl(Assembler::zero, Address((address) BiasedLocking::fast_path_entry_count_addr(), relocInfo::none));
     }
     jcc(Assembler::zero, done);
 
@@ -956,7 +955,8 @@ void InterpreterMacroAssembler::unlock_object(Register lock_reg) {
     movq(obj_reg, Address(lock_reg, BasicObjectLock::obj_offset_in_bytes()));
 
     // Free entry
-    movptr(Address(lock_reg, BasicObjectLock::obj_offset_in_bytes()), NULL_WORD);
+    movq(Address(lock_reg, BasicObjectLock::obj_offset_in_bytes()), 
+         NULL_WORD);
 
     if (UseBiasedLocking) {
       biased_locking_exit(obj_reg, header_reg, done);
@@ -974,7 +974,7 @@ void InterpreterMacroAssembler::unlock_object(Register lock_reg) {
     
     // Atomic swap back the old header
     if (os::is_MP()) lock();
-    cmpxchgq(header_reg, Address(obj_reg, 0));
+    cmpxchgq(header_reg, Address(obj_reg));
 
     // zero for recursive case
     jcc(Assembler::zero, done);
@@ -1436,6 +1436,8 @@ void InterpreterMacroAssembler::profile_null_seen(Register mdp) {
     // If no method data exists, go to profile_continue.
     test_method_data_pointer(mdp, profile_continue);
 
+    set_mdp_flag_at(mdp, BitData::null_seen_byte_constant());
+
     // The method data pointer needs to be updated.
     int mdp_delta = in_bytes(BitData::bit_data_size());
     if (TypeProfileCasts) {
@@ -1467,7 +1469,8 @@ void InterpreterMacroAssembler::profile_typecheck_failed(Register mdp) {
 }
 
 
-void InterpreterMacroAssembler::profile_typecheck(Register mdp, Register klass, Register reg2) {
+void InterpreterMacroAssembler::profile_typecheck(Register mdp, Register klass, Register reg2)
+{
   if (ProfileInterpreter) {
     Label profile_continue;
 

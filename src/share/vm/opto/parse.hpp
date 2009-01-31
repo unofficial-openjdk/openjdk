@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)parse.hpp	1.269 07/05/05 17:06:25 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -132,7 +132,6 @@ class Parse : public GraphKit {
     Block**            _successors;
 
     // Use init_node/init_graph to initialize Blocks.
-    // Block() : _live_locals((uintptr_t*)NULL,0) { ShouldNotReachHere(); }
     Block() : _live_locals(NULL,0) { ShouldNotReachHere(); }
 
    public:
@@ -432,7 +431,7 @@ class Parse : public GraphKit {
 
   // Helper function to identify inlining potential at call-site
   ciMethod* optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass, 
-                              ciMethod *dest_method, const TypeOopPtr* receiver_type);
+                              ciMethod *dest_method, const TypeInstPtr* receiver_type);
     
   // Helper function to setup for type-profile based inlining
   bool prepare_type_profile_inline(ciInstanceKlass* prof_klass, ciMethod* prof_method);
@@ -506,8 +505,8 @@ class Parse : public GraphKit {
   void set_md_flag_at(ciMethodData* md, ciProfileData* data, int flag_constant); 
 
   void profile_method_entry();
-  void profile_taken_branch(int target_bci, bool force_update = false);
-  void profile_not_taken_branch(bool force_update = false);
+  void profile_taken_branch(int target_bci);
+  void profile_not_taken_branch();
   void profile_call(Node* receiver);
   void profile_generic_call();
   void profile_receiver_type(Node* receiver);

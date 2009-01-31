@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)nmethod.cpp	1.366 07/06/08 15:21:44 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -316,18 +316,6 @@ void PcDescCache::add_pc_desc(PcDesc* pc_desc) {
   // Note:  Do not update _last_pc_desc.  It fronts for the LRU cache.
 }
 
-// adjust pcs_size so that it is a multiple of both oopSize and
-// sizeof(PcDesc) (assumes that if sizeof(PcDesc) is not a multiple
-// of oopSize, then 2*sizeof(PcDesc) is)
-static int  adjust_pcs_size(int pcs_size) {
-  int nsize = round_to(pcs_size,   oopSize);
-  if ((nsize % sizeof(PcDesc)) != 0) {
-    nsize = pcs_size + sizeof(PcDesc);
-  }
-  assert((nsize %  oopSize) == 0, "correct alignment");
-  return nsize;
-}
-
 //-----------------------------------------------------------------------------
 
 
@@ -485,7 +473,7 @@ nmethod* nmethod::new_nmethod(methodHandle method,
   { MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     int nmethod_size =
       allocation_size(code_buffer, sizeof(nmethod))
-      + adjust_pcs_size(debug_info->pcs_size())
+      + round_to(debug_info->pcs_size()        , oopSize)
       + round_to(dependencies->size_in_bytes() , oopSize)
       + round_to(handler_table->size_in_bytes(), oopSize)
       + round_to(nul_chk_table->size_in_bytes(), oopSize)
@@ -608,9 +596,6 @@ nmethod::nmethod(
       print_code();
       oop_maps->print();
     }
-    if (PrintRelocations) {
-      print_relocations();
-    }
     if (xtty != NULL) {
       xtty->tail("print_native_nmethod");
     }
@@ -669,7 +654,7 @@ nmethod::nmethod(
     _consts_offset           = instructions_offset() + code_buffer->total_offset_of(code_buffer->consts()->start());
     _scopes_data_offset      = data_offset();
     _scopes_pcs_offset       = _scopes_data_offset   + round_to(debug_info->data_size         (), oopSize);
-    _dependencies_offset     = _scopes_pcs_offset    + adjust_pcs_size(debug_info->pcs_size());
+    _dependencies_offset     = _scopes_pcs_offset    + round_to(debug_info->pcs_size          (), oopSize);
     _handler_table_offset    = _dependencies_offset  + round_to(dependencies->size_in_bytes (), oopSize);
     _nul_chk_table_offset    = _handler_table_offset + round_to(handler_table->size_in_bytes(), oopSize);
     _nmethod_end_offset      = _nul_chk_table_offset + round_to(nul_chk_table->size_in_bytes(), oopSize);
@@ -845,8 +830,7 @@ void nmethod::set_version(int v) {
 ScopeDesc* nmethod::scope_desc_at(address pc) {
   PcDesc* pd = pc_desc_at(pc);
   guarantee(pd != NULL, "scope must be present");
-  return new ScopeDesc(this, pd->scope_decode_offset(),
-                       pd->obj_decode_offset());
+  return new ScopeDesc(this, pd->scope_decode_offset());
 }
 
 
@@ -1621,28 +1605,31 @@ PcDesc* nmethod::find_pc_desc_internal(address pc, bool approximate) {
 }
 
 
-bool nmethod::check_all_dependencies() {
+bool nmethod::is_dependent_on(klassOop dependee) {
   bool found_check = false;
-  // wholesale check of all dependencies
-  for (Dependencies::DepStream deps(this); deps.next(); ) {
-    if (deps.check_dependency() != NULL) {
-      found_check = true;
-      NOT_DEBUG(break);
+  if (dependee == NULL) {
+    // wholesale check of all dependencies
+    for (Dependencies::DepStream deps(this); deps.next(); ) {
+      if (deps.check_dependency() != NULL) {
+        found_check = true;
+        NOT_DEBUG(break);
+      }
     }
-  }
-  return found_check;  // tell caller if we found anything
-}
-
-bool nmethod::check_dependency_on(DepChange& changes) {
-  // What has happened:
-  // 1) a new class dependee has been added
-  // 2) dependee and all its super classes have been marked
-  bool found_check = false;  // set true if we are upset
-  for (Dependencies::DepStream deps(this); deps.next(); ) {
-    // Evaluate only relevant dependencies.
-    if (deps.spot_check_dependency_at(changes) != NULL) {
-      found_check = true;
-      NOT_DEBUG(break);
+  } else {
+    // What has happened:
+    // 1) a new class dependee has been added
+    // 2) dependee and all its super classes have been marked
+    for (Dependencies::DepStream deps(this); deps.next(); ) {
+      // Evaluate only relevant dependencies.
+      klassOop ctxk = deps.context_type();
+      if (ctxk == NULL)  continue;  // e.g., evol_method
+      bool ctxk_is_marked = instanceKlass::cast(ctxk)->is_marked_dependent();
+      assert(ctxk_is_marked == Klass::cast(dependee)->is_subtype_of(ctxk),
+             "correct marking of potential context types");
+      if (ctxk_is_marked && deps.check_dependency() != NULL) {
+        found_check = true;
+        NOT_DEBUG(break);
+      }
     }
   }
   return found_check;
@@ -1815,8 +1802,7 @@ void nmethod::verify_interrupt_point(address call_site) {
   }
   PcDesc* pd = pc_desc_at(ic->end_of_call());
   assert(pd != NULL, "PcDesc must exist");
-  for (ScopeDesc* sd = new ScopeDesc(this, pd->scope_decode_offset(),
-                                     pd->obj_decode_offset());
+  for (ScopeDesc* sd = new ScopeDesc(this, pd->scope_decode_offset());
        !sd->is_top(); sd = sd->sender()) {
     sd->verify();
   }
@@ -1881,16 +1867,14 @@ void nmethod::print() const {
   ttyLocker ttyl;   // keep the following output all in one block
 
   tty->print("Compiled ");
-
-  if (is_compiled_by_c1()) {
+#ifdef TIERED
+  if (compiler()->is_c1()) {
     tty->print("(c1) ");
-  } else if (is_compiled_by_c2()) {
-    tty->print("(c2) ");
   } else {
-    assert(is_native_method(), "Who else?");
-    tty->print("(nm) ");
+    assert(compiler()->is_c2(), "Who else?");
+    tty->print("(c2) ");
   }
-
+#endif // TIERED
   print_on(tty, "nmethod");
   tty->cr();
   if (WizardMode) {
@@ -1970,13 +1954,6 @@ void nmethod::print_dependencies() {
   tty->print_cr("Dependencies:");
   for (Dependencies::DepStream deps(this); deps.next(); ) {
     deps.print_dependency();
-    klassOop ctxk = deps.context_type();
-    if (ctxk != NULL) {
-      Klass* k = Klass::cast(ctxk);
-      if (k->oop_is_instance() && ((instanceKlass*)k)->is_dependent_nmethod(this)) {
-        tty->print("   [nmethod<=klass]%s", k->external_name());
-      }
-    }
     deps.log_dependency();  // put it into the xml log also
   }
 }
@@ -2063,8 +2040,7 @@ const char* nmethod::reloc_string_for(u_char* begin, u_char* end) {
 ScopeDesc* nmethod::scope_desc_in(address begin, address end) {
   PcDesc* p = pc_desc_near(begin+1);
   if (p != NULL && p->real_pc(this) <= end) {
-    return new ScopeDesc(this, p->scope_decode_offset(),
-                         p->obj_decode_offset());
+    return new ScopeDesc(this, p->scope_decode_offset());
   }
   return NULL;
 }
@@ -2212,7 +2188,6 @@ void nmethod::print_statistics() {
   nmethod_stats.print_nmethod_stats();
   DebugInformationRecorder::print_statistics();
   nmethod_stats.print_pc_stats();
-  Dependencies::print_statistics();
   if (xtty != NULL)  xtty->tail("statistics");
 }
 

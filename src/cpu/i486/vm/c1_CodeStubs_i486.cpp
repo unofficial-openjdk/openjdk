@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_CodeStubs_i486.cpp	1.98 07/05/17 15:46:20 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -40,17 +40,15 @@ void ConversionStub::emit_code(LIR_Assembler* ce) {
 
 
   if (input()->is_single_xmm()) {
-    __ comiss(input()->as_xmm_float_reg(),
-              ExternalAddress((address)&float_zero));
+    __ comiss(input()->as_xmm_float_reg(), Address((int)&float_zero, relocInfo::none));
   } else if (input()->is_double_xmm()) {
-    __ comisd(input()->as_xmm_double_reg(),
-              ExternalAddress((address)&double_zero));
+    __ comisd(input()->as_xmm_double_reg(), Address((int)&double_zero, relocInfo::none));
   } else {
-    __ pushl(rax);
+    __ pushl(eax);
     __ ftst();
     __ fnstsw_ax();
     __ sahf();
-    __ popl(rax);
+    __ popl(eax);
   }
 
   Label NaN, do_return;
@@ -74,7 +72,7 @@ void ConversionStub::emit_code(LIR_Assembler* ce) {
 void CounterOverflowStub::emit_code(LIR_Assembler* ce) {
   __ bind(_entry);
   ce->store_parameter(_bci, 0);
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::counter_overflow_id)));
+  __ call(Runtime1::entry_for(Runtime1::counter_overflow_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
 
@@ -101,13 +99,11 @@ void RangeCheckStub::emit_code(LIR_Assembler* ce) {
   } else {
     ce->store_parameter(_index->as_jint(), 0);
   }
-  Runtime1::StubID stub_id;
   if (_throw_index_out_of_bounds_exception) {
-    stub_id = Runtime1::throw_index_exception_id;
+    __ call(Runtime1::entry_for(Runtime1::throw_index_exception_id), relocInfo::runtime_call_type);
   } else {
-    stub_id = Runtime1::throw_range_check_failed_id;
+    __ call(Runtime1::entry_for(Runtime1::throw_range_check_failed_id), relocInfo::runtime_call_type);
   }
-  __ call(RuntimeAddress(Runtime1::entry_for(stub_id)));
   ce->add_call_info_here(_info);
   debug_only(__ should_not_reach_here());
 }
@@ -118,7 +114,7 @@ void DivByZeroStub::emit_code(LIR_Assembler* ce) {
     ce->compilation()->implicit_exception_table()->append(_offset, __ offset());
   }
   __ bind(_entry);
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::throw_div0_exception_id)));
+  __ call(Runtime1::entry_for(Runtime1::throw_div0_exception_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   debug_only(__ should_not_reach_here());
 }
@@ -140,13 +136,13 @@ NewInstanceStub::NewInstanceStub(LIR_Opr klass_reg, LIR_Opr result, ciInstanceKl
 
 
 void NewInstanceStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
+  assert(__ esp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
-  __ movl(rdx, _klass_reg->as_register());
-  __ call(RuntimeAddress(Runtime1::entry_for(_stub_id)));
+  __ movl(edx, _klass_reg->as_register());
+  __ call(Runtime1::entry_for(_stub_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
-  assert(_result->as_register() == rax, "result must in rax,");
+  assert(_result->as_register() == eax, "result must in eax");
   __ jmp(_continuation);
 }
 
@@ -162,14 +158,14 @@ NewTypeArrayStub::NewTypeArrayStub(LIR_Opr klass_reg, LIR_Opr length, LIR_Opr re
 
 
 void NewTypeArrayStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
+  assert(__ esp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
-  assert(_length->as_register() == rbx, "length must in rbx,");
-  assert(_klass_reg->as_register() == rdx, "klass_reg must in rdx");
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::new_type_array_id)));
+  assert(_length->as_register() == ebx, "length must in ebx");
+  assert(_klass_reg->as_register() == edx, "klass_reg must in edx");
+  __ call(Runtime1::entry_for(Runtime1::new_type_array_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
-  assert(_result->as_register() == rax, "result must in rax,");
+  assert(_result->as_register() == eax, "result must in eax");
   __ jmp(_continuation);
 }
 
@@ -185,14 +181,14 @@ NewObjectArrayStub::NewObjectArrayStub(LIR_Opr klass_reg, LIR_Opr length, LIR_Op
 
 
 void NewObjectArrayStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
+  assert(__ esp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
-  assert(_length->as_register() == rbx, "length must in rbx,");
-  assert(_klass_reg->as_register() == rdx, "klass_reg must in rdx");
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::new_object_array_id)));
+  assert(_length->as_register() == ebx, "length must in ebx");
+  assert(_klass_reg->as_register() == edx, "klass_reg must in edx");
+  __ call(Runtime1::entry_for(Runtime1::new_object_array_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
-  assert(_result->as_register() == rax, "result must in rax,");
+  assert(_result->as_register() == eax, "result must in eax");
   __ jmp(_continuation);
 }
 
@@ -207,17 +203,15 @@ MonitorEnterStub::MonitorEnterStub(LIR_Opr obj_reg, LIR_Opr lock_reg, CodeEmitIn
 
 
 void MonitorEnterStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
+  assert(__ esp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
   ce->store_parameter(_obj_reg->as_register(),  1);
   ce->store_parameter(_lock_reg->as_register(), 0);
-  Runtime1::StubID enter_id;
   if (ce->compilation()->has_fpu_code()) {
-    enter_id = Runtime1::monitorenter_id;
+    __ call(Runtime1::entry_for(Runtime1::monitorenter_id), relocInfo::runtime_call_type);
   } else {
-    enter_id = Runtime1::monitorenter_nofpu_id;
+    __ call(Runtime1::entry_for(Runtime1::monitorenter_nofpu_id), relocInfo::runtime_call_type);
   }
-  __ call(RuntimeAddress(Runtime1::entry_for(enter_id)));
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
   __ jmp(_continuation);
@@ -232,13 +226,11 @@ void MonitorExitStub::emit_code(LIR_Assembler* ce) {
   }
   ce->store_parameter(_lock_reg->as_register(), 0);
   // note: non-blocking leaf routine => no call info needed
-  Runtime1::StubID exit_id;
   if (ce->compilation()->has_fpu_code()) {
-    exit_id = Runtime1::monitorexit_id;
+    __ call(Runtime1::entry_for(Runtime1::monitorexit_id), relocInfo::runtime_call_type);
   } else {
-    exit_id = Runtime1::monitorexit_nofpu_id;
+    __ call(Runtime1::entry_for(Runtime1::monitorexit_nofpu_id), relocInfo::runtime_call_type);
   }
-  __ call(RuntimeAddress(Runtime1::entry_for(exit_id)));
   __ jmp(_continuation);
 }
 
@@ -248,7 +240,7 @@ void MonitorExitStub::emit_code(LIR_Assembler* ce) {
 // - Replace original code with a call to the stub
 // At Runtime:
 // - call to stub, jump to runtime 
-// - in runtime: preserve all registers (rspecially objects, i.e., source and destination object)
+// - in runtime: preserve all registers (especially objects, i.e., source and destination object)
 // - in runtime: after initializing class, restore original code, reexecute instruction 
 
 int PatchingStub::_patch_info_offset = -NativeGeneralJump::instruction_size;
@@ -281,7 +273,7 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
     // produce a copy of the load klass instruction for use by the being initialized case
     address start = __ pc();
     jobject o = NULL;
-    __ movoop(_obj, o);
+    __ movl(_obj, o);
 #ifdef ASSERT
     for (int i = 0; i < _bytes_to_copy; i++) {
       address ptr = (address)(_pc_start + i);
@@ -307,8 +299,8 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
       __ block_comment(" being_initialized check");
     }
     assert(_obj != noreg, "must be a valid register");
-    Register tmp = rax;
-    if (_obj == tmp) tmp = rbx;
+    Register tmp = eax;
+    if (_obj == tmp) tmp = ebx;
     __ pushl(tmp);
     __ get_thread(tmp);
     __ cmpl(tmp, Address(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc)));
@@ -357,7 +349,7 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
   if (CommentedAssembly) {
     __ block_comment("patch entry point");
   }
-  __ call(RuntimeAddress(target));
+  __ call(target, relocInfo::runtime_call_type);
   assert(_patch_info_offset == (patch_info_pc - __ pc()), "must not change");
   ce->add_call_info_here(_info);
   int jmp_off = __ offset();
@@ -378,21 +370,21 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
 void ImplicitNullCheckStub::emit_code(LIR_Assembler* ce) {
   ce->compilation()->implicit_exception_table()->append(_offset, __ offset());
   __ bind(_entry);
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::throw_null_pointer_exception_id)));
+  __ call(Runtime1::entry_for(Runtime1::throw_null_pointer_exception_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   debug_only(__ should_not_reach_here());
 }
 
 
 void SimpleExceptionStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
+  assert(__ esp_offset() == 0, "frame size should be fixed");
   
   __ bind(_entry);
   // pass the object on stack because all registers must be preserved
   if (_obj->is_cpu_register()) {
     ce->store_parameter(_obj->as_register(), 0);
   }
-  __ call(RuntimeAddress(Runtime1::entry_for(_stub)));
+  __ call(Runtime1::entry_for(_stub), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   debug_only(__ should_not_reach_here());
 }
@@ -404,9 +396,9 @@ ArrayStoreExceptionStub::ArrayStoreExceptionStub(CodeEmitInfo* info):
 
 
 void ArrayStoreExceptionStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
+  assert(__ esp_offset() == 0, "frame size should be fixed");
   __ bind(_entry);
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::throw_array_store_exception_id)));
+  __ call(Runtime1::entry_for(Runtime1::throw_array_store_exception_id), relocInfo::runtime_call_type);
   ce->add_call_info_here(_info);
   debug_only(__ should_not_reach_here());
 }
@@ -437,7 +429,7 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
     VMReg r_1 = args[i].first();
     if (r_1->is_stack()) {
       int st_off = r_1->reg2stack() * wordSize;
-      __ movl (Address(rsp, st_off), r[i]);
+      __ movl (Address(esp, st_off), r[i]);
     } else {
       assert(r[i] == args[i].first()->as_Register(), "Wrong register for arg ");
     }
@@ -446,13 +438,11 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
   ce->align_call(lir_static_call);
 
   ce->emit_static_call_stub();
-  AddressLiteral resolve(SharedRuntime::get_resolve_static_call_stub(),
-                         relocInfo::static_call_type);
-  __ call(resolve);
+  __ call(SharedRuntime::get_resolve_static_call_stub(), relocInfo::static_call_type);
   ce->add_call_info_here(info());
 
 #ifndef PRODUCT
-  __ increment(ExternalAddress((address)&Runtime1::_arraycopy_slowcase_cnt));
+  __ increment(Address((intptr_t)&Runtime1::_arraycopy_slowcase_cnt, relocInfo::none));
 #endif
   
   __ jmp(_continuation);

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vmStructs_cms.hpp	1.2 07/05/01 19:01:30 JVM"
 #endif
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.

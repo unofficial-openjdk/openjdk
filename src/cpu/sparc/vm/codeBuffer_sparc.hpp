@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)codeBuffer_sparc.hpp	1.15 07/05/05 17:04:27 JVM"
 #endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.

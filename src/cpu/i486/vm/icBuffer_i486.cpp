@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)icBuffer_i486.cpp	1.23 07/05/05 17:04:16 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,8 +43,8 @@ void InlineCacheBuffer::assemble_ic_buffer_code(address code_begin, oop cached_o
   // (1) the oop is old (i.e., doesn't matter for scavenges)
   // (2) these ICStubs are removed *before* a GC happens, so the roots disappear
   assert(cached_oop == NULL || cached_oop->is_perm(), "must be perm oop");
-  masm->lea(rax, OopAddress((address) cached_oop));
-  masm->jump(ExternalAddress(entry_point));
+  masm->movl(eax, (int)cached_oop);
+  masm->jmp (entry_point, relocInfo::none);
 }
 
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)os_solaris_i486.cpp	1.120 07/06/28 16:50:03 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -33,7 +33,6 @@
 # include <sys/mman.h>
 # include <pthread.h>
 # include <signal.h>
-# include <setjmp.h>
 # include <errno.h>
 # include <dlfcn.h>
 # include <stdio.h>

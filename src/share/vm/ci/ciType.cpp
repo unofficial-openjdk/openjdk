@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)ciType.cpp	1.16 07/05/05 17:05:16 JVM"
 #endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -87,7 +87,7 @@ void ciType::print_name() {
 //
 ciInstance* ciType::java_mirror() {
   VM_ENTRY_MARK;
-  return CURRENT_THREAD_ENV->get_object(Universe::java_mirror(basic_type()))->as_instance();
+  return CURRENT_THREAD_ENV->get_object(SystemDictionary::java_mirror(basic_type()))->as_instance();
 }
 
 // ------------------------------------------------------------------

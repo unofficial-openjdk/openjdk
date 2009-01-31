@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c2_globals_amd64.hpp	1.28 07/05/05 17:04:03 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -74,10 +74,7 @@ define_pd_global(intx, ReservedCodeCacheSize,        48*M);
 define_pd_global(intx, CodeCacheExpansionSize,       64*K);
 define_pd_global(uintx,CodeCacheMinBlockLength,      4);
 
-// Heap related flags
 define_pd_global(uintx, PermSize,    ScaleForWordSize(16*M));
 define_pd_global(uintx, MaxPermSize, ScaleForWordSize(64*M));
 
-// Ergonomics related flags
-define_pd_global(uintx, DefaultMaxRAM, 32*G);
 define_pd_global(bool, NeverActAsServerClassMachine, false);

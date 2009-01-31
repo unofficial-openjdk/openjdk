@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)genCollectedHeap.hpp	1.104 07/05/29 09:44:15 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -41,7 +41,6 @@ class GenCollectedHeap : public SharedHeap {
   friend class VM_GenCollectFull;
   friend class VM_GenCollectFullConcurrent;
   friend class VM_GC_HeapInspection;
-  friend class VM_HeapDumper;
   friend class HeapInspection;
   friend class GCCauseSetter;
   friend class VMStructs;
@@ -490,5 +489,5 @@ protected:
   virtual void gc_epilogue(bool full);
   
 public:
-  virtual void preload_and_dump(TRAPS) KERNEL_RETURN;
+  virtual void preload_and_dump(TRAPS);
 };

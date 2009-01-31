@@ -377,9 +377,6 @@ reg_class ptr_rbp_reg(RBP, RBP_H);
 // Singleton class for stack pointer
 reg_class ptr_rsp_reg(RSP, RSP_H);
 
-// Singleton class for TLS pointer
-reg_class ptr_r15_reg(R15, R15_H);
-
 // Class for all long registers (except RSP)
 reg_class long_reg(RAX, RAX_H,
                    RDX, RDX_H,
@@ -850,16 +847,6 @@ void encode_copy(CodeBuffer &cbuf, int dstenc, int srcenc)
   }
 }
 
-void encode_CopyXD( CodeBuffer &cbuf, int dst_encoding, int src_encoding ) {
-  if( dst_encoding == src_encoding ) {
-    // reg-reg copy, use an empty encoding
-  } else {
-    MacroAssembler _masm(&cbuf);
-
-    __ movdqa(as_XMMRegister(dst_encoding), as_XMMRegister(src_encoding));
-  }
-}
-
 
 //=============================================================================
 #ifndef PRODUCT
@@ -1118,7 +1105,7 @@ static enum RC rc_class(OptoReg::Name reg)
 
   if (r->is_Register()) return rc_int;
 
-  assert(r->is_XMMRegister(), "must be");
+  assert(r->is_FloatRegister(), "must be");
   return rc_float;
 }
 
@@ -1820,8 +1807,8 @@ void emit_java_to_interp(CodeBuffer& cbuf)
   // static stub relocation stores the instruction address of the call
   __ relocate(static_stub_Relocation::spec(mark), RELOC_IMM64);
   // static stub relocation also tags the methodOop in the code-stream.
-  __ movoop(rbx, (jobject) NULL);  // method is zapped till fixup time
-  __ jump(RuntimeAddress(__ pc()));
+  __ movq(rbx, (jobject) NULL);  // method is zapped till fixup time
+  __ jmp(__ pc(), relocInfo::runtime_call_type);   // jmp    entry
 
   // Update current stubs pointer and restore code_end.
   __ end_a_stub();
@@ -1860,9 +1847,8 @@ void MachUEPNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const
   uint code_size = cbuf.code_size();
 #endif
   masm.cmpq(rax, Address(j_rarg0, oopDesc::klass_offset_in_bytes()));
-
-  masm.jump_cc(Assembler::notEqual, RuntimeAddress(SharedRuntime::get_ic_miss_stub()));
-
+  masm.jcc(Assembler::notEqual, 
+           SharedRuntime::get_ic_miss_stub(), relocInfo::runtime_call_type);
   /* WARNING these NOPs are critical so that verified entry point is properly
      aligned for patching by NativeJump::patch_verified_entry() */
   int nops_cnt = 1;
@@ -1902,7 +1888,7 @@ int emit_exception_handler(CodeBuffer& cbuf)
   __ start_a_stub(size_exception_handler());
   if (base == NULL)  return 0;  // CodeBuffer::expand failed
   int offset = __ offset();
-  __ jump(RuntimeAddress(OptoRuntime::exception_blob()->instructions_begin()));
+  __ jmp(OptoRuntime::exception_blob()->instructions_begin(), relocInfo::runtime_call_type);
   assert(__ offset() - offset <= (int) size_exception_handler(), "overflow");
   __ end_a_stub();
   return offset;
@@ -1934,8 +1920,8 @@ int emit_deopt_handler(CodeBuffer& cbuf)
   __ call(next, relocInfo::none); // reloc none is fine since it is a disp32
   __ bind(next);
   // adjust it so it matches "the_pc"
-  __ subq(Address(rsp, 0), __ offset() - offset);
-  __ jump(RuntimeAddress(SharedRuntime::deopt_blob()->unpack()));
+  __ subq(Address(rsp), __ offset() - offset);
+  __ jmp(SharedRuntime::deopt_blob()->unpack(), relocInfo::runtime_call_type);
   assert(__ offset() - offset <= (int) size_deopt_handler(), "overflow");
   __ end_a_stub();
   return offset;
@@ -1976,7 +1962,7 @@ const bool Matcher::convL2FSupported(void) {
 
 // Vector width in bytes
 const uint Matcher::vector_width_in_bytes(void) {
-  return 8;
+  return 0;
 }
 
 // Vector ideal reg
@@ -1992,20 +1978,6 @@ bool Matcher::is_short_branch_offset(int offset)
 {
   return -0x80 <= offset && offset < 0x80;
 }
-
-const bool Matcher::isSimpleConstant64(jlong value) {
-  // Will one (StoreL ConL) be cheaper than two (StoreI ConI)?.
-  //return value == (int) value;  // Cf. storeImmL and immL32.
-
-  // Probably always true, even if a temp register is required.
-  return true;
-}
-
-// The ecx parameter to rep stosq for the ClearArray node is in words.
-const bool Matcher::init_array_count_is_in_bytes = false;
-
-// Threshold size for cleararray.
-const int Matcher::init_array_short_size = 8 * BytesPerLong;
 
 // Should the Matcher clone shifts on addressing modes, expecting them
 // to be subsumed into complex addressing expressions or compute them
@@ -2553,8 +2525,8 @@ encode %{
     __ cmpq(Rrax, Rrsi);
     __ jcc(Assembler::equal, hit);
 #ifndef PRODUCT
-    __ lea(Rrcx, ExternalAddress((address)&SharedRuntime::_partial_subtype_ctr));
-    __ incrementl(Address(Rrcx, 0));
+    __ movq(Rrcx, (intptr_t) &SharedRuntime::_partial_subtype_ctr);
+    __ incrementl(Address(Rrcx));
 #endif //PRODUCT
     __ movq(Rrdi, Address(Rrsi, 
                           sizeof(oopDesc) + 
@@ -2716,7 +2688,6 @@ encode %{
 
   enc_class load_immUL32(rRegL dst, immUL32 src)
   %{
-    // same as load_immI, but this time we care about zeroes in the high word
     int dstenc = $dst$$reg;
     if (dstenc >= 8) {
       emit_opcode(cbuf, Assembler::REX_B);
@@ -2737,18 +2708,6 @@ encode %{
     }
     emit_opcode(cbuf, 0xC7);
     emit_rm(cbuf, 0x03, 0x00, dstenc);
-    $$$emit32$src$$constant;
-  %}
-
-  enc_class load_immP31(rRegP dst, immP32 src)
-  %{
-    // same as load_immI, but this time we care about zeroes in the high word
-    int dstenc = $dst$$reg;
-    if (dstenc >= 8) {
-      emit_opcode(cbuf, Assembler::REX_B);
-      dstenc -= 8;
-    }
-    emit_opcode(cbuf, 0xB8 | dstenc);
     $$$emit32$src$$constant;
   %}
 
@@ -2811,11 +2770,6 @@ encode %{
   enc_class enc_copy(rRegI dst, rRegI src)
   %{
     encode_copy(cbuf, $dst$$reg, $src$$reg);
-  %}
-
-  // Encode xmm reg-reg copy.  If it is useless, then empty encoding.
-  enc_class enc_CopyXD( RegD dst, RegD src ) %{
-    encode_CopyXD( cbuf, $dst$$reg, $src$$reg );
   %}
 
   enc_class enc_copy_always(rRegI dst, rRegI src)
@@ -2914,16 +2868,8 @@ encode %{
     Register dest_reg   = as_Register($dest$$reg);
     address table_base  = masm.address_table_constant(_index2label);
 
-    // We could use jump(ArrayAddress) except that the macro assembler needs to use r10
-    // to do that and the compiler is using that register as one it can allocate.
-    // So we build it all by hand.
-    // Address index(noreg, switch_reg, Address::times_1);
-    // ArrayAddress dispatch(table, index);
-
-    Address dispatch(dest_reg, switch_reg, Address::times_1);
-
-    masm.lea(dest_reg, InternalAddress(table_base));
-    masm.jmp(dispatch);
+    masm.leaq(dest_reg, Address(table_base, relocInfo::internal_word_type));
+    masm.jmp(Address(dest_reg, switch_reg, Address::times_1));
   %}
 
   enc_class jump_enc_addr(rRegL switch_val, immI2 shift, immL32 offset, rRegI dest) %{
@@ -2933,16 +2879,8 @@ encode %{
     Register dest_reg   = as_Register($dest$$reg);
     address table_base  = masm.address_table_constant(_index2label);
 
-    // We could use jump(ArrayAddress) except that the macro assembler needs to use r10
-    // to do that and the compiler is using that register as one it can allocate.
-    // So we build it all by hand.
-    // Address index(noreg, switch_reg, (Address::ScaleFactor)$shift$$constant, (int)$offset$$constant);
-    // ArrayAddress dispatch(table, index);
-
-    Address dispatch(dest_reg, switch_reg, (Address::ScaleFactor)$shift$$constant, (int)$offset$$constant);
-
-    masm.lea(dest_reg, InternalAddress(table_base));
-    masm.jmp(dispatch);
+    masm.leaq(dest_reg, Address(table_base, relocInfo::internal_word_type));
+    masm.jmp(Address(dest_reg, switch_reg, (Address::ScaleFactor)$shift$$constant, (int)$offset$$constant));
   %}
 
   enc_class jump_enc_offset(rRegL switch_val, immI2 shift, rRegI dest) %{
@@ -2952,16 +2890,8 @@ encode %{
     Register dest_reg   = as_Register($dest$$reg);
     address table_base  = masm.address_table_constant(_index2label);
 
-    // We could use jump(ArrayAddress) except that the macro assembler needs to use r10
-    // to do that and the compiler is using that register as one it can allocate.
-    // So we build it all by hand.
-    // Address index(noreg, switch_reg, (Address::ScaleFactor)$shift$$constant);
-    // ArrayAddress dispatch(table, index);
-
-    Address dispatch(dest_reg, switch_reg, (Address::ScaleFactor)$shift$$constant);
-    masm.lea(dest_reg, InternalAddress(table_base));
-    masm.jmp(dispatch);
-
+    masm.leaq(dest_reg, Address(table_base, relocInfo::internal_word_type));
+    masm.jmp(Address(dest_reg, switch_reg, (Address::ScaleFactor)$shift$$constant));
   %}
 
   enc_class lock_prefix()
@@ -3414,50 +3344,6 @@ encode %{
   %}
 
 
-  enc_class movq_ld(regD dst, memory mem) %{
-    MacroAssembler _masm(&cbuf);
-    Address madr = Address::make_raw($mem$$base, $mem$$index, $mem$$scale, $mem$$disp);
-    __ movq(as_XMMRegister($dst$$reg), madr);
-  %}
-
-  enc_class movq_st(memory mem, regD src) %{
-    MacroAssembler _masm(&cbuf);
-    Address madr = Address::make_raw($mem$$base, $mem$$index, $mem$$scale, $mem$$disp);
-    __ movq(madr, as_XMMRegister($src$$reg));
-  %}
-
-  enc_class pshufd_8x8(regF dst, regF src) %{
-    MacroAssembler _masm(&cbuf);
-
-    encode_CopyXD(cbuf, $dst$$reg, $src$$reg);
-    __ punpcklbw(as_XMMRegister($dst$$reg), as_XMMRegister($dst$$reg));
-    __ pshuflw(as_XMMRegister($dst$$reg), as_XMMRegister($dst$$reg), 0x00);
-  %}
-
-  enc_class pshufd_4x16(regF dst, regF src) %{
-    MacroAssembler _masm(&cbuf);
-
-    __ pshuflw(as_XMMRegister($dst$$reg), as_XMMRegister($src$$reg), 0x00);
-  %}
-
-  enc_class pshufd(regD dst, regD src, int mode) %{
-    MacroAssembler _masm(&cbuf);
-
-    __ pshufd(as_XMMRegister($dst$$reg), as_XMMRegister($src$$reg), $mode);
-  %}
-
-  enc_class pxor(regD dst, regD src) %{
-    MacroAssembler _masm(&cbuf);
-
-    __ pxor(as_XMMRegister($dst$$reg), as_XMMRegister($src$$reg));
-  %}
-
-  enc_class mov_i2x(regD dst, rRegI src) %{
-    MacroAssembler _masm(&cbuf);
-
-    __ movdl(as_XMMRegister($dst$$reg), as_Register($src$$reg));
-  %}
-
   // obj: object to lock
   // box: box address (header location) -- killed
   // tmp: rax -- killed
@@ -3482,11 +3368,11 @@ encode %{
             objReg != scrReg && tmpReg != scrReg, "invariant") ; 
 
     if (_counters != NULL) {
-      masm.atomic_incl(ExternalAddress((address) _counters->total_entry_count_addr()));
+      masm.atomic_incl(Address((address) _counters->total_entry_count_addr(), relocInfo::none));
     }
     if (EmitSync & 1) { 
-        masm.movptr (Address(boxReg, 0), intptr_t(markOopDesc::unused_mark())) ; 
-        masm.cmpq   (rsp, 0) ; 
+        masm.movq (Address(boxReg), intptr_t(markOopDesc::unused_mark())) ; 
+        masm.cmpq (rsp, 0) ; 
     } else
     if (EmitSync & 2) { 
         Label DONE_LABEL;
@@ -3495,25 +3381,25 @@ encode %{
           masm.biased_locking_enter(boxReg, objReg, tmpReg, scrReg, false, DONE_LABEL, NULL, _counters);
         }
         masm.movl(tmpReg, 0x1);
-        masm.orq(tmpReg, Address(objReg, 0));
-        masm.movq(Address(boxReg, 0), tmpReg);
+        masm.orq(tmpReg, Address(objReg));
+        masm.movq(Address(boxReg), tmpReg);
         if (os::is_MP()) {
           masm.lock();
         }
-        masm.cmpxchgq(boxReg, Address(objReg, 0)); // Updates tmpReg
+        masm.cmpxchgq(boxReg, Address(objReg)); // Updates tmpReg
         masm.jcc(Assembler::equal, DONE_LABEL);
     
         // Recursive locking
         masm.subq(tmpReg, rsp);
         masm.andq(tmpReg, 7 - os::vm_page_size());
-        masm.movq(Address(boxReg, 0), tmpReg);
+        masm.movq(Address(boxReg), tmpReg);
 
         masm.bind(DONE_LABEL); 
         masm.nop(); // avoid branch to branch
     } else { 
         Label DONE_LABEL, IsInflated, Egress; 
 
-        masm.movq  (tmpReg, Address(objReg, 0)) ; 
+        masm.movq  (tmpReg, Address(objReg)) ; 
         masm.testq (tmpReg, 0x02) ;         // inflated vs stack-locked|neutral|biased
         masm.jcc   (Assembler::notZero, IsInflated) ; 
          
@@ -3526,26 +3412,26 @@ encode %{
           
         if (UseBiasedLocking) {
           masm.biased_locking_enter(boxReg, objReg, tmpReg, scrReg, true, DONE_LABEL, NULL, _counters);
-          masm.movq  (tmpReg, Address(objReg, 0)) ;        // [FETCH]
+          masm.movq  (tmpReg, Address(objReg)) ;        // [FETCH]
         }
 
         masm.orq   (tmpReg, 1) ; 
-        masm.movq  (Address(boxReg, 0), tmpReg) ;  
+        masm.movq  (Address(boxReg), tmpReg) ;  
         if (os::is_MP()) { masm.lock(); } 
-        masm.cmpxchgq(boxReg, Address(objReg, 0)); // Updates tmpReg
+        masm.cmpxchgq(boxReg, Address(objReg)); // Updates tmpReg
         if (_counters != NULL) {
-           masm.cond_inc32(Assembler::equal,
-                           ExternalAddress((address) _counters->fast_path_entry_count_addr()));
+           masm.cond_incl(Assembler::equal, 
+             Address((address) _counters->fast_path_entry_count_addr(), relocInfo::none));
         }
         masm.jcc   (Assembler::equal, DONE_LABEL);
     
         // Recursive locking
         masm.subq  (tmpReg, rsp);
         masm.andq  (tmpReg, 7 - os::vm_page_size());
-        masm.movq  (Address(boxReg, 0), tmpReg);
+        masm.movq  (Address(boxReg), tmpReg);
         if (_counters != NULL) {
-           masm.cond_inc32(Assembler::equal,
-                           ExternalAddress((address) _counters->fast_path_entry_count_addr()));
+           masm.cond_incl(Assembler::equal, 
+             Address((address) _counters->fast_path_entry_count_addr(), relocInfo::none));
         }
         masm.jmp   (DONE_LABEL) ; 
 
@@ -3557,7 +3443,7 @@ encode %{
         // We should also think about trying a CAS without having
         // fetched _owner.  If the CAS is successful we may
         // avoid an RTO->RTS upgrade on the $line.  
-        masm.movptr(Address(boxReg, 0), intptr_t(markOopDesc::unused_mark())) ; 
+        masm.movq  (Address(boxReg), intptr_t(markOopDesc::unused_mark())) ; 
 
         masm.movq  (boxReg, tmpReg) ; 
         masm.movq  (tmpReg, Address(tmpReg, ObjectMonitor::owner_offset_in_bytes()-2)) ; 
@@ -3596,7 +3482,7 @@ encode %{
 
        // Check whether the displaced header is 0 
        //(=> recursive unlock)
-       masm.movq(tmpReg, Address(boxReg, 0));
+       masm.movq(tmpReg, Address(boxReg));
        masm.testq(tmpReg, tmpReg);
        masm.jcc(Assembler::zero, DONE_LABEL);
 
@@ -3604,7 +3490,7 @@ encode %{
        if (os::is_MP()) {
          masm.lock();
        }
-       masm.cmpxchgq(tmpReg, Address(objReg, 0)); // Uses RAX which is box
+       masm.cmpxchgq(tmpReg, Address(objReg)); // Uses RAX which is box
        masm.bind(DONE_LABEL);
        masm.nop(); // avoid branch to branch
     } else { 
@@ -3614,8 +3500,8 @@ encode %{
          masm.biased_locking_exit(objReg, tmpReg, DONE_LABEL);
        }
         
-       masm.movq  (tmpReg, Address(objReg, 0)) ; 
-       masm.cmpq  (Address(boxReg, 0), (int)NULL_WORD) ; 
+       masm.movq  (tmpReg, Address(objReg)) ; 
+       masm.cmpq  (Address(boxReg), 0L) ; 
        masm.jcc   (Assembler::zero, DONE_LABEL) ; 
        masm.testq (tmpReg, 0x02) ; 
        masm.jcc   (Assembler::zero, Stacked) ; 
@@ -3628,27 +3514,27 @@ encode %{
        masm.movq  (boxReg, Address (tmpReg, ObjectMonitor::cxq_offset_in_bytes()-2)) ; 
        masm.orq   (boxReg, Address (tmpReg, ObjectMonitor::EntryList_offset_in_bytes()-2)) ; 
        masm.jcc   (Assembler::notZero, CheckSucc) ; 
-       masm.mov64 (Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2), (int)NULL_WORD) ; 
+       masm.movq  (Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2), intptr_t(0L)) ; 
        masm.jmp   (DONE_LABEL) ; 
         
        if ((EmitSync & 65536) == 0) { 
          Label LSuccess, LGoSlowPath ;
          masm.bind  (CheckSucc) ;
-         masm.cmpq  (Address (tmpReg, ObjectMonitor::succ_offset_in_bytes()-2), (int)NULL_WORD) ;
+         masm.cmpq  (Address (tmpReg, ObjectMonitor::succ_offset_in_bytes()-2), 0L) ;
          masm.jcc   (Assembler::zero, LGoSlowPath) ;
 
          // I'd much rather use lock:andl m->_owner, 0 as it's faster than the
          // the explicit ST;MEMBAR combination, but masm doesn't currently support
          // "ANDQ M,IMM".  Don't use MFENCE here.  lock:add to TOS, xchg, etc
          // are all faster when the write buffer is populated.
-         masm.movptr (Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2), (int)NULL_WORD) ;
+         masm.movq  (Address (tmpReg, ObjectMonitor::owner_offset_in_bytes()-2), intptr_t(0L)) ;
          if (os::is_MP()) {
-            masm.lock () ; masm.addq (Address(rsp, 0), 0) ;
+            masm.lock () ; masm.addq (Address(rsp), 0) ;
          }
-         masm.cmpq  (Address (tmpReg, ObjectMonitor::succ_offset_in_bytes()-2), (int)NULL_WORD) ;
+         masm.cmpq  (Address (tmpReg, ObjectMonitor::succ_offset_in_bytes()-2), 0L) ;
          masm.jcc   (Assembler::notZero, LSuccess) ;
 
-         masm.movptr (boxReg, (int)NULL_WORD) ;                   // box is really EAX
+         masm.movq  (boxReg, intptr_t(0L)) ;                   // box is really EAX
          if (os::is_MP()) { masm.lock(); }
          masm.cmpxchgq (r15_thread, Address(tmpReg, ObjectMonitor::owner_offset_in_bytes()-2));
          masm.jcc   (Assembler::notEqual, LSuccess) ;
@@ -3664,9 +3550,9 @@ encode %{
        }
 
        masm.bind  (Stacked) ; 
-       masm.movq  (tmpReg, Address (boxReg, 0)) ;      // re-fetch
+       masm.movq  (tmpReg, Address (boxReg)) ;      // re-fetch
        if (os::is_MP()) { masm.lock(); } 
-       masm.cmpxchgq(tmpReg, Address(objReg, 0)); // Uses RAX which is box
+       masm.cmpxchgq(tmpReg, Address(objReg)); // Uses RAX which is box
 
        if (EmitSync & 65536) { 
           masm.bind (CheckSucc) ; 
@@ -3715,8 +3601,8 @@ encode %{
     masm.jcc(Assembler::zero, LENGTH_DIFF_LABEL);
     
     // Load first characters
-    masm.load_unsigned_word(rcx, Address(rbx, 0));
-    masm.load_unsigned_word(rdi, Address(rax, 0));
+    masm.load_unsigned_word(rcx, Address(rbx));
+    masm.load_unsigned_word(rdi, Address(rax));
     
     // Compare first characters
     masm.subl(rcx, rdi);
@@ -3732,7 +3618,7 @@ encode %{
       masm.jcc(Assembler::notEqual, LSkip2);
     
       // Check if the length difference is zero (from stack)
-      masm.cmpl(Address(rsp, 0), 0x0);
+      masm.cmpl(Address(rsp), 0x0);
       masm.jcc(Assembler::equal,  LENGTH_DIFF_LABEL);
 
       // Strings might not be equivalent
@@ -4416,20 +4302,6 @@ operand immP0()
   interface(CONST_INTER);
 %}
 
-// Unsigned 31-bit Pointer Immediate
-// Can be used in both 32-bit signed and 32-bit unsigned insns.
-// Works for nulls and markOops; not for relocatable (oop) pointers.
-operand immP31()
-%{
-  predicate(!n->as_Type()->type()->isa_oopptr()
-            && (n->get_ptr() >> 31) == 0);
-  match(ConP);
-
-  op_cost(5);
-  format %{ %}
-  interface(CONST_INTER);
-%}
-
 // Long Immediate
 operand immL()
 %{
@@ -4744,7 +4616,6 @@ operand any_RegP()
   match(rdi_RegP);
   match(rsi_RegP);
   match(rbp_RegP);
-  match(r15_RegP);
   match(rRegP);
 
   format %{ %}
@@ -4760,19 +4631,10 @@ operand rRegP()
   match(rdi_RegP);
   match(rsi_RegP);
   match(rbp_RegP);
-  match(r15_RegP);  // See Q&A below about r15_RegP.
 
   format %{ %}
   interface(REG_INTER);
 %}
-
-// Question: Why is r15_RegP (the read-only TLS register) a match for rRegP?
-// Answer: Operand match rules govern the DFA as it processes instruction inputs.
-// It's fine for an instruction input which expects rRegP to match a r15_RegP.
-// The output of an instruction is controlled by the allocator, which respects
-// register class masks, not match rules.  Unless an instruction mentions
-// r15_RegP or any_RegP explicitly as its output, r15 will not be considered
-// by the allocator as an input.
 
 operand no_rax_RegP()
 %{
@@ -4856,16 +4718,6 @@ operand rdi_RegP()
 operand rbp_RegP()
 %{
   constraint(ALLOC_IN_RC(ptr_rbp_reg));
-  match(RegP);
-  match(rRegP);
-
-  format %{ %}
-  interface(REG_INTER);
-%}
-
-operand r15_RegP()
-%{
-  constraint(ALLOC_IN_RC(ptr_r15_reg));
   match(RegP);
   match(rRegP);
 
@@ -5003,7 +4855,7 @@ operand regD()
 // %}
 
 // Indirect Memory Operand
-operand indirect(any_RegP reg)
+operand indirect(rRegP reg)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(reg);
@@ -5018,7 +4870,7 @@ operand indirect(any_RegP reg)
 %}
 
 // Indirect Memory Plus Short Offset Operand
-operand indOffset8(any_RegP reg, immL8 off)
+operand indOffset8(rRegP reg, immL8 off)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(AddP reg off);
@@ -5033,7 +4885,7 @@ operand indOffset8(any_RegP reg, immL8 off)
 %}
 
 // Indirect Memory Plus Long Offset Operand
-operand indOffset32(any_RegP reg, immL32 off)
+operand indOffset32(rRegP reg, immL32 off)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(AddP reg off);
@@ -5048,7 +4900,7 @@ operand indOffset32(any_RegP reg, immL32 off)
 %}
 
 // Indirect Memory Plus Index Register Plus Offset Operand
-operand indIndexOffset(any_RegP reg, rRegL lreg, immL32 off)
+operand indIndexOffset(rRegP reg, rRegL lreg, immL32 off)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(AddP (AddP reg lreg) off);
@@ -5064,7 +4916,7 @@ operand indIndexOffset(any_RegP reg, rRegL lreg, immL32 off)
 %}
 
 // Indirect Memory Plus Index Register Plus Offset Operand
-operand indIndex(any_RegP reg, rRegL lreg)
+operand indIndex(rRegP reg, rRegL lreg)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(AddP reg lreg);
@@ -5080,7 +4932,7 @@ operand indIndex(any_RegP reg, rRegL lreg)
 %}
 
 // Indirect Memory Times Scale Plus Index Register 
-operand indIndexScale(any_RegP reg, rRegL lreg, immI2 scale)
+operand indIndexScale(rRegP reg, rRegL lreg, immI2 scale)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(AddP reg (LShiftL lreg scale));
@@ -5096,7 +4948,7 @@ operand indIndexScale(any_RegP reg, rRegL lreg, immI2 scale)
 %}
 
 // Indirect Memory Times Scale Plus Index Register Plus Offset Operand
-operand indIndexScaleOffset(any_RegP reg, immL32 off, rRegL lreg, immI2 scale)
+operand indIndexScaleOffset(rRegP reg, immL32 off, rRegL lreg, immI2 scale)
 %{
   constraint(ALLOC_IN_RC(ptr_reg));
   match(AddP (AddP reg (LShiftL lreg scale)) off);
@@ -5968,51 +5820,6 @@ instruct loadD(regD dst, memory mem)
   ins_pipe(pipe_slow); // XXX
 %}
 
-// Load Aligned Packed Byte to XMM register
-instruct loadA8B(regD dst, memory mem) %{
-  match(Set dst (Load8B mem));
-  ins_cost(125);
-  format %{ "MOVQ  $dst,$mem\t! packed8B" %}
-  ins_encode( movq_ld(dst, mem));
-  ins_pipe( pipe_slow );
-%}
-
-// Load Aligned Packed Short to XMM register
-instruct loadA4S(regD dst, memory mem) %{
-  match(Set dst (Load4S mem));
-  ins_cost(125);
-  format %{ "MOVQ  $dst,$mem\t! packed4S" %}
-  ins_encode( movq_ld(dst, mem));
-  ins_pipe( pipe_slow );
-%}
-
-// Load Aligned Packed Char to XMM register
-instruct loadA4C(regD dst, memory mem) %{
-  match(Set dst (Load4C mem));
-  ins_cost(125);
-  format %{ "MOVQ  $dst,$mem\t! packed4C" %}
-  ins_encode( movq_ld(dst, mem));
-  ins_pipe( pipe_slow );
-%}
-
-// Load Aligned Packed Integer to XMM register
-instruct load2IU(regD dst, memory mem) %{
-  match(Set dst (Load2I mem));
-  ins_cost(125);
-  format %{ "MOVQ  $dst,$mem\t! packed2I" %}
-  ins_encode( movq_ld(dst, mem));
-  ins_pipe( pipe_slow );
-%}
-
-// Load Aligned Packed Single to XMM
-instruct loadA2F(regD dst, memory mem) %{
-  match(Set dst (Load2F mem));
-  ins_cost(145);
-  format %{ "MOVQ  $dst,$mem\t! packed2F" %}
-  ins_encode( movq_ld(dst, mem));
-  ins_pipe( pipe_slow );
-%}
-
 // Load Effective Address
 instruct leaP8(rRegP dst, indOffset8 mem) 
 %{
@@ -6164,17 +5971,6 @@ instruct loadConP0(rRegP dst, immP0 src, rFlagsReg cr)
   ins_pipe(ialu_reg);
 %}
 
-instruct loadConP31(rRegP dst, immP31 src, rFlagsReg cr)
-%{
-  match(Set dst src);
-  effect(KILL cr);
- 
-  ins_cost(60);
-  format %{ "movl    $dst, $src\t# ptr (positive 32-bit)" %}
-  ins_encode(load_immP31(dst, src));
-  ins_pipe(ialu_reg);
-%}
-
 instruct loadConF(regF dst, immF src)
 %{
   match(Set dst src);
@@ -6270,7 +6066,7 @@ instruct loadSSD(regD dst, stackSlotD src)
   ins_cost(125);
   format %{ "movsd   $dst, $src\t# double stk" %}
   ins_encode  %{
-    __ movdbl($dst$$XMMRegister, Address(rsp, $src$$disp));
+    __ movdbl($dst$$FloatRegister, Address(rsp, $src$$disp));
   %}
   ins_pipe(pipe_slow); // XXX
 %}
@@ -6428,13 +6224,13 @@ instruct storeP(memory mem, any_RegP src)
   ins_pipe(ialu_mem_reg);
 %}
 
-// Store NULL Pointer, mark word, or other simple pointer constant.
-instruct storeImmP(memory mem, immP31 src)
+// Store NULL Pointer
+instruct storeImmP(memory mem, immP0 src)
 %{
   match(Set mem (StoreP mem src));
 
   ins_cost(125); // XXX
-  format %{ "movq    $mem, $src\t# ptr" %}
+  format %{ "movq    $mem, $src\t# NULL ptr" %}
   opcode(0xC7); /* C7 /0 */
   ins_encode(REX_mem_wide(mem), OpcP, RM_opc_mem(0x00, mem), Con32(src));
   ins_pipe(ialu_mem_imm);
@@ -6489,33 +6285,6 @@ instruct storeImmB(memory mem, immI8 src)
   ins_pipe(ialu_mem_imm);	
 %}
 
-// Store Aligned Packed Byte XMM register to memory
-instruct storeA8B(memory mem, regD src) %{
-  match(Set mem (Store8B mem src));
-  ins_cost(145);
-  format %{ "MOVQ  $mem,$src\t! packed8B" %}
-  ins_encode( movq_st(mem, src));
-  ins_pipe( pipe_slow );
-%}
-
-// Store Aligned Packed Char/Short XMM register to memory
-instruct storeA4C(memory mem, regD src) %{
-  match(Set mem (Store4C mem src));
-  ins_cost(145);
-  format %{ "MOVQ  $mem,$src\t! packed4C" %}
-  ins_encode( movq_st(mem, src));
-  ins_pipe( pipe_slow );
-%}
-
-// Store Aligned Packed Integer XMM register to memory
-instruct storeA2I(memory mem, regD src) %{
-  match(Set mem (Store2I mem src));
-  ins_cost(145);
-  format %{ "MOVQ  $mem,$src\t! packed2I" %}
-  ins_encode( movq_st(mem, src));
-  ins_pipe( pipe_slow );
-%}
-
 // Store CMS card-mark Immediate
 instruct storeImmCM0(memory mem, immI0 src)
 %{
@@ -6526,15 +6295,6 @@ instruct storeImmCM0(memory mem, immI0 src)
   opcode(0xC6); /* C6 /0 */
   ins_encode(REX_mem(mem), OpcP, RM_opc_mem(0x00, mem), Con8or32(src));
   ins_pipe(ialu_mem_imm);	
-%}
-
-// Store Aligned Packed Single Float XMM register to memory
-instruct storeA2F(memory mem, regD src) %{
-  match(Set mem (Store2F mem src));
-  ins_cost(145);
-  format %{ "MOVQ  $mem,$src\t! packed2F" %}
-  ins_encode( movq_st(mem, src));
-  ins_pipe( pipe_slow );
 %}
 
 // Store Float
@@ -10343,7 +10103,7 @@ instruct MoveF2I_reg_reg(rRegI dst, regF src) %{
   effect(DEF dst, USE src);
   ins_cost(85);
   format %{ "movd    $dst,$src\t# MoveF2I" %}
-  ins_encode %{ __ movdl($dst$$Register, $src$$XMMRegister); %}
+  ins_encode %{ __ movdl($dst$$Register, $src$$FloatRegister); %}
   ins_pipe( pipe_slow );
 %}
 
@@ -10352,7 +10112,7 @@ instruct MoveD2L_reg_reg(rRegL dst, regD src) %{
   effect(DEF dst, USE src);
   ins_cost(85);
   format %{ "movd    $dst,$src\t# MoveD2L" %}
-  ins_encode %{ __ movdq($dst$$Register, $src$$XMMRegister); %}
+  ins_encode %{ __ movdq($dst$$Register, $src$$FloatRegister); %}
   ins_pipe( pipe_slow );
 %}
 
@@ -10362,7 +10122,7 @@ instruct MoveI2F_reg_reg(regF dst, rRegI src) %{
   effect(DEF dst, USE src);
   ins_cost(300);
   format %{ "movd    $dst,$src\t# MoveI2F" %}
-  ins_encode %{ __ movdl($dst$$XMMRegister, $src$$Register); %}
+  ins_encode %{ __ movdl($dst$$FloatRegister, $src$$Register); %}
   ins_pipe( pipe_slow );
 %}
 
@@ -10371,137 +10131,9 @@ instruct MoveL2D_reg_reg(regD dst, rRegL src) %{
   effect(DEF dst, USE src);
   ins_cost(300);
   format %{ "movd    $dst,$src\t# MoveL2D" %}
-  ins_encode %{ __ movdq($dst$$XMMRegister, $src$$Register); %}
+  ins_encode %{ __ movdq($dst$$FloatRegister, $src$$Register); %}
   ins_pipe( pipe_slow );
 %}
-
-// Replicate scalar to packed byte (1 byte) values in xmm
-instruct Repl8B_reg(regD dst, regD src) %{
-  match(Set dst (Replicate8B src));
-  format %{ "MOVDQA  $dst,$src\n\t"
-            "PUNPCKLBW $dst,$dst\n\t"
-            "PSHUFLW $dst,$dst,0x00\t! replicate8B" %}
-  ins_encode( pshufd_8x8(dst, src));
-  ins_pipe( pipe_slow );
-%}
-
-// Replicate scalar to packed byte (1 byte) values in xmm
-instruct Repl8B_rRegI(regD dst, rRegI src) %{
-  match(Set dst (Replicate8B src));
-  format %{ "MOVD    $dst,$src\n\t"
-            "PUNPCKLBW $dst,$dst\n\t"
-            "PSHUFLW $dst,$dst,0x00\t! replicate8B" %}
-  ins_encode( mov_i2x(dst, src), pshufd_8x8(dst, dst));
-  ins_pipe( pipe_slow );
-%}
-
-// Replicate scalar zero to packed byte (1 byte) values in xmm
-instruct Repl8B_immI0(regD dst, immI0 zero) %{
-  match(Set dst (Replicate8B zero));
-  format %{ "PXOR  $dst,$dst\t! replicate8B" %}
-  ins_encode( pxor(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed shore (2 byte) values in xmm
-instruct Repl4S_reg(regD dst, regD src) %{
-  match(Set dst (Replicate4S src));
-  format %{ "PSHUFLW $dst,$src,0x00\t! replicate4S" %}
-  ins_encode( pshufd_4x16(dst, src));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed shore (2 byte) values in xmm
-instruct Repl4S_rRegI(regD dst, rRegI src) %{
-  match(Set dst (Replicate4S src));
-  format %{ "MOVD    $dst,$src\n\t"
-            "PSHUFLW $dst,$dst,0x00\t! replicate4S" %}
-  ins_encode( mov_i2x(dst, src), pshufd_4x16(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar zero to packed short (2 byte) values in xmm
-instruct Repl4S_immI0(regD dst, immI0 zero) %{
-  match(Set dst (Replicate4S zero));
-  format %{ "PXOR  $dst,$dst\t! replicate4S" %}
-  ins_encode( pxor(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed char (2 byte) values in xmm
-instruct Repl4C_reg(regD dst, regD src) %{
-  match(Set dst (Replicate4C src));
-  format %{ "PSHUFLW $dst,$src,0x00\t! replicate4C" %}
-  ins_encode( pshufd_4x16(dst, src));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed char (2 byte) values in xmm
-instruct Repl4C_rRegI(regD dst, rRegI src) %{
-  match(Set dst (Replicate4C src));
-  format %{ "MOVD    $dst,$src\n\t"
-            "PSHUFLW $dst,$dst,0x00\t! replicate4C" %}
-  ins_encode( mov_i2x(dst, src), pshufd_4x16(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar zero to packed char (2 byte) values in xmm
-instruct Repl4C_immI0(regD dst, immI0 zero) %{
-  match(Set dst (Replicate4C zero));
-  format %{ "PXOR  $dst,$dst\t! replicate4C" %}
-  ins_encode( pxor(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed integer (4 byte) values in xmm
-instruct Repl2I_reg(regD dst, regD src) %{
-  match(Set dst (Replicate2I src));
-  format %{ "PSHUFD $dst,$src,0x00\t! replicate2I" %}
-  ins_encode( pshufd(dst, src, 0x00));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed integer (4 byte) values in xmm
-instruct Repl2I_rRegI(regD dst, rRegI src) %{
-  match(Set dst (Replicate2I src));
-  format %{ "MOVD   $dst,$src\n\t"
-            "PSHUFD $dst,$dst,0x00\t! replicate2I" %}
-  ins_encode( mov_i2x(dst, src), pshufd(dst, dst, 0x00));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar zero to packed integer (2 byte) values in xmm
-instruct Repl2I_immI0(regD dst, immI0 zero) %{
-  match(Set dst (Replicate2I zero));
-  format %{ "PXOR  $dst,$dst\t! replicate2I" %}
-  ins_encode( pxor(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed single precision floating point values in xmm
-instruct Repl2F_reg(regD dst, regD src) %{
-  match(Set dst (Replicate2F src));
-  format %{ "PSHUFD $dst,$src,0xe0\t! replicate2F" %}
-  ins_encode( pshufd(dst, src, 0xe0));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed single precision floating point values in xmm
-instruct Repl2F_regF(regD dst, regF src) %{
-  match(Set dst (Replicate2F src));
-  format %{ "PSHUFD $dst,$src,0xe0\t! replicate2F" %}
-  ins_encode( pshufd(dst, src, 0xe0));
-  ins_pipe( fpu_reg_reg );
-%}
-
-// Replicate scalar to packed single precision floating point values in xmm
-instruct Repl2F_immF0(regD dst, immF0 zero) %{
-  match(Set dst (Replicate2F zero));
-  format %{ "PXOR  $dst,$dst\t! replicate2F" %}
-  ins_encode( pxor(dst, dst));
-  ins_pipe( fpu_reg_reg );
-%}
-
 
 // =======================================================================
 // fast clearing of an array

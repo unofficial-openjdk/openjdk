@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_amd64.cpp	1.57 07/06/08 18:13:29 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,18 +28,15 @@
 #include "incls/_precompiled.incl"
 #include "incls/_assembler_amd64.cpp.incl"
 
-// Implementation of AddressLiteral
-
-AddressLiteral::AddressLiteral(address target, relocInfo::relocType rtype) {
-  _is_lval = false;
+// Implementation of Address
+Address::Address(address target, relocInfo::relocType rtype)
+{
+  _base = noreg;
+  _index = noreg;
+  _scale = no_scale;
+  _disp = 0;
   _target = target;
   switch (rtype) {
-  case relocInfo::oop_type:
-    // Oops are a special case. Normally they would be their own section
-    // but in cases like icBuffer they are literals in the code stream that
-    // we don't have a section for. We use none so that we get a literal address
-    // which is always patchable.
-    break;
   case relocInfo::external_word_type:
     _rspec = external_word_Relocation::spec(target);
     break;
@@ -63,132 +60,16 @@ AddressLiteral::AddressLiteral(address target, relocInfo::relocType rtype) {
   }
 }
 
-// Implementation of Address
-
-Address Address::make_array(ArrayAddress adr) {
-#ifdef _LP64
-  // Not implementable on 64bit machines
-  // Should have been handled higher up the call chain.
-  ShouldNotReachHere();
-  return Address();
-#else
-  AddressLiteral base = adr.base();
-  Address index = adr.index();
-  assert(index._disp == 0, "must not have disp"); // maybe it can?
-  Address array(index._base, index._index, index._scale, (intptr_t) base.target());
-  array._rspec = base._rspec;
-  return array;
-#endif // _LP64
-}
-
-// exceedingly dangerous constructor
-Address::Address(int disp, address loc, relocInfo::relocType rtype) {
-  _base  = noreg;
-  _index = noreg;
-  _scale = no_scale;
-  _disp  = disp;
-  switch (rtype) {
-    case relocInfo::external_word_type:
-      _rspec = external_word_Relocation::spec(loc);
-      break;
-    case relocInfo::internal_word_type:
-      _rspec = internal_word_Relocation::spec(loc);
-      break;
-    case relocInfo::runtime_call_type:
-      // HMM
-      _rspec = runtime_call_Relocation::spec();
-      break;
-    case relocInfo::none:
-      break;
-    default:
-      ShouldNotReachHere();
-  }
-}
-
-// Convert the raw encoding form into the form expected by the constructor for
-// Address.  An index of 4 (rsp) corresponds to having no index, so convert
-// that to noreg for the Address constructor.
-Address Address::make_raw(int base, int index, int scale, int disp) {
-  bool valid_index = index != rsp->encoding();
-  if (valid_index) {
-    Address madr(as_Register(base), as_Register(index), (Address::ScaleFactor)scale, in_ByteSize(disp));
-    return madr;
-  } else {
-    Address madr(as_Register(base), noreg, Address::no_scale, in_ByteSize(disp));
-    return madr;
-  }
-}
-
-
 // Implementation of Assembler
-int AbstractAssembler::code_fill_byte() {
+int AbstractAssembler::code_fill_byte() 
+{
   return (u_char)'\xF4'; // hlt
 }
 
-// This should only be used by 64bit instructions that can use rip-relative
-// it cannot be used by instructions that want an immediate value.
-
-bool Assembler::reachable(AddressLiteral adr) {
-  int64_t disp;
-  // None will force a 64bit literal to the code stream. Likely a placeholder
-  // for something that will be patched later and we need to certain it will
-  // always be reachable.
-  if (adr.reloc() == relocInfo::none) {
-    return false;
-  }
-  if (adr.reloc() == relocInfo::internal_word_type) {
-    // This should be rip relative and easily reachable.
-    return true;
-  }
-  if (adr.reloc() != relocInfo::external_word_type &&
-      adr.reloc() != relocInfo::runtime_call_type ) {
-    return false;
-  }
-
-  // Stress the correction code
-  if (ForceUnreachable) {
-    // Must be runtimecall reloc, see if it is in the codecache
-    // Flipping stuff in the codecache to be unreachable causes issues
-    // with things like inline caches where the additional instructions
-    // are not handled.
-    if (CodeCache::find_blob(adr._target) == NULL) {
-      return false;
-    }
-  } 
-  // For external_word_type/runtime_call_type if it is reachable from where we
-  // are now (possibly a temp buffer) and where we might end up
-  // anywhere in the codeCache then we are always reachable.
-  // This would have to change if we ever save/restore shared code
-  // to be more pessimistic.
-
-  disp = (int64_t)adr._target - ((int64_t)CodeCache::low_bound() + sizeof(int));
-  if (!is_simm32(disp)) return false;
-  disp = (int64_t)adr._target - ((int64_t)CodeCache::high_bound() + sizeof(int));
-  if (!is_simm32(disp)) return false;
-
-  disp = (int64_t)adr._target - ((int64_t)_code_pos + sizeof(int));
-
-  // Because rip relative is a disp + address_of_next_instruction and we
-  // don't know the value of address_of_next_instruction we apply a fudge factor
-  // to make sure we will be ok no matter the size of the instruction we get placed into.
-  // We don't have to fudge the checks above here because they are already worst case.
-
-  // 12 == override/rex byte, opcode byte, rm byte, sib byte, a 4-byte disp , 4-byte literal 
-  // + 4 because better safe than sorry.
-  const int fudge = 12 + 4;
-  if (disp < 0) {
-    disp -= fudge;
-  } else {
-    disp += fudge;
-  }
-  return is_simm32(disp);
-} 
-
-
-// make this go away eventually
 void Assembler::emit_data(jint data, 
                           relocInfo::relocType rtype, 
-                          int format) {
+                          int format) 
+{
   if (rtype == relocInfo::none) {
     emit_long(data);
   } else {
@@ -198,29 +79,24 @@ void Assembler::emit_data(jint data,
 
 void Assembler::emit_data(jint data,
                           RelocationHolder const& rspec,
-                          int format) {
+                          int format)
+{
   assert(imm64_operand == 0, "default format must be imm64 in this file");
   assert(imm64_operand != format, "must not be imm64");
   assert(inst_mark() != NULL, "must be inside InstructionMark");
-  if (rspec.type() !=  relocInfo::none) {
-    #ifdef ASSERT
-      check_relocation(rspec, format);
-    #endif
-    // Do not use AbstractAssembler::relocate, which is not intended for
-    // embedded words.  Instead, relocate to the enclosing instruction.
-
-    // hack. call32 is too wide for mask so use disp32
-    if (format == call32_operand)
-      code_section()->relocate(inst_mark(), rspec, disp32_operand);
-    else
-      code_section()->relocate(inst_mark(), rspec, format);
-  }
+  // Do not use AbstractAssembler::relocate, which is not intended for
+  // embedded words.  Instead, relocate to the enclosing instruction.
+  code_section()->relocate(inst_mark(), rspec, format);
+#ifdef ASSERT
+  check_relocation(rspec, format);
+#endif
   emit_long(data);
 }
 
 void Assembler::emit_data64(jlong data, 
                             relocInfo::relocType rtype, 
-                            int format) {
+                            int format) 
+{
   if (rtype == relocInfo::none) {
     emit_long64(data);
   } else {
@@ -230,7 +106,8 @@ void Assembler::emit_data64(jlong data,
 
 void Assembler::emit_data64(jlong data,
                             RelocationHolder const& rspec,
-                            int format) {
+                            int format)
+{
   assert(imm64_operand == 0, "default format must be imm64 in this file");
   assert(imm64_operand == format, "must be imm64");
   assert(inst_mark() != NULL, "must be inside InstructionMark");
@@ -243,7 +120,8 @@ void Assembler::emit_data64(jlong data,
   emit_long64(data);
 }
 
-void Assembler::emit_arith_b(int op1, int op2, Register dst, int imm8) {
+void Assembler::emit_arith_b(int op1, int op2, Register dst, int imm8) 
+{
   assert(isByte(op1) && isByte(op2), "wrong opcode");
   assert(isByte(imm8), "not a byte");
   assert((op1 & 0x01) == 0, "should be 8bit operation");
@@ -256,7 +134,8 @@ void Assembler::emit_arith_b(int op1, int op2, Register dst, int imm8) {
   emit_byte(imm8);
 }
 
-void Assembler::emit_arith(int op1, int op2, Register dst, int imm32) {
+void Assembler::emit_arith(int op1, int op2, Register dst, int imm32) 
+{
   assert(isByte(op1) && isByte(op2), "wrong opcode");
   assert((op1 & 0x01) == 1, "should be 32bit operation");
   assert((op1 & 0x02) == 0, "sign-extension bit should not be set");
@@ -278,7 +157,8 @@ void Assembler::emit_arith(int op1, int op2, Register dst, int imm32) {
 // immediate-to-memory forms
 void Assembler::emit_arith_operand(int op1, 
                                    Register rm, Address adr,
-                                   int imm32) {
+                                   int imm32)
+{
   assert((op1 & 0x01) == 1, "should be 32bit operation");
   assert((op1 & 0x02) == 0, "sign-extension bit should not be set");
   if (is8bit(imm32)) {
@@ -293,7 +173,8 @@ void Assembler::emit_arith_operand(int op1,
 }
 
 
-void Assembler::emit_arith(int op1, int op2, Register dst, Register src) {
+void Assembler::emit_arith(int op1, int op2, Register dst, Register src) 
+{
   assert(isByte(op1) && isByte(op2), "wrong opcode");
   int dstenc = dst->encoding();
   int srcenc = src->encoding();
@@ -309,8 +190,10 @@ void Assembler::emit_arith(int op1, int op2, Register dst, Register src) {
 
 void Assembler::emit_operand(Register reg, Register base, Register index,
                              Address::ScaleFactor scale, int disp,
+                             address target,
                              RelocationHolder const& rspec,
-                             int rip_relative_correction) {
+                             int rip_relative_correction) 
+{
   relocInfo::relocType rtype = (relocInfo::relocType) rspec.type();
   int regenc = reg->encoding();
   if (regenc >= 8) { 
@@ -407,40 +290,33 @@ void Assembler::emit_operand(Register reg, Register base, Register index,
       emit_byte(0x04 | regenc << 3);
       emit_byte(scale << 6 | indexenc << 3 | 0x05);
       emit_data(disp, rspec, disp32_operand);
-#ifdef _LP64
-    } else if (rtype != relocInfo::none ) {
-      // [disp] RIP-RELATIVE
-      // [00 000 101] disp32
-
-      emit_byte(0x05 | regenc << 3);
-      // Note that the RIP-rel. correction applies to the generated
-      // disp field, but _not_ to the target address in the rspec.
-
-      // disp was created by converting the target address minus the pc
-      // at the start of the instruction. That needs more correction here.
-      // intptr_t disp = target - next_ip;
-      assert(inst_mark() != NULL, "must be inside InstructionMark");
-      address next_ip = pc() + sizeof(int32_t) + rip_relative_correction;
-      int64_t adjusted = (int64_t) disp -  (next_ip - inst_mark());
-      assert(is_simm32(adjusted),
-             "must be 32bit offset (RIP relative address)");
-      emit_data((int) adjusted, rspec, disp32_operand);
-  
-#endif // _LP64
-    } else {
+    } else if (target == NULL) {
       // [disp] ABSOLUTE
       // [00 reg 100][00 100 101] disp32
       emit_byte(0x04 | regenc << 3);
       emit_byte(0x25);
       emit_data(disp, rspec, disp32_operand);
+    } else {
+      // [disp] RIP-RELATIVE
+      // [00 reg 101] disp32
+      emit_byte(0x05 | regenc << 3);
+      // Note that the RIP-rel. correction applies to the generated
+      // disp field, but _not_ to the target address in the rspec.
+      address next_ip = pc() + sizeof(int) + rip_relative_correction;
+      intptr_t disp = target - next_ip;
+      assert(is_simm32(disp),
+             "must be 32bit offset (RIP relative address)");
+      emit_data((int) disp, rspec, disp32_operand);
     }
   }
 }
 
-void Assembler::emit_operand(XMMRegister reg, Register base, Register index,
+void Assembler::emit_operand(FloatRegister reg, Register base, Register index,
                              Address::ScaleFactor scale, int disp,
+                             address target,
                              RelocationHolder const& rspec,
-                             int rip_relative_correction) {
+                             int rip_relative_correction) 
+{
   relocInfo::relocType rtype = (relocInfo::relocType) rspec.type();
   int regenc = reg->encoding();
   if (regenc >= 8) { 
@@ -537,32 +413,23 @@ void Assembler::emit_operand(XMMRegister reg, Register base, Register index,
       emit_byte(0x04 | regenc << 3);
       emit_byte(scale << 6 | indexenc << 3 | 0x05);
       emit_data(disp, rspec, disp32_operand);
-#ifdef _LP64
-    } else if ( rtype != relocInfo::none ) {
-      // [disp] RIP-RELATIVE
-      // [00 reg 101] disp32
-      emit_byte(0x05 | regenc << 3);
-      // Note that the RIP-rel. correction applies to the generated
-      // disp field, but _not_ to the target address in the rspec.
-
-      // disp was created by converting the target address minus the pc
-      // at the start of the instruction. That needs more correction here.
-      // intptr_t disp = target - next_ip;
-
-      assert(inst_mark() != NULL, "must be inside InstructionMark");
-      address next_ip = pc() + sizeof(int32_t) + rip_relative_correction;
-
-      int64_t adjusted = (int64_t) disp -  (next_ip - inst_mark());
-      assert(is_simm32(adjusted),
-             "must be 32bit offset (RIP relative address)");
-      emit_data((int) adjusted, rspec, disp32_operand);
-#endif // _LP64
-    } else {
+    } else if (target == NULL) {
       // [disp] ABSOLUTE
       // [00 reg 100][00 100 101] disp32
       emit_byte(0x04 | regenc << 3);
       emit_byte(0x25);
       emit_data(disp, rspec, disp32_operand);
+    } else {
+      // [disp] RIP-RELATIVE
+      // [00 reg 101] disp32
+      emit_byte(0x05 | regenc << 3);
+      // Note that the RIP-rel. correction applies to the generated
+      // disp field, but _not_ to the target address in the rspec.
+      address next_ip = pc() + sizeof(int) + rip_relative_correction;
+      intptr_t disp = target - next_ip;
+      assert(is_simm32(disp),
+             "must be 32bit offset (RIP relative address)");
+      emit_data((int) disp, rspec, disp32_operand);
     }
   }
 }
@@ -639,7 +506,6 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   case 0x8A: // movb r, a
   case 0x8B: // movl r, a
   case 0x8F: // popl a
-    debug_only(has_disp32 = true);
     break;
 
   case 0x68: // pushq #32
@@ -685,7 +551,7 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
 
   case REP8(0xB8): // movl/q r, #32/#64(oop?)
     if (which == end_pc_operand)  return ip + (is_64bit ? 8 : 4);
-    assert((which == call32_operand || which == imm64_operand) && is_64bit, "");
+    assert(which == imm64_operand && is_64bit, "");
     return ip;
 
   case 0x69: // imul r, a, #32
@@ -719,11 +585,9 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
     case 0xC1: // xaddl
     case 0xC7: // cmpxchg8
     case REP16(0x90): // setcc a
-      debug_only(has_disp32 = true);
       // fall out of the switch to decode the address
       break;
     case 0xAC: // shrd r, a, #8
-      debug_only(has_disp32 = true);
       tail_size = 1;  // the imm8
       break;
     case REP16(0x80): // jcc rdisp32
@@ -743,14 +607,12 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
 
   case 0x83: // addl a, #8; addl r, #8
     // also: orl, adcl, sbbl, andl, subl, xorl, cmpl
-    debug_only(has_disp32 = true); // has both kinds of operands!
     tail_size = 1;
     break;
 
   case 0x9B:
     switch (0xFF & *ip++) {
     case 0xD9: // fnstcw a
-      debug_only(has_disp32 = true);
       break;
     default:
       ShouldNotReachHere();
@@ -766,7 +628,6 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   case REP4(0x28): // sub...
   case 0xF7: // mull a
   case 0x87: // xchg r, a
-    debug_only(has_disp32 = true);
     break;
   case REP4(0x38): // cmp...
   case 0x8D: // lea r, a
@@ -778,7 +639,6 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   case 0xC6: // movb a, #8 
   case 0x80: // cmpb a, #8
   case 0x6B: // imul r, a, #8
-    debug_only(has_disp32 = true); // has both kinds of operands!
     tail_size = 1; // the imm8
     break;
 
@@ -797,7 +657,6 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   case 0xD8: // fadd_s a; fsubr_s a; fmul_s a; fdivr_s a; fcomp_s a
   case 0xDC: // fadd_d a; fsubr_d a; fmul_d a; fdivr_d a; fcomp_d a
   case 0xDE: // faddp_d a; fsubrp_d a; fmulp_d a; fdivrp_d a; fcompp_d a
-    debug_only(has_disp32 = true);
     break;
 
   case 0xF3:                    // For SSE
@@ -835,7 +694,8 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
 
   assert(which != call32_operand, "instruction is not a call, jmp, or jcc");
   assert(which != imm64_operand, "instruction is not a movq reg, imm64");
-  assert(which != disp32_operand || has_disp32, "instruction has no disp32 field");
+  assert(which != disp32_operand || has_disp32,
+         "instruction has no disp32 field");
 
   // parse the output of emit_operand
   int op2 = 0xFF & *ip++;
@@ -893,13 +753,15 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
   return ip;
 }
 
-address Assembler::locate_next_instruction(address inst) {
+address Assembler::locate_next_instruction(address inst)
+{
   // Secretly share code with locate_operand:
   return locate_operand(inst, end_pc_operand);
 }
 
 #ifdef ASSERT
-void Assembler::check_relocation(RelocationHolder const& rspec, int format) {
+void Assembler::check_relocation(RelocationHolder const& rspec, int format) 
+{
   address inst = inst_mark();
   assert(inst != NULL && inst < pc(),
          "must point to beginning of instruction");
@@ -921,212 +783,26 @@ void Assembler::check_relocation(RelocationHolder const& rspec, int format) {
 }
 #endif
 
-int Assembler::prefix_and_encode(int reg_enc, bool byteinst) {
-  if (reg_enc >= 8) {
-    prefix(REX_B);
-    reg_enc -= 8;
-  } else if (byteinst && reg_enc >= 4) {
-    prefix(REX);
-  }
-  return reg_enc;
-}
-
-int Assembler::prefixq_and_encode(int reg_enc) {
-  if (reg_enc < 8) {
-    prefix(REX_W);
-  } else {
-    prefix(REX_WB);
-    reg_enc -= 8;
-  }
-  return reg_enc;
-}
-
-int Assembler::prefix_and_encode(int dst_enc, int src_enc, bool byteinst) {
-  if (dst_enc < 8) {
-    if (src_enc >= 8) {
-      prefix(REX_B);
-      src_enc -= 8;
-    } else if (byteinst && src_enc >= 4) {
-      prefix(REX);
-    }
-  } else {
-    if (src_enc < 8) {
-      prefix(REX_R);
-    } else {
-      prefix(REX_RB);
-      src_enc -= 8;
-    }
-    dst_enc -= 8;
-  }
-  return dst_enc << 3 | src_enc;
-}
-
-int Assembler::prefixq_and_encode(int dst_enc, int src_enc) {
-  if (dst_enc < 8) {
-    if (src_enc < 8) {
-      prefix(REX_W);
-    } else {
-      prefix(REX_WB);
-      src_enc -= 8;
-    }
-  } else {
-    if (src_enc < 8) {
-      prefix(REX_WR);
-    } else {
-      prefix(REX_WRB);
-      src_enc -= 8;
-    }
-    dst_enc -= 8;
-  }
-  return dst_enc << 3 | src_enc;
-}
-
-void Assembler::prefix(Register reg) {
-  if (reg->encoding() >= 8) {
-    prefix(REX_B);
-  }
-}
-
-void Assembler::prefix(Address adr) {
-  if (adr.base_needs_rex()) {
-    if (adr.index_needs_rex()) {
-      prefix(REX_XB);
-    } else {
-      prefix(REX_B);
-    }
-  } else {
-    if (adr.index_needs_rex()) {
-      prefix(REX_X);
-    }
-  }
-}
-
-void Assembler::prefixq(Address adr) {
-  if (adr.base_needs_rex()) {
-    if (adr.index_needs_rex()) {
-      prefix(REX_WXB);
-    } else {
-      prefix(REX_WB);
-    }
-  } else {
-    if (adr.index_needs_rex()) {
-      prefix(REX_WX);
-    } else {
-      prefix(REX_W);
-    }
-  }
-}
-
-
-void Assembler::prefix(Address adr, Register reg, bool byteinst) {
-  if (reg->encoding() < 8) {
-    if (adr.base_needs_rex()) {
-      if (adr.index_needs_rex()) {
-        prefix(REX_XB);
-      } else {
-        prefix(REX_B);
-      }
-    } else {
-      if (adr.index_needs_rex()) {
-        prefix(REX_X);
-      } else if (reg->encoding() >= 4 ) {
-        prefix(REX);
-      }
-    }
-  } else {
-    if (adr.base_needs_rex()) {
-      if (adr.index_needs_rex()) {
-        prefix(REX_RXB);
-      } else {
-        prefix(REX_RB);
-      }
-    } else {
-      if (adr.index_needs_rex()) {
-        prefix(REX_RX);
-      } else {
-        prefix(REX_R);
-      }
-    }
-  }
-}
-
-void Assembler::prefixq(Address adr, Register src) {
-  if (src->encoding() < 8) {
-    if (adr.base_needs_rex()) {
-      if (adr.index_needs_rex()) {
-        prefix(REX_WXB);
-      } else {
-        prefix(REX_WB);
-      }
-    } else {
-      if (adr.index_needs_rex()) {
-        prefix(REX_WX);
-      } else {
-        prefix(REX_W);
-      }
-    }
-  } else {
-    if (adr.base_needs_rex()) {
-      if (adr.index_needs_rex()) {
-        prefix(REX_WRXB);
-      } else {
-        prefix(REX_WRB);
-      }
-    } else {
-      if (adr.index_needs_rex()) {
-        prefix(REX_WRX);
-      } else {
-        prefix(REX_WR);
-      }
-    }
-  }
-}
-
-void Assembler::prefix(Address adr, XMMRegister reg) {
-  if (reg->encoding() < 8) {
-    if (adr.base_needs_rex()) {
-      if (adr.index_needs_rex()) {
-        prefix(REX_XB);
-      } else {
-        prefix(REX_B);
-      }
-    } else {
-      if (adr.index_needs_rex()) {
-        prefix(REX_X);
-      }
-    }
-  } else {
-    if (adr.base_needs_rex()) {
-      if (adr.index_needs_rex()) {
-        prefix(REX_RXB);
-      } else {
-        prefix(REX_RB);
-      }
-    } else {
-      if (adr.index_needs_rex()) {
-        prefix(REX_RX);
-      } else {
-        prefix(REX_R);
-      }
-    }
-  }
-}
-
 void Assembler::emit_operand(Register reg, Address adr,
-                             int rip_relative_correction) {
+                             int rip_relative_correction) 
+{
   emit_operand(reg, adr._base, adr._index, adr._scale, adr._disp,
+               adr._target,
                adr._rspec,
                rip_relative_correction);
 }
 
-void Assembler::emit_operand(XMMRegister reg, Address adr,
-                             int rip_relative_correction) {
+void Assembler::emit_operand(FloatRegister reg, Address adr,
+                             int rip_relative_correction) 
+{
   emit_operand(reg, adr._base, adr._index, adr._scale, adr._disp,
+               adr._target,
                adr._rspec,
                rip_relative_correction);
 }
 
-void Assembler::emit_farith(int b1, int b2, int i) {
+void Assembler::emit_farith(int b1, int b2, int i) 
+{
   assert(isByte(b1) && isByte(b2), "wrong opcode");
   assert(0 <= i &&  i < 8, "illegal stack offset");
   emit_byte(b1);
@@ -1135,7 +811,8 @@ void Assembler::emit_farith(int b1, int b2, int i) {
 
 // pushad is invalid, use this instead.
 // NOTE: Kills flags!!
-void Assembler::pushaq() {
+void Assembler::pushaq() 
+{
   // we have to store original rsp.  ABI says that 128 bytes
   // below rsp are local scratch.
   movq(Address(rsp, -5 * wordSize), rsp);
@@ -1157,13 +834,14 @@ void Assembler::pushaq() {
   movq(Address(rsp, 3 * wordSize), r12);
   movq(Address(rsp, 2 * wordSize), r13);
   movq(Address(rsp, wordSize), r14);
-  movq(Address(rsp, 0), r15);
+  movq(Address(rsp), r15);
 }
 
 // popad is invalid, use this instead
 // NOTE: Kills flags!!
-void Assembler::popaq() {
-  movq(r15, Address(rsp, 0));
+void Assembler::popaq() 
+{
+  movq(r15, Address(rsp));
   movq(r14, Address(rsp, wordSize));
   movq(r13, Address(rsp, 2 * wordSize));
   movq(r12, Address(rsp, 3 * wordSize));
@@ -1183,293 +861,1065 @@ void Assembler::popaq() {
   addq(rsp, 16 * wordSize);
 }
 
-void Assembler::pushfq() {
+void Assembler::pushfq() 
+{
   emit_byte(0x9C);
 }
 
-void Assembler::popfq() {
+void Assembler::popfq() 
+{
   emit_byte(0x9D);
 }
 
-void Assembler::pushq(int imm32) {
+void Assembler::pushq(int imm32) 
+{
   emit_byte(0x68);
   emit_long(imm32);  
 }
 
-void Assembler::pushq(Register src) {
-  int encode = prefix_and_encode(src->encoding());
-
-  emit_byte(0x50 | encode);
+void Assembler::pushq(Register src) 
+{
+  int srcenc = src->encoding();
+  if (srcenc >= 8) {
+    prefix(REX_B);
+    srcenc -= 8;
+  }
+  emit_byte(0x50 | srcenc);
 }
 
-void Assembler::pushq(Address src) {
+void Assembler::pushq(Address src) 
+{
   InstructionMark im(this);
-  prefix(src);
+  if (src.base_needs_rex()) {
+    if (src.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (src.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rsi, src);  
 }
 
-void Assembler::popq(Register dst) {
-  int encode = prefix_and_encode(dst->encoding());
-  emit_byte(0x58 | encode);
+void Assembler::popq(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
+  emit_byte(0x58 | dstenc);
 }
 
-void Assembler::popq(Address dst) {
+void Assembler::popq(Address dst)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x8F);
   emit_operand(rax, dst);
 }
 
-void Assembler::prefix(Prefix p) {
+void Assembler::prefix(Prefix p)
+{
   a_byte(p);
 }
 
-void Assembler::movb(Register dst, Address src) {
+void Assembler::movb(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst, true);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      } else if (dst->encoding() >= 4) {
+        prefix(REX);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x8A);
   emit_operand(dst, src);
 }
 
-void Assembler::movb(Address dst, int imm8) {
+void Assembler::movb(Address dst, int imm8)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xC6);
   emit_operand(rax, dst, 1);
   emit_byte(imm8);
 }
 
-void Assembler::movb(Address dst, Register src) {
+void Assembler::movb(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefix(dst, src, true);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      } else if (src->encoding() >= 4) {
+        prefix(REX);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x88);
   emit_operand(src, dst);
 }
 
-void Assembler::movw(Address dst, int imm16) {
+void Assembler::movw(Address dst, int imm16)
+{
   InstructionMark im(this);
   emit_byte(0x66); // switch to 16-bit mode
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xC7);
   emit_operand(rax, dst, 2);
   emit_word(imm16);
 }
   
-void Assembler::movw(Register dst, Address src) {
+void Assembler::movw(Register dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0x66);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x8B);
   emit_operand(dst, src);
 }
 
-void Assembler::movw(Address dst, Register src) {
+void Assembler::movw(Address dst, Register src)
+{
   InstructionMark im(this);
   emit_byte(0x66);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x89);
   emit_operand(src, dst);
 }
 
 // Uses zero extension.
-void Assembler::movl(Register dst, int imm32) {
-  int encode = prefix_and_encode(dst->encoding());
-  emit_byte(0xB8 | encode);
+void Assembler::movl(Register dst, int imm32)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
+  emit_byte(0xB8 | dstenc);
   emit_long(imm32);
 }
 
-void Assembler::movl(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::movl(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x8B);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movl(Register dst, Address src) {
+void Assembler::movl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x8B);
   emit_operand(dst, src);
 }
 
-void Assembler::movl(Address dst, int imm32) {
+void Assembler::movl(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xC7);
   emit_operand(rax, dst, 4);
   emit_long(imm32);
 }
 
-void Assembler::movl(Address dst, Register src) {
+void Assembler::movl(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x89);
   emit_operand(src, dst);
 }
 
-void Assembler::mov64(Register dst, int64_t imm64) {
+void Assembler::movq(Register dst, int64_t imm64)
+{
   InstructionMark im(this);
-  int encode = prefixq_and_encode(dst->encoding());
-  emit_byte(0xB8 | encode);
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
+  emit_byte(0xB8 | dstenc);
   emit_long64(imm64);
 }
 
-void Assembler::mov_literal64(Register dst, intptr_t imm64, RelocationHolder const& rspec) {
+void Assembler::movq(Register dst, address imm64, relocInfo::relocType rtype)
+{
   InstructionMark im(this);
-  int encode = prefixq_and_encode(dst->encoding());
-  emit_byte(0xB8 | encode);
-  emit_data64(imm64, rspec);
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
+  emit_byte(0xB8 | dstenc);
+  switch (rtype) {
+  case relocInfo::none:
+    emit_data64((jlong) imm64, relocInfo::none);
+    break;
+  case relocInfo::internal_word_type:
+    {
+      // Internal words will need to be relocated if we relocate since
+      // they very obviously move.
+      RelocationHolder rspec = internal_word_Relocation::spec_for_immediate();
+      emit_data64((jlong) imm64, rspec);
+    }
+    break;
+  case relocInfo::oop_type:
+    {
+      RelocationHolder rspec = oop_Relocation::spec_for_immediate();
+      emit_data64((jlong) imm64, rspec);
+    }
+    break;
+  case relocInfo::runtime_call_type:
+  case relocInfo::external_word_type:
+    {
+      RelocationHolder rspec = external_word_Relocation::spec_for_immediate();
+      emit_data64((jlong) imm64, rspec);
+    }
+    break;
+  default:
+    ShouldNotReachHere();
+  }
 }
 
-void Assembler::movq(Register dst, Register src) {
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::movq(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x8B);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movq(Register dst, Address src) {
+void Assembler::movq(Register dst, jobject obj)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
-  emit_byte(0x8B);
-  emit_operand(dst, src);
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
+  emit_byte(0xB8 | dstenc);
+  emit_data64((jlong) obj, relocInfo::oop_type);
 }
 
-void Assembler::mov64(Address dst, int64_t imm32) {
+void Assembler::movq(Register dst, Address src)
+{
+  InstructionMark im(this);
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    dstenc -= 8;
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
+  if (is_reachable(src)) {
+    emit_byte(0x8B);
+    emit_operand(dst, src);
+  }
+  else {
+    emit_byte(0xB8 | dstenc);
+// [RGV] using relocInfo::none for now to work around assert. 
+    emit_data64((jlong) src._target, relocInfo::none );
+  }
+}
+
+void Assembler::movq(Address dst, int64_t imm32)
+{
   assert(is_simm32(imm32), "lost bits");
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0xC7);
   emit_operand(rax, dst, 4);
   emit_long(imm32);
 }
 
-void Assembler::movq(Address dst, Register src) {
+void Assembler::movq(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefixq(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x89);
   emit_operand(src, dst);
 }
 
-void Assembler::movsbl(Register dst, Address src) {
+void Assembler::movsbl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xBE);
   emit_operand(dst, src);
 }
 
-void Assembler::movsbl(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding(), true);
+void Assembler::movsbl(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    } else if (srcenc >= 4) {
+      prefix(REX);
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0xBE);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movswl(Register dst, Address src) {
+void Assembler::movswl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xBF);
   emit_operand(dst, src);
 }
   
-void Assembler::movswl(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::movswl(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0xBF);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movslq(Register dst, Address src) {
+void Assembler::movslq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x63);
   emit_operand(dst, src);
 }
   
-void Assembler::movslq(Register dst, Register src) {
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::movslq(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x63);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
   
-void Assembler::movzbl(Register dst, Address src) {
+void Assembler::movzbl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xB6);
   emit_operand(dst, src);
 }
 
-void Assembler::movzbl(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding(), true);
+void Assembler::movzbl(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    } else if (srcenc >= 4) {
+      prefix(REX);
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0xB6);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movzwl(Register dst, Address src) {
+void Assembler::movzwl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xB7);
   emit_operand(dst, src);
 }
  
-void Assembler::movzwl(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::movzwl(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0xB7);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movss(XMMRegister dst, XMMRegister src) {
+void Assembler::movss(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x10);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movss(XMMRegister dst, Address src) {
+void Assembler::movss(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0xF3);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x10);
   emit_operand(dst, src);
 }
 
-void Assembler::movss(Address dst, XMMRegister src) {
+void Assembler::movss(Address dst, FloatRegister src)
+{
   InstructionMark im(this);
   emit_byte(0xF3);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x11);
   emit_operand(src, dst);
 }
 
-void Assembler::movsd(XMMRegister dst, XMMRegister src) {
+void Assembler::movsd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x10);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movsd(XMMRegister dst, Address src) {
+void Assembler::movsd(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0xF2);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x10);
   emit_operand(dst, src);
 }
 
-void Assembler::movsd(Address dst, XMMRegister src) {
+void Assembler::movsd(Address dst, FloatRegister src)
+{
   InstructionMark im(this);
   emit_byte(0xF2);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x11);
   emit_operand(src, dst);
@@ -1478,16 +1928,44 @@ void Assembler::movsd(Address dst, XMMRegister src) {
 // New cpus require to use movsd and movss to avoid partial register stall
 // when loading from memory. But for old Opteron use movlpd instead of movsd.
 // The selection is done in MacroAssembler::movdbl() and movflt().
-void Assembler::movlpd(XMMRegister dst, Address src) {
+void Assembler::movlpd(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0x66);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x12);
   emit_operand(dst, src);
 }
 
-void Assembler::movapd(XMMRegister dst, XMMRegister src) {
+void Assembler::movapd(FloatRegister dst, FloatRegister src)
+{
   int dstenc = dst->encoding();
   int srcenc = src->encoding();
   emit_byte(0x66);
@@ -1510,7 +1988,8 @@ void Assembler::movapd(XMMRegister dst, XMMRegister src) {
   emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movaps(XMMRegister dst, XMMRegister src) {
+void Assembler::movaps(FloatRegister dst, FloatRegister src)
+{
   int dstenc = dst->encoding();
   int srcenc = src->encoding();
   if (dstenc < 8) {
@@ -1532,174 +2011,238 @@ void Assembler::movaps(XMMRegister dst, XMMRegister src) {
   emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movdl(XMMRegister dst, Register src) {
+void Assembler::movdl(FloatRegister dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0x66);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x6E);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movdl(Register dst, XMMRegister src) {
+void Assembler::movdl(Register dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0x66);
-  // swap src/dst to get correct prefix
-  int encode = prefix_and_encode(src->encoding(), dst->encoding());
+  if (srcenc < 8) {
+    if (dstenc >= 8) {
+      prefix(REX_B);
+      dstenc -= 8;
+    }
+  } else {
+    if (dstenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      dstenc -= 8;
+    }
+    srcenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x7E);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | srcenc << 3 | dstenc);
 }
 
-void Assembler::movdq(XMMRegister dst, Register src) {
+void Assembler::movdq(FloatRegister dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0x66);
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x6E);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::movdq(Register dst, XMMRegister src) {
+void Assembler::movdq(Register dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0x66);
-  // swap src/dst to get correct prefix
-  int encode = prefixq_and_encode(src->encoding(), dst->encoding());
+  if (srcenc < 8) {
+    if (dstenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      dstenc -= 8;
+    }
+  } else {
+    if (dstenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      dstenc -= 8;
+    }
+    srcenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x7E);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | srcenc << 3 | dstenc);
 }
 
-void Assembler::pxor(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0x66);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0xEF);
-  emit_operand(dst, src);
-}
-
-void Assembler::pxor(XMMRegister dst, XMMRegister src) {
-  InstructionMark im(this);
-  emit_byte(0x66);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0xEF);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::movdqa(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0x66);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x6F);
-  emit_operand(dst, src);
-}
-
-void Assembler::movdqa(XMMRegister dst, XMMRegister src) {
-  emit_byte(0x66);
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x6F);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::movdqa(Address dst, XMMRegister src) {
-  InstructionMark im(this);
-  emit_byte(0x66);
-  prefix(dst, src);
-  emit_byte(0x0F);
-  emit_byte(0x7F);
-  emit_operand(src, dst);
-}
-
-void Assembler::movq(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0xF3);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x7E);
-  emit_operand(dst, src);
-}
-
-void Assembler::movq(Address dst, XMMRegister src) {
-  InstructionMark im(this);
-  emit_byte(0x66);
-  prefix(dst, src);
-  emit_byte(0x0F);
-  emit_byte(0xD6);
-  emit_operand(src, dst);
-}
-
-void Assembler::pshufd(XMMRegister dst, XMMRegister src, int mode) {
-  assert(isByte(mode), "invalid value");
-  emit_byte(0x66);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x70);
-  emit_byte(0xC0 | encode);
-  emit_byte(mode & 0xFF);
-}
-
-void Assembler::pshufd(XMMRegister dst, Address src, int mode) {
-  assert(isByte(mode), "invalid value");
-  InstructionMark im(this);
-  emit_byte(0x66);
-  emit_byte(0x0F);
-  emit_byte(0x70);
-  emit_operand(dst, src);
-  emit_byte(mode & 0xFF);
-}
-
-void Assembler::pshuflw(XMMRegister dst, XMMRegister src, int mode) {
-  assert(isByte(mode), "invalid value");
-  emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x70);
-  emit_byte(0xC0 | encode);
-  emit_byte(mode & 0xFF);
-}
-
-void Assembler::pshuflw(XMMRegister dst, Address src, int mode) {
-  assert(isByte(mode), "invalid value");
-  InstructionMark im(this);
-  emit_byte(0xF2);
-  emit_byte(0x0F);
-  emit_byte(0x70);
-  emit_operand(dst, src);
-  emit_byte(mode & 0xFF);
-}
-
-void Assembler::cmovl(Condition cc, Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::cmovl(Condition cc, Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x40 | cc);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cmovl(Condition cc, Register dst, Address src) {
+void Assembler::cmovl(Condition cc, Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x40 | cc);
   emit_operand(dst, src);
 }
 
-void Assembler::cmovq(Condition cc, Register dst, Register src) {
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::cmovq(Condition cc, Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x40 | cc);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cmovq(Condition cc, Register dst, Address src) {
+void Assembler::cmovq(Condition cc, Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x40 | cc);
   emit_operand(dst, src);
 }
 
 void Assembler::prefetch_prefix(Address src) {
-  prefix(src);
+  if (src.base_needs_rex()) {
+    if (src.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (src.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x0F);
 }
 
@@ -1738,618 +2281,1647 @@ void Assembler::prefetchw(Address src) {
   emit_operand(rcx, src); // 1, src
 }
 
-void Assembler::adcl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::adcl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xD0, dst, imm32);
 }
 
-void Assembler::adcl(Register dst, Address src) {
+void Assembler::adcl(Register dst, Address src) 
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x13);
   emit_operand(dst, src);
 }
 
-void Assembler::adcl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::adcl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x13, 0xC0, dst, src);
 }
 
-void Assembler::adcq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::adcq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xD0, dst, imm32);
 }
 
-void Assembler::adcq(Register dst, Address src) {
+void Assembler::adcq(Register dst, Address src) 
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x13);
   emit_operand(dst, src);
 }
 
-void Assembler::adcq(Register dst, Register src) {
-  (int) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::adcq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x13, 0xC0, dst, src);
 }
 
-void Assembler::addl(Address dst, int imm32) {
+void Assembler::addl(Address dst, int imm32) 
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_arith_operand(0x81, rax, dst,imm32);
 }
 
-void Assembler::addl(Address dst, Register src) {
+void Assembler::addl(Address dst, Register src) 
+{
   InstructionMark im(this);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x01);
   emit_operand(src, dst);
 }
 
-void Assembler::addl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::addl(Register dst, int imm32) 
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xC0, dst, imm32);
 }
 
-void Assembler::addl(Register dst, Address src) {
+void Assembler::addl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x03);
   emit_operand(dst, src);
 }
 
-void Assembler::addl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::addl(Register dst, Register src) 
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x03, 0xC0, dst, src);
 }
 
-void Assembler::addq(Address dst, int imm32) {
+void Assembler::addq(Address dst, int imm32) 
+{
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_arith_operand(0x81, rax, dst,imm32);
 }
 
-void Assembler::addq(Address dst, Register src) {
+void Assembler::addq(Address dst, Register src) 
+{
   InstructionMark im(this);
-  prefixq(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x01);
   emit_operand(src, dst);
 }
 
-void Assembler::addq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::addq(Register dst, int imm32) 
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xC0, dst, imm32);
 }
 
-void Assembler::addq(Register dst, Address src) {
+void Assembler::addq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x03);
   emit_operand(dst, src);
 }
 
-void Assembler::addq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::addq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x03, 0xC0, dst, src);
 }
 
-void Assembler::andl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::andl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xE0, dst, imm32);
 }
 
-void Assembler::andl(Register dst, Address src) {
+void Assembler::andl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x23);
   emit_operand(dst, src);
 }
 
-void Assembler::andl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::andl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x23, 0xC0, dst, src);
 }
 
-void Assembler::andq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::andq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xE0, dst, imm32);
 }
 
-void Assembler::andq(Register dst, Address src) {
+void Assembler::andq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x23);
   emit_operand(dst, src);
 }
 
-void Assembler::andq(Register dst, Register src) {
-  (int) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::andq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x23, 0xC0, dst, src);
 }
 
-void Assembler::cmpb(Address dst, int imm8) {
+void Assembler::cmpb(Address dst, int imm8)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x80);
   emit_operand(rdi, dst, 1);
   emit_byte(imm8);
 }
 
-void Assembler::cmpl(Address dst, int imm32) {
+void Assembler::cmpl(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x81);
   emit_operand(rdi, dst, 4);
   emit_long(imm32);
 }
 
-void Assembler::cmpl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::cmpl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xF8, dst, imm32);
 }
 
-void Assembler::cmpl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::cmpl(Register dst, Register src) 
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x3B, 0xC0, dst, src);
 }
 
-void Assembler::cmpl(Register dst, Address src) {
+void Assembler::cmpl(Register dst, Address src) 
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x3B);
   emit_operand(dst, src);
 }
 
-void Assembler::cmpq(Address dst, int imm32) {
+void Assembler::cmpq(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0x81);
   emit_operand(rdi, dst, 4);
   emit_long(imm32);
 }
 
-void Assembler::cmpq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::cmpq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xF8, dst, imm32);
 }
 
-void Assembler::cmpq(Address dst, Register src) {
-  prefixq(dst, src);
-  emit_byte(0x3B);
-  emit_operand(src, dst);
-}
-
-void Assembler::cmpq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::cmpq(Register dst, Register src) 
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x3B, 0xC0, dst, src);
 }
 
-void Assembler::cmpq(Register dst, Address  src) {
+void Assembler::cmpq(Register dst, Address  src) 
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x3B);
   emit_operand(dst, src);
 }
 
-void Assembler::ucomiss(XMMRegister dst, XMMRegister src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::ucomiss(FloatRegister dst, FloatRegister src) 
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2E);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::ucomisd(XMMRegister dst, XMMRegister src) {
+void Assembler::ucomisd(FloatRegister dst, FloatRegister src) 
+{
   emit_byte(0x66);
   ucomiss(dst, src);
 }
 
-void Assembler::decl(Register dst) {
+void Assembler::decl(Register dst)
+{
   // Don't use it directly. Use MacroAssembler::decrementl() instead.
   // Use two-byte form (one-byte from is a REX prefix in 64-bit mode)
-  int encode = prefix_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xFF);
-  emit_byte(0xC8 | encode);
+  emit_byte(0xC8 | dstenc);
 }
 
-void Assembler::decl(Address dst) {
+void Assembler::decl(Address dst)
+{
   // Don't use it directly. Use MacroAssembler::decrementl() instead.
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rcx, dst);
 }
 
-void Assembler::decq(Register dst) {
+void Assembler::decq(Register dst) 
+{
   // Don't use it directly. Use MacroAssembler::decrementq() instead.
   // Use two-byte form (one-byte from is a REX prefix in 64-bit mode)
-  int encode = prefixq_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xFF);
-  emit_byte(0xC8 | encode);
+  emit_byte(0xC8 | dstenc);
 }
 
-void Assembler::decq(Address dst) {
+void Assembler::decq(Address dst)
+{
   // Don't use it directly. Use MacroAssembler::decrementq() instead.
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rcx, dst);
 }
 
-void Assembler::idivl(Register src) {
-  int encode = prefix_and_encode(src->encoding());
+void Assembler::idivl(Register src)
+{
+  int srcenc = src->encoding();
+  if (srcenc >= 8) {
+    prefix(REX_B);
+    srcenc -= 8;
+  }
   emit_byte(0xF7);
-  emit_byte(0xF8 | encode);
+  emit_byte(0xF8 | srcenc);
 }
 
-void Assembler::idivq(Register src) {
-  int encode = prefixq_and_encode(src->encoding());
+void Assembler::idivq(Register src)
+{
+  int srcenc = src->encoding();
+  if (srcenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    srcenc -= 8;
+  }
   emit_byte(0xF7);
-  emit_byte(0xF8 | encode);
+  emit_byte(0xF8 | srcenc);
 }
 
-void Assembler::cdql() {
+void Assembler::cdql()
+{
   emit_byte(0x99);
 }
 
-void Assembler::cdqq() {
+void Assembler::cdqq()
+{
   prefix(REX_W);
   emit_byte(0x99);
 }
 
-void Assembler::imull(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::imull(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0xAF);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::imull(Register dst, Register src, int value) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::imull(Register dst, Register src, int value)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   if (is8bit(value)) {
     emit_byte(0x6B);
-    emit_byte(0xC0 | encode);
+    emit_byte(0xC0 | dstenc << 3 | srcenc);
     emit_byte(value);
   } else {
     emit_byte(0x69);
-    emit_byte(0xC0 | encode);
+    emit_byte(0xC0 | dstenc << 3 | srcenc);
     emit_long(value);
   }
 }
 
-void Assembler::imulq(Register dst, Register src) {
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::imulq(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0xAF);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::imulq(Register dst, Register src, int value) {
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::imulq(Register dst, Register src, int value)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   if (is8bit(value)) {
     emit_byte(0x6B);
-    emit_byte(0xC0 | encode);
+    emit_byte(0xC0 | dstenc << 3 | srcenc);
     emit_byte(value);
   } else {
     emit_byte(0x69);
-    emit_byte(0xC0 | encode);
+    emit_byte(0xC0 | dstenc << 3 | srcenc);
     emit_long(value);
   }
 }
 
-void Assembler::incl(Register dst) {
+void Assembler::incl(Register dst)
+{
   // Don't use it directly. Use MacroAssembler::incrementl() instead.
   // Use two-byte form (one-byte from is a REX prefix in 64-bit mode)
-  int encode = prefix_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xFF);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc);
 }
 
-void Assembler::incl(Address dst) {
+void Assembler::incl(Address dst)
+{
   // Don't use it directly. Use MacroAssembler::incrementl() instead.
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rax, dst);
 }
 
-void Assembler::incq(Register dst) {
+void Assembler::incq(Register dst)
+{
   // Don't use it directly. Use MacroAssembler::incrementq() instead.
   // Use two-byte form (one-byte from is a REX prefix in 64-bit mode)
-  int encode = prefixq_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xFF);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc);
 }
 
-void Assembler::incq(Address dst) {
+void Assembler::incq(Address dst)
+{
   // Don't use it directly. Use MacroAssembler::incrementq() instead.
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rax, dst);
 }
 
-void Assembler::leal(Register dst, Address src) {
+void Assembler::leal(Register dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0x67); // addr32
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x8D);
   emit_operand(dst, src);
 }
 
-void Assembler::leaq(Register dst, Address src) {
+void Assembler::leaq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x8D);
   emit_operand(dst, src);
 }
 
-void Assembler::mull(Address src) {
+void Assembler::mull(Address src)
+{
   InstructionMark im(this);
-  // was missing
-  prefix(src);
   emit_byte(0xF7);
   emit_operand(rsp, src);
 }
 
-void Assembler::mull(Register src) {
-  // was missing
-  int encode = prefix_and_encode(src->encoding());
+void Assembler::mull(Register src)
+{
   emit_byte(0xF7);
-  emit_byte(0xE0 | encode);
+  emit_byte(0xE0 | src->encoding());
 }
 
-void Assembler::negl(Register dst) {
-  int encode = prefix_and_encode(dst->encoding());
+void Assembler::negl(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xF7);
-  emit_byte(0xD8 | encode);
+  emit_byte(0xD8 | dstenc);
 }
 
-void Assembler::negq(Register dst) {
-  int encode = prefixq_and_encode(dst->encoding());
+void Assembler::negq(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xF7);
-  emit_byte(0xD8 | encode);
+  emit_byte(0xD8 | dstenc);
 }
 
-void Assembler::notl(Register dst) {
-  int encode = prefix_and_encode(dst->encoding());
+void Assembler::notl(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xF7);
-  emit_byte(0xD0 | encode);
+  emit_byte(0xD0 | dstenc);
 }
 
-void Assembler::notq(Register dst) {
-  int encode = prefixq_and_encode(dst->encoding());
+void Assembler::notq(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xF7);
-  emit_byte(0xD0 | encode);
+  emit_byte(0xD0 | dstenc);
 }
 
-void Assembler::orl(Address dst, int imm32) {
+void Assembler::orl(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x81);
   emit_operand(rcx, dst, 4);
   emit_long(imm32);
 }
 
-void Assembler::orl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::orl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xC8, dst, imm32);
 }
 
-void Assembler::orl(Register dst, Address src) {
+void Assembler::orl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0B);
   emit_operand(dst, src);
 }
 
-void Assembler::orl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::orl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x0B, 0xC0, dst, src);
 }
 
-void Assembler::orq(Address dst, int imm32) {
+void Assembler::orq(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0x81);
   emit_operand(rcx, dst, 4);
   emit_long(imm32);
 }
 
-void Assembler::orq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::orq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xC8, dst, imm32);
 }
 
-void Assembler::orq(Register dst, Address src) {
+void Assembler::orq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x0B);
   emit_operand(dst, src);
 }
 
-void Assembler::orq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::orq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x0B, 0xC0, dst, src);
 }
 
-void Assembler::rcll(Register dst, int imm8) {
+void Assembler::rcll(Register dst, int imm8)
+{
   assert(isShiftCount(imm8), "illegal shift count");
-  int encode = prefix_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   if (imm8 == 1) {
     emit_byte(0xD1);
-    emit_byte(0xD0 | encode);
+    emit_byte(0xD0 | dstenc);
   } else {
     emit_byte(0xC1);
-    emit_byte(0xD0 | encode);
+    emit_byte(0xD0 | dstenc);
     emit_byte(imm8);
   }
 }
 
-void Assembler::rclq(Register dst, int imm8) {
+void Assembler::rclq(Register dst, int imm8)
+{
   assert(isShiftCount(imm8 >> 1), "illegal shift count");
-  int encode = prefixq_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    emit_byte(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   if (imm8 == 1) {
     emit_byte(0xD1);
-    emit_byte(0xD0 | encode);
+    emit_byte(0xD0 | dstenc);
   } else {
     emit_byte(0xC1);
-    emit_byte(0xD0 | encode);
+    emit_byte(0xD0 | dstenc);
     emit_byte(imm8);
   }
 }
 
-void Assembler::sarl(Register dst, int imm8) {
-  int encode = prefix_and_encode(dst->encoding());
+void Assembler::sarl(Register dst, int imm8)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   assert(isShiftCount(imm8), "illegal shift count");
   if (imm8 == 1) {
     emit_byte(0xD1);
-    emit_byte(0xF8 | encode);
+    emit_byte(0xF8 | dstenc);
   } else {
     emit_byte(0xC1);
-    emit_byte(0xF8 | encode);
+    emit_byte(0xF8 | dstenc);
     emit_byte(imm8);
   }
 }
 
-void Assembler::sarl(Register dst) {
-  int encode = prefix_and_encode(dst->encoding());
+void Assembler::sarl(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xD3);
-  emit_byte(0xF8 | encode);
+  emit_byte(0xF8 | dstenc);
 }
 
-void Assembler::sarq(Register dst, int imm8) {
+void Assembler::sarq(Register dst, int imm8)
+{
   assert(isShiftCount(imm8 >> 1), "illegal shift count");
-  int encode = prefixq_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   if (imm8 == 1) {
     emit_byte(0xD1);
-    emit_byte(0xF8 | encode);
+    emit_byte(0xF8 | dstenc);
   } else {
     emit_byte(0xC1);
-    emit_byte(0xF8 | encode);
+    emit_byte(0xF8 | dstenc);
     emit_byte(imm8);
   }
 }
 
-void Assembler::sarq(Register dst) {
-  int encode = prefixq_and_encode(dst->encoding());
+void Assembler::sarq(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xD3);
-  emit_byte(0xF8 | encode);
+  emit_byte(0xF8 | dstenc);
 }
 
-void Assembler::sbbl(Address dst, int imm32) {
+void Assembler::sbbl(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_arith_operand(0x81, rbx, dst, imm32);
 }
 
-void Assembler::sbbl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::sbbl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xD8, dst, imm32);
 }
 
-void Assembler::sbbl(Register dst, Address src) {
+void Assembler::sbbl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x1B);
   emit_operand(dst, src);
 }
 
-void Assembler::sbbl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::sbbl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x1B, 0xC0, dst, src);
 }
 
-void Assembler::sbbq(Address dst, int imm32) {
+void Assembler::sbbq(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_arith_operand(0x81, rbx, dst, imm32);
 }
 
-void Assembler::sbbq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::sbbq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xD8, dst, imm32);
 }
 
-void Assembler::sbbq(Register dst, Address src) {
+void Assembler::sbbq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x1B);
   emit_operand(dst, src);
 }
 
-void Assembler::sbbq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::sbbq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x1B, 0xC0, dst, src);
 }
 
-void Assembler::shll(Register dst, int imm8) {
+void Assembler::shll(Register dst, int imm8)
+{
   assert(isShiftCount(imm8), "illegal shift count");
-  int encode = prefix_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   if (imm8 == 1 ) {
     emit_byte(0xD1);
-    emit_byte(0xE0 | encode);
+    emit_byte(0xE0 | dstenc);
   } else {
     emit_byte(0xC1);
-    emit_byte(0xE0 | encode);
+    emit_byte(0xE0 | dstenc);
     emit_byte(imm8);
   }
 }
 
-void Assembler::shll(Register dst) {
-  int encode = prefix_and_encode(dst->encoding());
+void Assembler::shll(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xD3);
-  emit_byte(0xE0 | encode);
+  emit_byte(0xE0 | dstenc);
 }
 
-void Assembler::shlq(Register dst, int imm8) {
+void Assembler::shlq(Register dst, int imm8)
+{
   assert(isShiftCount(imm8 >> 1), "illegal shift count");
-  int encode = prefixq_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   if (imm8 == 1) {
     emit_byte(0xD1);
-    emit_byte(0xE0 | encode);
+    emit_byte(0xE0 | dstenc);
   } else {
     emit_byte(0xC1);
-    emit_byte(0xE0 | encode);
+    emit_byte(0xE0 | dstenc);
     emit_byte(imm8);
   }
 }
 
-void Assembler::shlq(Register dst) {
-  int encode = prefixq_and_encode(dst->encoding());
+void Assembler::shlq(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xD3);
-  emit_byte(0xE0 | encode);
+  emit_byte(0xE0 | dstenc);
 }
 
-void Assembler::shrl(Register dst, int imm8) {
+void Assembler::shrl(Register dst, int imm8)
+{
   assert(isShiftCount(imm8), "illegal shift count");
-  int encode = prefix_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xC1);
-  emit_byte(0xE8 | encode);
+  emit_byte(0xE8 | dstenc);
   emit_byte(imm8);
 }
 
-void Assembler::shrl(Register dst) {
-  int encode = prefix_and_encode(dst->encoding());
+void Assembler::shrl(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
   emit_byte(0xD3);
-  emit_byte(0xE8 | encode);
+  emit_byte(0xE8 | dstenc);
 }
 
-void Assembler::shrq(Register dst, int imm8) {
+void Assembler::shrq(Register dst, int imm8)
+{
   assert(isShiftCount(imm8 >> 1), "illegal shift count");
-  int encode = prefixq_and_encode(dst->encoding());
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xC1);
-  emit_byte(0xE8 | encode);
+  emit_byte(0xE8 | dstenc);
   emit_byte(imm8);
 }
 
-void Assembler::shrq(Register dst) {
-  int encode = prefixq_and_encode(dst->encoding());
+void Assembler::shrq(Register dst)
+{
+  int dstenc = dst->encoding();
+  if (dstenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    dstenc -= 8;
+  }
   emit_byte(0xD3);
-  emit_byte(0xE8 | encode);
+  emit_byte(0xE8 | dstenc);
 }
   
-void Assembler::subl(Address dst, int imm32) {
+void Assembler::subl(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   if (is8bit(imm32)) {
     emit_byte(0x83);
     emit_operand(rbp, dst, 1);
@@ -2361,33 +3933,114 @@ void Assembler::subl(Address dst, int imm32) {
   }
 }
 
-void Assembler::subl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::subl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xE8, dst, imm32);
 }
 
-void Assembler::subl(Address dst, Register src) {
+void Assembler::subl(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x29);
   emit_operand(src, dst);
 }
 
-void Assembler::subl(Register dst, Address src) {
+void Assembler::subl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x2B);
   emit_operand(dst, src);
 }
 
-void Assembler::subl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::subl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x2B, 0xC0, dst, src);
 }
 
-void Assembler::subq(Address dst, int imm32) {
+void Assembler::subq(Address dst, int imm32)
+{
   InstructionMark im(this);
-  prefixq(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   if (is8bit(imm32)) {
     emit_byte(0x83);
     emit_operand(rbp, dst, 1);
@@ -2399,185 +4052,605 @@ void Assembler::subq(Address dst, int imm32) {
   }
 }
 
-void Assembler::subq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::subq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xE8, dst, imm32);
 }
 
-void Assembler::subq(Address dst, Register src) {
+void Assembler::subq(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefixq(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x29);
   emit_operand(src, dst);
 }
 
-void Assembler::subq(Register dst, Address src) {
+void Assembler::subq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x2B);
   emit_operand(dst, src);
 }
 
-void Assembler::subq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::subq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x2B, 0xC0, dst, src);
 }
 
-void Assembler::testb(Register dst, int imm8) {
-  (void) prefix_and_encode(dst->encoding(), true);
+void Assembler::testb(Register dst, int imm8)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+  } else if (dstenc >= 4) {
+    prefix(REX);
+  }
   emit_arith_b(0xF6, 0xC0, dst, imm8);
 }
 
-void Assembler::testl(Register dst, int imm32) {
+void Assembler::testl(Register dst, int imm32)
+{
   // not using emit_arith because test
   // doesn't support sign-extension of
   // 8bit operands
-  int encode = dst->encoding();
-  if (encode == 0) {
+  int dstenc = dst->encoding();
+  if (dstenc == 0) {
     emit_byte(0xA9);
   } else {
-    encode = prefix_and_encode(encode);
+    if (dstenc >= 8) {
+      prefix(REX_B);
+      dstenc -= 8;
+    }
     emit_byte(0xF7);
-    emit_byte(0xC0 | encode);
+    emit_byte(0xC0 | dstenc);
   }
   emit_long(imm32);
 }
 
-void Assembler::testl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::testl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x85, 0xC0, dst, src);
 }
 
-void Assembler::testq(Register dst, int imm32) {
+void Assembler::testq(Register dst, int imm32)
+{
   // not using emit_arith because test
   // doesn't support sign-extension of
   // 8bit operands
-  int encode = dst->encoding();
-  if (encode == 0) {
+  int dstenc = dst->encoding();
+  if (dstenc == 0) {
     prefix(REX_W);
     emit_byte(0xA9);
   } else { 
-    encode = prefixq_and_encode(encode);
+    if (dstenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      dstenc -= 8;
+    }
     emit_byte(0xF7);
-    emit_byte(0xC0 | encode);
+    emit_byte(0xC0 | dstenc);
   }
   emit_long(imm32);
 }
 
-void Assembler::testq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::testq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x85, 0xC0, dst, src);
 }
 
-void Assembler::xaddl(Address dst, Register src) {
+void Assembler::xaddl(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefix(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xC1);
   emit_operand(src, dst);
 }
 
-void Assembler::xaddq(Address dst, Register src) {
+void Assembler::xaddq(Address dst, Register src)
+{
   InstructionMark im(this);
-  prefixq(dst, src);
+  if (src->encoding() < 8) {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (dst.base_needs_rex()) {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (dst.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xC1);
   emit_operand(src, dst);
 }
 
-void Assembler::xorl(Register dst, int imm32) {
-  prefix(dst);
+void Assembler::xorl(Register dst, int imm32)
+{
+  if (dst->encoding() >= 8) {
+    prefix(REX_B);
+  }
   emit_arith(0x81, 0xF0, dst, imm32);
 }
 
-void Assembler::xorl(Register dst, Register src) {
-  (void) prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::xorl(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() >= 8) {
+      prefix(REX_B);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+    }
+  }
   emit_arith(0x33, 0xC0, dst, src);
 }
 
-void Assembler::xorl(Register dst, Address src) {
+void Assembler::xorl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x33);
   emit_operand(dst, src);
 }
 
-void Assembler::xorq(Register dst, int imm32) {
-  (void) prefixq_and_encode(dst->encoding());
+void Assembler::xorq(Register dst, int imm32)
+{
+  if (dst->encoding() < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+  }
   emit_arith(0x81, 0xF0, dst, imm32);
 }
 
-void Assembler::xorq(Register dst, Register src) {
-  (void) prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::xorq(Register dst, Register src)
+{
+  if (dst->encoding() < 8) {
+    if (src->encoding() < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src->encoding() < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+    }
+  }
   emit_arith(0x33, 0xC0, dst, src);
 }
 
-void Assembler::xorq(Register dst, Address src) {
+void Assembler::xorq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x33);
   emit_operand(dst, src);
 }
 
-void Assembler::bswapl(Register reg) {
-  int encode = prefix_and_encode(reg->encoding());
+void Assembler::bswapl(Register reg)
+{
+  int regenc = reg->encoding();
+  if (regenc >= 8) {
+    prefix(REX_B);
+    regenc -= 8;
+  }
   emit_byte(0x0F);
-  emit_byte(0xC8 | encode);
+  emit_byte(0xC8 | regenc);
 }
 
-void Assembler::bswapq(Register reg) {
-  int encode = prefixq_and_encode(reg->encoding());
+void Assembler::bswapq(Register reg)
+{
+  int regenc = reg->encoding();
+  if (regenc < 8) {
+    prefix(REX_W);
+  } else {
+    prefix(REX_WB);
+    regenc -= 8;
+  }
   emit_byte(0x0F);
-  emit_byte(0xC8 | encode);
+  emit_byte(0xC8 | regenc);
 }
 
-void Assembler::lock() {
+void Assembler::lock()
+{
   emit_byte(0xF0);
 }
 
-void Assembler::xchgl(Register dst, Address src) {
+void Assembler::xchgl(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x87);
   emit_operand(dst, src);
 }
 
-void Assembler::xchgl(Register dst, Register src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::xchgl(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x87);
-  emit_byte(0xc0 | encode);
+  emit_byte(0xc0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::xchgq(Register dst, Address src) {
+void Assembler::xchgq(Register dst, Address src)
+{
   InstructionMark im(this);
-  prefixq(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x87);
   emit_operand(dst, src);
 }
 
-void Assembler::xchgq(Register dst, Register src) {
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+void Assembler::xchgq(Register dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x87);
-  emit_byte(0xc0 | encode);
+  emit_byte(0xc0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cmpxchgl(Register reg, Address adr) {
+void Assembler::cmpxchgl(Register reg, Address adr)
+{
   InstructionMark im(this);
-  prefix(adr, reg);
+  if (reg->encoding() < 8) {
+    if (adr.base_needs_rex()) {
+      if (adr.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (adr.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (adr.base_needs_rex()) {
+      if (adr.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (adr.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xB1);
   emit_operand(reg, adr);
 }
 
-void Assembler::cmpxchgq(Register reg, Address adr) {
+void Assembler::cmpxchgq(Register reg, Address adr)
+{
   InstructionMark im(this);
-  prefixq(adr, reg);
+  if (reg->encoding() < 8) {
+    if (adr.base_needs_rex()) {
+      if (adr.index_needs_rex()) {
+        prefix(REX_WXB);
+      } else {
+        prefix(REX_WB);
+      }
+    } else {
+      if (adr.index_needs_rex()) {
+        prefix(REX_WX);
+      } else {
+        prefix(REX_W);
+      }
+    }
+  } else {
+    if (adr.base_needs_rex()) {
+      if (adr.index_needs_rex()) {
+        prefix(REX_WRXB);
+      } else {
+        prefix(REX_WRB);
+      }
+    } else {
+      if (adr.index_needs_rex()) {
+        prefix(REX_WRX);
+      } else {
+        prefix(REX_WR);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xB1);
   emit_operand(reg, adr);
 }
 
-void Assembler::hlt() {
+void Assembler::hlt()
+{
   emit_byte(0xF4);
 }
 
@@ -2721,7 +4794,8 @@ void Assembler::nop(int i) {
   }
 }
 
-void Assembler::ret(int imm16) {
+void Assembler::ret(int imm16)
+{
   if (imm16 == 0) {
     emit_byte(0xC3);
   } else {
@@ -2736,7 +4810,8 @@ void Assembler::smovl() {
 }
 
 // copies data from [rsi] to [rdi] using rcx words (m32)
-void Assembler::rep_movl() {
+void Assembler::rep_movl()
+{
   // REP
   emit_byte(0xF3);
   // MOVSL
@@ -2744,7 +4819,8 @@ void Assembler::rep_movl() {
 }
 
 // copies data from [rsi] to [rdi] using rcx double words (m64)
-void Assembler::rep_movq() {
+void Assembler::rep_movq()
+{
   // REP
   emit_byte(0xF3);
   // MOVSQ
@@ -2753,7 +4829,8 @@ void Assembler::rep_movq() {
 }
 
 // sets rcx double words (m64) with rax value at [rdi]
-void Assembler::rep_set() {
+void Assembler::rep_set()
+{
   // REP
   emit_byte(0xF3);
   // STOSQ
@@ -2762,7 +4839,8 @@ void Assembler::rep_set() {
 }
 
 // scans rcx double words (m64) at [rdi] for occurance of rax
-void Assembler::repne_scan() {
+void Assembler::repne_scan()
+{
   // REPNE/REPNZ
   emit_byte(0xF2);
   // SCASQ
@@ -2770,22 +4848,41 @@ void Assembler::repne_scan() {
   emit_byte(0xAF);
 }
 
-void Assembler::setb(Condition cc, Register dst) {
+void Assembler::setb(Condition cc, Register dst)
+{
   assert(0 <= cc && cc < 16, "illegal cc");
-  int encode = prefix_and_encode(dst->encoding(), true);
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  } else if (dstenc >= 4) {
+    prefix(REX);
+  }
   emit_byte(0x0F);
   emit_byte(0x90 | cc);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc);
 }
 
-void Assembler::clflush(Address adr) {
-  prefix(adr);
+void Assembler::clflush(Address adr)
+{
+  if (adr.base_needs_rex()) {
+    if (adr.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (adr.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xAE);
   emit_operand(rdi, adr);
 }
 
-void Assembler::call(Label& L, relocInfo::relocType rtype) {
+void Assembler::call(Label& L, relocInfo::relocType rtype)
+{
   if (L.is_bound()) {
     const int long_size = 5;
     int offs = (int)( target(L) - pc() );
@@ -2804,74 +4901,122 @@ void Assembler::call(Label& L, relocInfo::relocType rtype) {
   }
 }
 
-void Assembler::call_literal(address entry, RelocationHolder const& rspec) {
+void Assembler::call(address entry, relocInfo::relocType rtype)
+{
+  assert(rtype != relocInfo::virtual_call_type,
+         "must use virtual_call_Relocation::spec");
   assert(entry != NULL, "call most probably wrong");
   InstructionMark im(this);
   emit_byte(0xE8);
-  intptr_t disp = entry - (_code_pos + sizeof(int32_t));
+  intptr_t disp = (intptr_t) entry - ((intptr_t) _code_pos + sizeof(int));
+  assert(is_simm32(disp), "must be 32bit offset (call1)");
+  // Technically, should use call32_operand, but this format is
+  // implied by the fact that we're emitting a call instruction.
+  emit_data((int) disp, rtype, disp32_operand);
+}
+
+void Assembler::call(address entry, RelocationHolder const& rspec)
+{
+  assert(entry != NULL, "call most probably wrong");
+  InstructionMark im(this);
+  emit_byte(0xE8);
+  intptr_t disp = (intptr_t) entry - ((intptr_t) _code_pos + sizeof(int));
   assert(is_simm32(disp), "must be 32bit offset (call2)");
   // Technically, should use call32_operand, but this format is
   // implied by the fact that we're emitting a call instruction.
   emit_data((int) disp, rspec, disp32_operand);
 }
 
-
-void Assembler::call(Register dst) {
-  // This was originally using a 32bit register encoding
-  // and surely we want 64bit!
-  // this is a 32bit encoding but in 64bit mode the default
-  // operand size is 64bit so there is no need for the
-  // wide prefix. So prefix only happens if we use the
-  // new registers. Much like push/pop.
-  int encode = prefixq_and_encode(dst->encoding());
+void Assembler::call(Register dst, relocInfo::relocType rtype)
+{
+  int dstenc = dst->encoding();
+  if (dstenc >= 8) {
+    prefix(REX_B);
+    dstenc -= 8;
+  }
+  relocate(rtype);
   emit_byte(0xFF);
-  emit_byte(0xD0 | encode);
+  emit_byte(0xD0 | dstenc);
 }
 
-void Assembler::call(Address adr) {
+void Assembler::call(Address adr)
+{
   InstructionMark im(this);
-  prefix(adr);
+  if (adr.base_needs_rex()) {
+    if (adr.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (adr.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rdx, adr);
 }
 
-void Assembler::jmp(Register reg) {
-  int encode = prefix_and_encode(reg->encoding());
+void Assembler::jmp(Register reg, relocInfo::relocType rtype)
+{
+  int regenc = reg->encoding();
+  if (regenc >= 8) {
+    prefix(REX_B);
+    regenc -= 8;
+  }
+  relocate(rtype);
   emit_byte(0xFF);
-  emit_byte(0xE0 | encode);
+  emit_byte(0xE0 | regenc);
 }
 
-void Assembler::jmp(Address adr) {
+void Assembler::jmp(Address adr)
+{
   InstructionMark im(this);
-  prefix(adr);
+  if (adr.base_needs_rex()) {
+    if (adr.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (adr.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0xFF);
   emit_operand(rsp, adr);
 }
 
-void Assembler::jmp_literal(address dest, RelocationHolder const& rspec) {
+void Assembler::jmp(address entry, relocInfo::relocType rtype)
+{
+  assert(entry != NULL, "jmp most probably wrong");
   InstructionMark im(this);
-  emit_byte(0xE9);
-  assert(dest != NULL, "must have a target");
-  intptr_t disp = dest - (_code_pos + sizeof(int32_t));
-  assert(is_simm32(disp), "must be 32bit offset (jmp)");
-  emit_data(disp, rspec.reloc(), call32_operand);
+  relocate(rtype);
+  const int short_size = 2;
+  const int long_size  = 5;
+  intptr_t offs = (intptr_t)entry - (intptr_t)_code_pos;
+  if (rtype == relocInfo::none && is8bit(offs - short_size)) {
+    emit_byte(0xEB);
+    emit_byte((offs - short_size) & 0xFF);
+  } else {
+    assert(is_simm32(offs - long_size),
+           "must be 32bit offset (call3)");
+    emit_byte(0xE9);
+    emit_long(offs - long_size); 
+  }
 }
 
-void Assembler::jmp(Label& L, relocInfo::relocType rtype) {
+void Assembler::jmpb(address entry) {
+  const int short_size = 2;
+  assert(is8bit((intptr_t)entry - ((intptr_t)_code_pos + short_size)),
+         "Dispacement too large for a short jmp");
+  jmp(entry, relocInfo::none);
+}
+
+void Assembler::jmp(Label& L, relocInfo::relocType rtype)
+{
   if (L.is_bound()) {
-    address entry = target(L);
-    assert(entry != NULL, "jmp most probably wrong");
-    InstructionMark im(this);
-    const int short_size = 2;
-    const int long_size = 5;
-    intptr_t offs = entry - _code_pos;
-    if (rtype == relocInfo::none && is8bit(offs - short_size)) {
-      emit_byte(0xEB);
-      emit_byte((offs - short_size) & 0xFF); 
-    } else {
-      emit_byte(0xE9);
-      emit_long(offs - long_size); 
-    }
+    jmp(target(L), rtype);
   } else {
     // By default, forward jumps are always 32-bit displacements, since
     // we can't yet know where the label will be bound.  If you're sure that 
@@ -2887,14 +5032,7 @@ void Assembler::jmp(Label& L, relocInfo::relocType rtype) {
 
 void Assembler::jmpb(Label& L) {
   if (L.is_bound()) {
-    const int short_size = 2;
-    address entry = target(L);
-    assert(is8bit((entry - _code_pos) + short_size),
-           "Dispacement too large for a short jmp");
-    assert(entry != NULL, "jmp most probably wrong");
-    intptr_t offs = entry - _code_pos;
-    emit_byte(0xEB);
-    emit_byte((offs - short_size) & 0xFF); 
+    jmpb(target(L));
   } else {
     InstructionMark im(this);
     L.add_patch_at(code(), locator());
@@ -2903,34 +5041,42 @@ void Assembler::jmpb(Label& L) {
   }
 }
 
-void Assembler::jcc(Condition cc, Label& L, relocInfo::relocType rtype) {
+void Assembler::jcc(Condition cc, address dst, relocInfo::relocType rtype)
+{
+  assert((0 <= cc) && (cc < 16), "illegal cc");
+  assert(dst != NULL, "jcc most probably wrong");
+
   InstructionMark im(this);
   relocate(rtype);
+  const int short_size = 2;
+  const int long_size = 6;
+  intptr_t offs = (intptr_t)dst - (intptr_t)_code_pos;
+  if (rtype == relocInfo::none && is8bit(offs - short_size)) {
+    // 0111 tttn #8-bit disp
+    emit_byte(0x70 | cc);
+    emit_byte((offs - short_size) & 0xFF); 
+  } else {
+    // 0000 1111 1000 tttn #32-bit disp
+    assert(is_simm32(offs - long_size),
+           "must be 32bit offset (call4)");
+    emit_byte(0x0F);
+    emit_byte(0x80 | cc);
+    emit_long(offs - long_size);
+  }
+}
+
+void Assembler::jcc(Condition cc, Label& L, relocInfo::relocType rtype)
+{
   assert((0 <= cc) && (cc < 16), "illegal cc");
   if (L.is_bound()) {
-    address dst = target(L);
-    assert(dst != NULL, "jcc most probably wrong");
-
-    const int short_size = 2;
-    const int long_size = 6;
-    intptr_t offs = (intptr_t)dst - (intptr_t)_code_pos;
-    if (rtype == relocInfo::none && is8bit(offs - short_size)) {
-      // 0111 tttn #8-bit disp
-      emit_byte(0x70 | cc);
-      emit_byte((offs - short_size) & 0xFF); 
-    } else {
-      // 0000 1111 1000 tttn #32-bit disp
-      assert(is_simm32(offs - long_size),
-             "must be 32bit offset (call4)");
-      emit_byte(0x0F);
-      emit_byte(0x80 | cc);
-      emit_long(offs - long_size);
-    }
+    jcc(cc, target(L), rtype);
   } else {
     // Note: could eliminate cond. jumps to this jump if condition
     //       is the same however, seems to be rather unlikely case.
     // Note: use jccb() if label to be bound is very close to get 
     //       an 8-bit displacement
+    InstructionMark im(this);
+    relocate(rtype);
     L.add_patch_at(code(), locator());
     emit_byte(0x0F);
     emit_byte(0x80 | cc);
@@ -2940,15 +5086,7 @@ void Assembler::jcc(Condition cc, Label& L, relocInfo::relocType rtype) {
 
 void Assembler::jccb(Condition cc, Label& L) {
   if (L.is_bound()) {
-    const int short_size = 2;
-    const int long_size = 6;
-    address entry = target(L);
-    assert(is8bit((intptr_t)entry - ((intptr_t)_code_pos + short_size)),
-           "Dispacement too large for a short jmp");
-    intptr_t offs = (intptr_t)entry - (intptr_t)_code_pos;
-    // 0111 tttn #8-bit disp
-    emit_byte(0x70 | cc);
-    emit_byte((offs - short_size) & 0xFF); 
+    jccb(cc, target(L));
   } else {
     InstructionMark im(this);
     L.add_patch_at(code(), locator());
@@ -2957,332 +5095,987 @@ void Assembler::jccb(Condition cc, Label& L) {
   }
 }
 
+void Assembler::jccb(Condition cc, address dst) {
+  const int short_size = 2;
+  assert(is8bit((intptr_t)dst - ((intptr_t)_code_pos + short_size)), 
+         "Distance too far for short jmp");
+  jcc(cc, dst, relocInfo::none); 
+}
+
+
+
 // FP instructions
 
-void Assembler::fxsave(Address dst) {
-  prefixq(dst);
+void Assembler::fxsave(Address dst)
+{
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xAE);
   emit_operand(as_Register(0), dst);
 }
 
-void Assembler::fxrstor(Address src) {
-  prefixq(src);
+void Assembler::fxrstor(Address src)
+{
+  if (src.base_needs_rex()) {
+    if (src.index_needs_rex()) {
+      prefix(REX_WXB);
+    } else {
+      prefix(REX_WB);
+    }
+  } else {
+    if (src.index_needs_rex()) {
+      prefix(REX_WX);
+    } else {
+      prefix(REX_W);
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xAE);
   emit_operand(as_Register(1), src);
 }
 
-void Assembler::ldmxcsr(Address src) { 
+void Assembler::ldmxcsr(Address src)
+{ 
   InstructionMark im(this);
-  prefix(src);
+  if (src.base_needs_rex()) {
+    if (src.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (src.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xAE);
   emit_operand(as_Register(2), src);
 }
 
-void Assembler::stmxcsr(Address dst) { 
+void Assembler::stmxcsr(Address dst)
+{ 
   InstructionMark im(this);
-  prefix(dst);
+  if (dst.base_needs_rex()) {
+    if (dst.index_needs_rex()) {
+      prefix(REX_XB);
+    } else {
+      prefix(REX_B);
+    }
+  } else {
+    if (dst.index_needs_rex()) {
+      prefix(REX_X);
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0xAE);
   emit_operand(as_Register(3), dst);
 }
 
-void Assembler::addss(XMMRegister dst, XMMRegister src) {
+void Assembler::addss(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x58);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::addss(XMMRegister dst, Address src) {
+void Assembler::addss(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0xF3);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x58);
-  emit_operand(dst, src);
-}
-
-void Assembler::subss(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x5C);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::subss(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0xF3);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x5C);
-  emit_operand(dst, src);
-}
-
-void Assembler::mulss(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x59);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::mulss(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0xF3);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x59);
-  emit_operand(dst, src);
-}
-
-void Assembler::divss(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x5E);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::divss(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0xF3);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x5E);
-  emit_operand(dst, src);
-}
-
-void Assembler::addsd(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x58);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::addsd(XMMRegister dst, Address src) {
-  InstructionMark im(this);
-  emit_byte(0xF2);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x58);
   emit_operand(dst, src);
 }
 
-void Assembler::subsd(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::subss(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF3);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x5C);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::subsd(XMMRegister dst, Address src) {
+void Assembler::subss(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
-  emit_byte(0xF2);
-  prefix(src, dst);
+  emit_byte(0xF3);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x5C);
   emit_operand(dst, src);
 }
 
-void Assembler::mulsd(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::mulss(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF3);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x59);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::mulsd(XMMRegister dst, Address src) {
+void Assembler::mulss(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
-  emit_byte(0xF2);
-  prefix(src, dst);
+  emit_byte(0xF3);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x59);
   emit_operand(dst, src);
 }
 
-void Assembler::divsd(XMMRegister dst, XMMRegister src) {
-  emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::divss(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF3);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x5E);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::divsd(XMMRegister dst, Address src) {
+void Assembler::divss(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
-  emit_byte(0xF2);
-  prefix(src, dst);
+  emit_byte(0xF3);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x5E);
   emit_operand(dst, src);
 }
 
-void Assembler::sqrtsd(XMMRegister dst, XMMRegister src) {
+void Assembler::addsd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
+  emit_byte(0x0F);
+  emit_byte(0x58);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
+}
+
+void Assembler::addsd(FloatRegister dst, Address src)
+{
+  InstructionMark im(this);
+  emit_byte(0xF2);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
+  emit_byte(0x0F);
+  emit_byte(0x58);
+  emit_operand(dst, src);
+}
+
+void Assembler::subsd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF2);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
+  emit_byte(0x0F);
+  emit_byte(0x5C);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
+}
+
+void Assembler::subsd(FloatRegister dst, Address src)
+{
+  InstructionMark im(this);
+  emit_byte(0xF2);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
+  emit_byte(0x0F);
+  emit_byte(0x5C);
+  emit_operand(dst, src);
+}
+
+void Assembler::mulsd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF2);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
+  emit_byte(0x0F);
+  emit_byte(0x59);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
+}
+
+void Assembler::mulsd(FloatRegister dst, Address src)
+{
+  InstructionMark im(this);
+  emit_byte(0xF2);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
+  emit_byte(0x0F);
+  emit_byte(0x59);
+  emit_operand(dst, src);
+}
+
+void Assembler::divsd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF2);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
+  emit_byte(0x0F);
+  emit_byte(0x5E);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
+}
+
+void Assembler::divsd(FloatRegister dst, Address src)
+{
+  InstructionMark im(this);
+  emit_byte(0xF2);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
+  emit_byte(0x0F);
+  emit_byte(0x5E);
+  emit_operand(dst, src);
+}
+
+void Assembler::sqrtsd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  emit_byte(0xF2);
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x51);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::sqrtsd(XMMRegister dst, Address src) {
+void Assembler::sqrtsd(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0xF2);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x51);
   emit_operand(dst, src);
 }
 
-void Assembler::xorps(XMMRegister dst, XMMRegister src) {
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+void Assembler::xorps(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x57);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::xorps(XMMRegister dst, Address src) {
+void Assembler::xorps(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x57);
   emit_operand(dst, src);
 }
 
-void Assembler::xorpd(XMMRegister dst, XMMRegister src) {
+void Assembler::xorpd(FloatRegister dst, FloatRegister src)
+{
   emit_byte(0x66);
   xorps(dst, src);
 }
 
-void Assembler::xorpd(XMMRegister dst, Address src) {
+void Assembler::xorpd(FloatRegister dst, Address src)
+{
   InstructionMark im(this);
   emit_byte(0x66);
-  prefix(src, dst);
+  if (dst->encoding() < 8) {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_XB);
+      } else {
+        prefix(REX_B);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_X);
+      }
+    }
+  } else {
+    if (src.base_needs_rex()) {
+      if (src.index_needs_rex()) {
+        prefix(REX_RXB);
+      } else {
+        prefix(REX_RB);
+      }
+    } else {
+      if (src.index_needs_rex()) {
+        prefix(REX_RX);
+      } else {
+        prefix(REX_R);
+      }
+    }
+  }
   emit_byte(0x0F);
   emit_byte(0x57);
   emit_operand(dst, src);
 }
 
-void Assembler::cvtsi2ssl(XMMRegister dst, Register src) {
+void Assembler::cvtsi2ssl(FloatRegister dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2A);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvtsi2ssq(XMMRegister dst, Register src) {
+void Assembler::cvtsi2ssq(FloatRegister dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2A);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvtsi2sdl(XMMRegister dst, Register src) {
+void Assembler::cvtsi2sdl(FloatRegister dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2A);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvtsi2sdq(XMMRegister dst, Register src) {
+void Assembler::cvtsi2sdq(FloatRegister dst, Register src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2A);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvttss2sil(Register dst, XMMRegister src) {
+void Assembler::cvttss2sil(Register dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2C);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvttss2siq(Register dst, XMMRegister src) {
+void Assembler::cvttss2siq(Register dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2C);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvttsd2sil(Register dst, XMMRegister src) {
+void Assembler::cvttsd2sil(Register dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2C);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvttsd2siq(Register dst, XMMRegister src) {
+void Assembler::cvttsd2siq(Register dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefixq_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc < 8) {
+      prefix(REX_W);
+    } else {
+      prefix(REX_WB);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_WR);
+    } else {
+      prefix(REX_WRB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x2C);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvtss2sd(XMMRegister dst, XMMRegister src) {
+void Assembler::cvtss2sd(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF3);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x5A);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
-void Assembler::cvtsd2ss(XMMRegister dst, XMMRegister src) {
+void Assembler::cvtsd2ss(FloatRegister dst, FloatRegister src)
+{
+  int dstenc = dst->encoding();
+  int srcenc = src->encoding();
   emit_byte(0xF2);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  if (dstenc < 8) {
+    if (srcenc >= 8) {
+      prefix(REX_B);
+      srcenc -= 8;
+    }
+  } else {
+    if (srcenc < 8) {
+      prefix(REX_R);
+    } else {
+      prefix(REX_RB);
+      srcenc -= 8;
+    }
+    dstenc -= 8;
+  }
   emit_byte(0x0F);
   emit_byte(0x5A);
-  emit_byte(0xC0 | encode);
-}
-
-void Assembler::punpcklbw(XMMRegister dst, XMMRegister src) {
-  emit_byte(0x66);
-  int encode = prefix_and_encode(dst->encoding(), src->encoding());
-  emit_byte(0x0F);
-  emit_byte(0x60);
-  emit_byte(0xC0 | encode);
+  emit_byte(0xC0 | dstenc << 3 | srcenc);
 }
 
 // Implementation of MacroAssembler
 
-// On 32 bit it returns a vanilla displacement on 64 bit is a rip relative displacement
-Address MacroAssembler::as_Address(AddressLiteral adr) {
-  assert(!adr.is_lval(), "must be rval");
-  assert(reachable(adr), "must be");
-  return Address((int)(intptr_t)(adr.target() - pc()), adr.target(), adr.reloc());
-}
-
-Address MacroAssembler::as_Address(ArrayAddress adr) {
-#ifdef _LP64
-  AddressLiteral base = adr.base();
-  lea(rscratch1, base);
-  Address index = adr.index();
-  assert(index._disp == 0, "must not have disp"); // maybe it can?
-  Address array(rscratch1, index._index, index._scale, index._disp);
-  return array;
-#else
-  return Address::make_array(adr);
-#endif // _LP64
-
-}
-
-void MacroAssembler::fat_nop() {
+void MacroAssembler::fat_nop()
+{
   // A 5 byte nop that is safe for patching (see patch_verified_entry)
   // Recommened sequence from 'Software Optimization Guide for the AMD
   // Hammer Processor'
@@ -3313,350 +6106,31 @@ static Assembler::Condition reverse[] = {
 
 };
 
-// 32bit can do a case table jump in one instruction but we no longer allow the base
-// to be installed in the Address class
-void MacroAssembler::jump(ArrayAddress entry) {
-#ifdef _LP64
-  lea(rscratch1, entry.base());
-  Address dispatch = entry.index();
-  assert(dispatch._base == noreg, "must be");
-  dispatch._base = rscratch1;
-  jmp(dispatch);
-#else
-  jmp(as_Address(entry));
-#endif // _LP64
-}
-
-void MacroAssembler::jump(AddressLiteral dst) {
-  if (reachable(dst)) {
-    jmp_literal(dst.target(), dst.rspec());
-  } else {
-    lea(rscratch1, dst);
-    jmp(rscratch1);
-  }
-}
-
-void MacroAssembler::jump_cc(Condition cc, AddressLiteral dst) {
-  if (reachable(dst)) {
-    InstructionMark im(this);
-    relocate(dst.reloc());
-    const int short_size = 2;
-    const int long_size = 6;
-    int offs = (intptr_t)dst.target() - ((intptr_t)_code_pos);
-    if (dst.reloc() == relocInfo::none && is8bit(offs - short_size)) {
-      // 0111 tttn #8-bit disp
-      emit_byte(0x70 | cc);
-      emit_byte((offs - short_size) & 0xFF); 
-    } else {
-      // 0000 1111 1000 tttn #32-bit disp
-      emit_byte(0x0F);
-      emit_byte(0x80 | cc);
-      emit_long(offs - long_size);
-    }
-  } else {
+void MacroAssembler::jcc(Condition cc, address dst, relocInfo::relocType rtype)
+{ 
+  Address dest(dst, rtype);
+  if (check_reach(dest)) {
+    Assembler::jcc(cc, dst, rtype);
+  } 
+  else {
 #ifdef ASSERT
     warning("reversing conditional branch");
 #endif /* ASSERT */
     Label skip;
-    jccb(reverse[cc], skip);
-    lea(rscratch1, dst);
-    Assembler::jmp(rscratch1);
+    Assembler::jccb(reverse[cc], skip);
+    Assembler::movq(rscratch1, dst, rtype);
+    jmp(rscratch1);
     bind(skip);
   }
 }
 
-// Wouldn't need if AddressLiteral version had new name
-void MacroAssembler::call(Label& L, relocInfo::relocType rtype) {
-  Assembler::call(L, rtype);
-}
-
-// Wouldn't need if AddressLiteral version had new name
-void MacroAssembler::call(Register entry) {
-  Assembler::call(entry);
-}
-
-void MacroAssembler::call(AddressLiteral entry) {
-  if (reachable(entry)) {
-    Assembler::call_literal(entry.target(), entry.rspec());
-  } else {
-    lea(rscratch1, entry);
-    Assembler::call(rscratch1);
-  }
-}
-
-void MacroAssembler::cmp8(AddressLiteral src1, int8_t src2) {
-  if (reachable(src1)) {
-    cmpb(as_Address(src1), src2);
-  } else {
-    lea(rscratch1, src1);
-    cmpb(Address(rscratch1, 0), src2);
-  }
-}
-
-void MacroAssembler::cmp32(AddressLiteral src1, int32_t src2) {
-  if (reachable(src1)) {
-    cmpl(as_Address(src1), src2);
-  } else {
-    lea(rscratch1, src1);
-    cmpl(Address(rscratch1, 0), src2);
-  }
-}
-
-void MacroAssembler::cmp32(Register src1, AddressLiteral src2) {
-  if (reachable(src2)) {
-    cmpl(src1, as_Address(src2));
-  } else {
-    lea(rscratch1, src2);
-    cmpl(src1, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::cmpptr(Register src1, AddressLiteral src2) {
-#ifdef _LP64
-  if (src2.is_lval()) {
-    movptr(rscratch1, src2);
-    Assembler::cmpq(src1, rscratch1);
-  } else if (reachable(src2)) {
-    cmpq(src1, as_Address(src2));
-  } else {
-    lea(rscratch1, src2);
-    Assembler::cmpq(src1, Address(rscratch1, 0));
-  }
-#else
-  if (src2.is_lval()) {
-    cmp_literal32(src1, (int32_t) src2.target(), src2.rspec());
-  } else {
-    cmpl(src1, as_Address(src2));
-  }
-#endif // _LP64
-}
-
-void MacroAssembler::cmpptr(Address src1, AddressLiteral src2) {
-  assert(src2.is_lval(), "not a mem-mem compare");
-#ifdef _LP64
-  // moves src2's literal address 
-  movptr(rscratch1, src2);
-  Assembler::cmpq(src1, rscratch1);
-#else
-  cmp_literal32(src1, (int32_t) src2.target(), src2.rspec());
-#endif // _LP64
-}
-
-void MacroAssembler::cmp64(Register src1, AddressLiteral src2) {
-  assert(!src2.is_lval(), "should use cmpptr");
-
-  if (reachable(src2)) {
-#ifdef _LP64
-    cmpq(src1, as_Address(src2));
-#else
-    ShouldNotReachHere();
-#endif // _LP64
-  } else {
-    lea(rscratch1, src2);
-    Assembler::cmpq(src1, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::cmpxchgptr(Register reg, AddressLiteral adr) {
-  if (reachable(adr)) {
-#ifdef _LP64
-    cmpxchgq(reg, as_Address(adr));
-#else
-    cmpxchgl(reg, as_Address(adr));
-#endif // _LP64
-  } else {
-    lea(rscratch1, adr);
-    cmpxchgq(reg, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::incrementl(AddressLiteral dst) {
-  if (reachable(dst)) {
-    incrementl(as_Address(dst));
-  } else {
-    lea(rscratch1, dst);
-    incrementl(Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::incrementl(ArrayAddress dst) {
-  incrementl(as_Address(dst));
-}
-
-void MacroAssembler::lea(Register dst, Address src) {
-#ifdef _LP64
-  leaq(dst, src);
-#else
-  leal(dst, src);
-#endif // _LP64
-}
-
-void MacroAssembler::lea(Register dst, AddressLiteral src) {
-#ifdef _LP64
-    mov_literal64(dst, (intptr_t)src.target(), src.rspec());
-#else
-    mov_literal32(dst, (intptr_t)src.target(), src.rspec());
-#endif // _LP64
-}
-
-void MacroAssembler::mov32(AddressLiteral dst, Register src) {
-  if (reachable(dst)) {
-    movl(as_Address(dst), src);
-  } else {
-    lea(rscratch1, dst);
-    movl(Address(rscratch1, 0), src);
-  }
-}
-
-void MacroAssembler::mov32(Register dst, AddressLiteral src) {
-  if (reachable(src)) {
-    movl(dst, as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    movl(dst, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::movdbl(XMMRegister dst, AddressLiteral src) {
-  if (reachable(src)) {
-    if (UseXmmLoadAndClearUpper) {
-      movsd (dst, as_Address(src));
-    } else {
-      movlpd(dst, as_Address(src));
-    }
-  } else {
-    lea(rscratch1, src);
-    if (UseXmmLoadAndClearUpper) {
-      movsd (dst, Address(rscratch1, 0));
-    } else {
-      movlpd(dst, Address(rscratch1, 0));
-    }
-  }
-}
-
-void MacroAssembler::movflt(XMMRegister dst, AddressLiteral src) {
-  if (reachable(src)) {
-    movss(dst, as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    movss(dst, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::movoop(Register dst, jobject obj) {
-  mov_literal64(dst, (intptr_t)obj, oop_Relocation::spec_for_immediate());
-}
-
-void MacroAssembler::movoop(Address dst, jobject obj) {
-  mov_literal64(rscratch1, (intptr_t)obj, oop_Relocation::spec_for_immediate());
-  movq(dst, rscratch1);
-}
-
-void MacroAssembler::movptr(Register dst, AddressLiteral src) {
-#ifdef _LP64
-  if (src.is_lval()) {
-    mov_literal64(dst, (intptr_t)src.target(), src.rspec());
-  } else {
-    if (reachable(src)) {
-      movq(dst, as_Address(src));
-    } else {
-      lea(rscratch1, src);
-      movq(dst, Address(rscratch1,0));
-    }
-  }
-#else
-  if (src.is_lval()) {
-    mov_literal32(dst, (intptr_t)src.target(), src.rspec());
-  } else {
-    movl(dst, as_Address(src));
-  }
-#endif // LP64
-}
-
-void MacroAssembler::movptr(ArrayAddress dst, Register src) {
-#ifdef _LP64
-  movq(as_Address(dst), src);
-#else
-  movl(as_Address(dst), src);
-#endif // _LP64
-}
-
-void MacroAssembler::pushoop(jobject obj) {
-#ifdef _LP64
-  movoop(rscratch1, obj);
-  pushq(rscratch1);
-#else
-  push_literal32((int32_t)obj, oop_Relocation::spec_for_immediate());
-#endif // _LP64
-}
-
-void MacroAssembler::pushptr(AddressLiteral src) {
-#ifdef _LP64
-  lea(rscratch1, src);
-  if (src.is_lval()) {
-    pushq(rscratch1);
-  } else {
-    pushq(Address(rscratch1, 0));
-  }
-#else
-  if (src.is_lval()) {
-    push_literal((int32_t)src.target(), src.rspec());
-  else { 
-    pushl(as_Address(src));
-  }
-#endif // _LP64
-}
-
-void MacroAssembler::ldmxcsr(AddressLiteral src) {
-  if (reachable(src)) {
-    Assembler::ldmxcsr(as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    Assembler::ldmxcsr(Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::movlpd(XMMRegister dst, AddressLiteral src) {
-  if (reachable(src)) {
-    movlpd(dst, as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    movlpd(dst, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::movss(XMMRegister dst, AddressLiteral src) {
-  if (reachable(src)) {
-    movss(dst, as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    movss(dst, Address(rscratch1, 0));
-  }
-}
-void MacroAssembler::xorpd(XMMRegister dst, AddressLiteral src) {
-  if (reachable(src)) {
-    xorpd(dst, as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    xorpd(dst, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::xorps(XMMRegister dst, AddressLiteral src) {
-  if (reachable(src)) {
-    xorps(dst, as_Address(src));
-  } else {
-    lea(rscratch1, src);
-    xorps(dst, Address(rscratch1, 0));
-  }
-}
-
-void MacroAssembler::null_check(Register reg, int offset) {
+void MacroAssembler::null_check(Register reg, int offset)
+{
   if (needs_explicit_null_check(offset)) {
     // provoke OS NULL exception if reg = NULL by
     // accessing M[reg] w/o changing any (non-CC) registers
-    cmpq(rax, Address(reg, 0));
-    // Note: should probably use testl(rax, Address(reg, 0));
+    cmpq(rax, Address(reg));
+    // Note: should probably use testl(rax, Address(reg));
     //       may be shorter code (however, this version of
     //       testl needs to be implemented first)
   } else {
@@ -3665,31 +6139,36 @@ void MacroAssembler::null_check(Register reg, int offset) {
   }
 }
 
-int MacroAssembler::load_unsigned_byte(Register dst, Address src) {
+int MacroAssembler::load_unsigned_byte(Register dst, Address src)
+{
   int off = offset();
   movzbl(dst, src);
   return off;
 }
 
-int MacroAssembler::load_unsigned_word(Register dst, Address src) {
+int MacroAssembler::load_unsigned_word(Register dst, Address src)
+{
   int off = offset();
   movzwl(dst, src);
   return off;
 }
 
-int MacroAssembler::load_signed_byte(Register dst, Address src) {
+int MacroAssembler::load_signed_byte(Register dst, Address src)
+{
   int off = offset();
   movsbl(dst, src);
   return off;
 }
 
-int MacroAssembler::load_signed_word(Register dst, Address src) {
+int MacroAssembler::load_signed_word(Register dst, Address src)
+{
   int off = offset();
   movswl(dst, src);
   return off;
 }
 
-void MacroAssembler::incrementl(Register reg, int value) {
+void MacroAssembler::incrementl(Register reg, int value)
+{
   if (value == min_jint) { addl(reg, value); return; }
   if (value <  0) { decrementl(reg, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3697,7 +6176,8 @@ void MacroAssembler::incrementl(Register reg, int value) {
   /* else */      { addl(reg, value)       ; return; }
 }
 
-void MacroAssembler::decrementl(Register reg, int value) {
+void MacroAssembler::decrementl(Register reg, int value)
+{
   if (value == min_jint) { subl(reg, value); return; }
   if (value <  0) { incrementl(reg, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3705,7 +6185,8 @@ void MacroAssembler::decrementl(Register reg, int value) {
   /* else */      { subl(reg, value)       ; return; }
 }
 
-void MacroAssembler::incrementq(Register reg, int value) {
+void MacroAssembler::incrementq(Register reg, int value)
+{
   if (value == min_jint) { addq(reg, value); return; }
   if (value <  0) { decrementq(reg, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3713,7 +6194,8 @@ void MacroAssembler::incrementq(Register reg, int value) {
   /* else */      { addq(reg, value)       ; return; }
 }
 
-void MacroAssembler::decrementq(Register reg, int value) {
+void MacroAssembler::decrementq(Register reg, int value)
+{
   if (value == min_jint) { subq(reg, value); return; }
   if (value <  0) { incrementq(reg, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3721,7 +6203,8 @@ void MacroAssembler::decrementq(Register reg, int value) {
   /* else */      { subq(reg, value)       ; return; }
 }
 
-void MacroAssembler::incrementl(Address dst, int value) {
+void MacroAssembler::incrementl(Address dst, int value)
+{
   if (value == min_jint) { addl(dst, value); return; }
   if (value <  0) { decrementl(dst, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3729,7 +6212,8 @@ void MacroAssembler::incrementl(Address dst, int value) {
   /* else */      { addl(dst, value)       ; return; }
 }
 
-void MacroAssembler::decrementl(Address dst, int value) {
+void MacroAssembler::decrementl(Address dst, int value)
+{
   if (value == min_jint) { subl(dst, value); return; }
   if (value <  0) { incrementl(dst, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3737,7 +6221,8 @@ void MacroAssembler::decrementl(Address dst, int value) {
   /* else */      { subl(dst, value)       ; return; }
 }
 
-void MacroAssembler::incrementq(Address dst, int value) {
+void MacroAssembler::incrementq(Address dst, int value)
+{
   if (value == min_jint) { addq(dst, value); return; }
   if (value <  0) { decrementq(dst, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3745,7 +6230,8 @@ void MacroAssembler::incrementq(Address dst, int value) {
   /* else */      { addq(dst, value)       ; return; }
 }
 
-void MacroAssembler::decrementq(Address dst, int value) {
+void MacroAssembler::decrementq(Address dst, int value)
+{
   if (value == min_jint) { subq(dst, value); return; }
   if (value <  0) { incrementq(dst, -value); return; }
   if (value == 0) {                        ; return; }
@@ -3753,18 +6239,21 @@ void MacroAssembler::decrementq(Address dst, int value) {
   /* else */      { subq(dst, value)       ; return; }
 }
 
-void MacroAssembler::align(int modulus) {
+void MacroAssembler::align(int modulus)
+{
   if (offset() % modulus != 0) {
     nop(modulus - (offset() % modulus));
   }
 }
 
-void MacroAssembler::enter() {
+void MacroAssembler::enter()
+{
   pushq(rbp);
   movq(rbp, rsp);
 }
 
-void MacroAssembler::leave() {
+void MacroAssembler::leave()
+{
   emit_byte(0xC9); // LEAVE
 }
 
@@ -3825,7 +6314,8 @@ void MacroAssembler::testbool(Register dst) {
 
 void MacroAssembler::set_last_Java_frame(Register last_java_sp,
                                          Register last_java_fp,
-                                         address  last_java_pc) {
+                                         address  last_java_pc)
+{
   // determine last_java_sp register
   if (!last_java_sp->is_valid()) {
     last_java_sp = rsp;
@@ -3839,34 +6329,38 @@ void MacroAssembler::set_last_Java_frame(Register last_java_sp,
 
   // last_java_pc is optional
   if (last_java_pc != NULL) {
-    Address java_pc(r15_thread, 
-                    JavaThread::frame_anchor_offset() + JavaFrameAnchor::last_Java_pc_offset());
-    lea(rscratch1, InternalAddress(last_java_pc));
-    movq(java_pc, rscratch1);
+    Assembler::movq(rscratch1, last_java_pc, relocInfo::internal_word_type);
+
+    movq(Address(r15_thread,
+                 JavaThread::frame_anchor_offset() +
+                 JavaFrameAnchor::last_Java_pc_offset()),
+                 rscratch1);
   }
 
   movq(Address(r15_thread, JavaThread::last_Java_sp_offset()), last_java_sp);
 }
 
 void MacroAssembler::reset_last_Java_frame(bool clear_fp,
-                                           bool clear_pc) {
+                                           bool clear_pc)
+{
   // we must set sp to zero to clear frame
-  movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
+  movq(Address(r15_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
   // must clear fp, so that compiled frames are not confused; it is
   // possible that we need it only for debugging
   if (clear_fp) {
-    movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
+    movq(Address(r15_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
 
   if (clear_pc) {
-    movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
+    movq(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
   }
 }
 
 
 // Implementation of call_VM versions
 
-void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args) {
+void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args)
+{
   Label L, E;
 
 #ifdef _WIN64
@@ -3880,16 +6374,12 @@ void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args) {
   jcc(Assembler::zero, L);
 
   subq(rsp, 8);
-  {
-    call(RuntimeAddress(entry_point));
-  }
+  call(entry_point, relocInfo::runtime_call_type);
   addq(rsp, 8);
   jmp(E);
 
   bind(L);
-  {
-    call(RuntimeAddress(entry_point));
-  }
+  call(entry_point, relocInfo::runtime_call_type);
 
   bind(E);
 
@@ -3906,7 +6396,8 @@ void MacroAssembler::call_VM_base(Register oop_result,
                                   Register last_java_sp,
                                   address entry_point,
                                   int num_args,
-                                  bool check_exceptions) {
+                                  bool check_exceptions)
+{
   // determine last_java_sp register
   if (!last_java_sp->is_valid()) {
     last_java_sp = rsp;
@@ -3941,17 +6432,13 @@ void MacroAssembler::call_VM_base(Register oop_result,
     jcc(Assembler::zero, L);
 
     subq(rsp, 8);
-    {
-      call(RuntimeAddress(entry_point));
-    }
+    call(entry_point, relocInfo::runtime_call_type);
     addq(rsp, 8);
     jmp(E);
 
 
     bind(L);
-    {
-      call(RuntimeAddress(entry_point));
-    }
+    call(entry_point, relocInfo::runtime_call_type);
 
     bind(E);
 
@@ -3989,14 +6476,14 @@ void MacroAssembler::call_VM_base(Register oop_result,
     // around so we can always reach
     Label ok;
     jcc(Assembler::equal, ok);
-    jump(RuntimeAddress(StubRoutines::forward_exception_entry()));
+    jmp(StubRoutines::forward_exception_entry(), relocInfo::runtime_call_type);
     bind(ok);
   }
 
   // get oop result if there is one and reset the value in the thread
   if (oop_result->is_valid()) {
     movq(oop_result, Address(r15_thread, JavaThread::vm_result_offset()));
-    movptr(Address(r15_thread, JavaThread::vm_result_offset()), NULL_WORD);
+    movq(Address(r15_thread, JavaThread::vm_result_offset()), NULL_WORD);
     verify_oop(oop_result);
   }
 }
@@ -4007,7 +6494,8 @@ void MacroAssembler::check_and_handle_earlyret(Register java_thread) {}
 void MacroAssembler::call_VM_helper(Register oop_result,
                                     address entry_point,
                                     int num_args,
-                                    bool check_exceptions) {
+                                    bool check_exceptions)
+{
   // Java thread becomes first argument of C function
   movq(c_rarg0, r15_thread);
 
@@ -4021,7 +6509,8 @@ void MacroAssembler::call_VM_helper(Register oop_result,
 
 void MacroAssembler::call_VM(Register oop_result,
                              address entry_point,
-                             bool check_exceptions) {
+                             bool check_exceptions) 
+{
   Label C, E;
   Assembler::call(C, relocInfo::none);
   jmp(E);
@@ -4037,7 +6526,8 @@ void MacroAssembler::call_VM(Register oop_result,
 void MacroAssembler::call_VM(Register oop_result,
                              address entry_point,
                              Register arg_1,
-                             bool check_exceptions) {
+                             bool check_exceptions) 
+{
   assert(rax != arg_1, "smashed argument");
   assert(c_rarg0 != arg_1, "smashed argument");
 
@@ -4060,7 +6550,8 @@ void MacroAssembler::call_VM(Register oop_result,
                              address entry_point,
                              Register arg_1,
                              Register arg_2,
-                             bool check_exceptions) {
+                             bool check_exceptions) 
+{
   assert(rax != arg_1, "smashed argument");
   assert(rax != arg_2, "smashed argument");
   assert(c_rarg0 != arg_1, "smashed argument");
@@ -4092,7 +6583,8 @@ void MacroAssembler::call_VM(Register oop_result,
                              Register arg_1,
                              Register arg_2,
                              Register arg_3,
-                             bool check_exceptions) {
+                             bool check_exceptions) 
+{
   assert(rax != arg_1, "smashed argument");
   assert(rax != arg_2, "smashed argument");
   assert(rax != arg_3, "smashed argument");
@@ -4131,7 +6623,8 @@ void MacroAssembler::call_VM(Register oop_result,
                              Register last_java_sp, 
                              address entry_point,
                              int num_args,
-                             bool check_exceptions) {
+                             bool check_exceptions) 
+{
   call_VM_base(oop_result, noreg, last_java_sp, entry_point, num_args,
                check_exceptions);
 }
@@ -4140,7 +6633,8 @@ void MacroAssembler::call_VM(Register oop_result,
                              Register last_java_sp,
                              address entry_point, 
                              Register arg_1, 
-                             bool check_exceptions) {
+                             bool check_exceptions) 
+{
   assert(c_rarg0 != arg_1, "smashed argument");
   assert(c_rarg1 != last_java_sp, "smashed argument");
   // c_rarg0 is reserved for thread
@@ -4155,7 +6649,8 @@ void MacroAssembler::call_VM(Register oop_result,
                              address entry_point,
                              Register arg_1,
                              Register arg_2,
-                             bool check_exceptions) {
+                             bool check_exceptions)
+{
   assert(c_rarg0 != arg_1, "smashed argument");
   assert(c_rarg0 != arg_2, "smashed argument");
   assert(c_rarg1 != arg_2, "smashed argument");
@@ -4179,7 +6674,8 @@ void MacroAssembler::call_VM(Register oop_result,
                              Register arg_1,
                              Register arg_2,
                              Register arg_3,
-                             bool check_exceptions) {
+                             bool check_exceptions)
+{
   assert(c_rarg0 != arg_1, "smashed argument");
   assert(c_rarg0 != arg_2, "smashed argument");
   assert(c_rarg0 != arg_3, "smashed argument");
@@ -4205,11 +6701,13 @@ void MacroAssembler::call_VM(Register oop_result,
   call_VM(oop_result, last_java_sp, entry_point, 3, check_exceptions);
 }
 
-void MacroAssembler::call_VM_leaf(address entry_point, int num_args) {
+void MacroAssembler::call_VM_leaf(address entry_point, int num_args)
+{
   call_VM_leaf_base(entry_point, num_args);
 }
 
-void MacroAssembler::call_VM_leaf(address entry_point, Register arg_1) {
+void MacroAssembler::call_VM_leaf(address entry_point, Register arg_1)
+{
   if (c_rarg0 != arg_1) {
     movq(c_rarg0, arg_1);
   }
@@ -4218,7 +6716,8 @@ void MacroAssembler::call_VM_leaf(address entry_point, Register arg_1) {
 
 void MacroAssembler::call_VM_leaf(address entry_point,
                                   Register arg_1, 
-                                  Register arg_2) {
+                                  Register arg_2) 
+{
   assert(c_rarg0 != arg_2, "smashed argument");
   assert(c_rarg1 != arg_1, "smashed argument");
   if (c_rarg0 != arg_1) {
@@ -4233,7 +6732,8 @@ void MacroAssembler::call_VM_leaf(address entry_point,
 void MacroAssembler::call_VM_leaf(address entry_point,
                                   Register arg_1,
                                   Register arg_2,
-                                  Register arg_3) {
+                                  Register arg_3)
+{
   assert(c_rarg0 != arg_2, "smashed argument");
   assert(c_rarg0 != arg_3, "smashed argument");
   assert(c_rarg1 != arg_1, "smashed argument");
@@ -4259,36 +6759,40 @@ void MacroAssembler::call_VM_leaf(address entry_point,
 // be recorded in the (thread-local) JavaThread object. When leaving C
 // land, the last Java fp has to be reset to 0. This is required to
 // allow proper stack traversal.
-void MacroAssembler::store_check(Register obj) {
+void MacroAssembler::store_check(Register obj) 
+{
   // Does a store check for the oop in register obj. The content of
   // register obj is destroyed afterwards.
   store_check_part_1(obj);
   store_check_part_2(obj);
 }
 
-void MacroAssembler::store_check(Register obj, Address dst) {
+void MacroAssembler::store_check(Register obj, Address dst) 
+{
   store_check(obj);
 }
 
 // split the store check operation so that other instructions can be
 // scheduled inbetween
-void MacroAssembler::store_check_part_1(Register obj) {
+void MacroAssembler::store_check_part_1(Register obj) 
+{
   BarrierSet* bs = Universe::heap()->barrier_set();
   assert(bs->kind() == BarrierSet::CardTableModRef, "Wrong barrier set kind");
   shrq(obj, CardTableModRefBS::card_shift);
 }
 
-void MacroAssembler::store_check_part_2(Register obj) {
+void MacroAssembler::store_check_part_2(Register obj) 
+{
   BarrierSet* bs = Universe::heap()->barrier_set();
   assert(bs->kind() == BarrierSet::CardTableModRef, "Wrong barrier set kind");
   CardTableModRefBS* ct = (CardTableModRefBS*)bs;
   assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
-  ExternalAddress cardtable((address)ct->byte_map_base);
-  Address index(noreg, obj, Address::times_1);
-  movb(as_Address(ArrayAddress(cardtable, index)), 0);
+  movq(r10, (int64_t) ct->byte_map_base);
+  movb(Address(r10, obj, Address::times_1), 0);
 }
 
-void MacroAssembler::c2bool(Register x) {
+void MacroAssembler::c2bool(Register x) 
+{
   // implements x == 0 ? 0 : 1
   // note: must only look at least-significant byte of x
   //       since C-style booleans are stored in one byte
@@ -4297,7 +6801,8 @@ void MacroAssembler::c2bool(Register x) {
   setb(Assembler::notZero, x);
 }
 
-int MacroAssembler::corrected_idivl(Register reg) {
+int MacroAssembler::corrected_idivl(Register reg) 
+{
   // Full implementation of Java idiv and irem; checks for special
   // case as described in JVM spec., p.243 & p.271.  The function
   // returns the (pc) offset of the idivl instruction - may be needed
@@ -4334,7 +6839,8 @@ int MacroAssembler::corrected_idivl(Register reg) {
   return idivl_offset;
 }
 
-int MacroAssembler::corrected_idivq(Register reg) {
+int MacroAssembler::corrected_idivq(Register reg) 
+{
   // Full implementation of Java ldiv and lrem; checks for special
   // case as described in JVM spec., p.243 & p.271.  The function
   // returns the (pc) offset of the idivl instruction - may be needed
@@ -4352,7 +6858,7 @@ int MacroAssembler::corrected_idivq(Register reg) {
   Label normal_case, special_case;
   
   // check for special case
-  cmp64(rax, ExternalAddress((address) &min_long));
+  cmpq(rax, Address((address) &min_long, relocInfo::none));
   jcc(Assembler::notEqual, normal_case);
   xorl(rdx, rdx); // prepare rdx for possible special case (where
                   // remainder = 0)
@@ -4385,11 +6891,11 @@ void MacroAssembler::pop_IU_state() {
 
 void MacroAssembler::push_FPU_state() {
   subq(rsp, FPUStateSizeInWords * wordSize);
-  fxsave(Address(rsp, 0));
+  fxsave(Address(rsp));
 }
 
 void MacroAssembler::pop_FPU_state() {
-  fxrstor(Address(rsp, 0));
+  fxrstor(Address(rsp));
   addq(rsp, FPUStateSizeInWords * wordSize);
 }
 
@@ -4405,15 +6911,18 @@ void MacroAssembler::pop_CPU_state() {
   pop_IU_state();
 }
 
-void MacroAssembler::sign_extend_short(Register reg) {
+void MacroAssembler::sign_extend_short(Register reg) 
+{
   movswl(reg, reg);
 }
 
-void MacroAssembler::sign_extend_byte(Register reg) {
+void MacroAssembler::sign_extend_byte(Register reg) 
+{
   movsbl(reg, reg);
 }
 
-void MacroAssembler::division_with_shift(Register reg, int shift_value) {
+void MacroAssembler::division_with_shift(Register reg, int shift_value) 
+{
   assert (shift_value > 0, "illegal shift value");
   Label _is_positive;
   testl (reg, reg);
@@ -4430,17 +6939,20 @@ void MacroAssembler::division_with_shift(Register reg, int shift_value) {
   sarl(reg, shift_value);
 }
 
-void MacroAssembler::round_to_l(Register reg, int modulus) {
+void MacroAssembler::round_to_l(Register reg, int modulus)
+{
   addl(reg, modulus - 1);
   andl(reg, -modulus);
 }
 
-void MacroAssembler::round_to_q(Register reg, int modulus) {
+void MacroAssembler::round_to_q(Register reg, int modulus)
+{
   addq(reg, modulus - 1);
   andq(reg, -modulus);
 }
 
-void MacroAssembler::verify_oop(Register reg, const char* s) {
+void MacroAssembler::verify_oop(Register reg, const char* s) 
+{
   if (!VerifyOops) {
     return;
   }
@@ -4453,16 +6965,11 @@ void MacroAssembler::verify_oop(Register reg, const char* s) {
 
   // pass args on stack, only touch rax
   pushq(reg);
-  
-  // avoid using pushptr, as it modifies scratch registers
-  // and our contract is not to modify anything
-  ExternalAddress buffer((address)b);  
-  movptr(rax, buffer.addr());
-  pushq(rax);
+  pushq(Address((address) b, relocInfo::none));
 
   // call indirectly to solve generation ordering problem
-  movptr(rax, ExternalAddress(StubRoutines::verify_oop_subroutine_entry_address()));
-  call(rax); // no alignment requirement
+  movq(rax, (int64_t) StubRoutines::verify_oop_subroutine_entry_address());
+  Assembler::call(rax); // no alignment requirement
   // everything popped by receiver
 }
 
@@ -4474,39 +6981,35 @@ void MacroAssembler::verify_oop_addr(Address addr, const char* s) {
   pushq(rax);                          // save rax
   movq(addr, rax);
   pushq(rax);                          // pass register argument
-
-
-  // avoid using pushptr, as it modifies scratch registers
-  // and our contract is not to modify anything
-  ExternalAddress buffer((address)b);  
-  movptr(rax, buffer.addr());
-  pushq(rax);
-
+  pushq((intptr_t)b);                  // pass msg argument
   // call indirectly to solve generation ordering problem
-  movptr(rax, ExternalAddress(StubRoutines::verify_oop_subroutine_entry_address()));
-  call(rax); // no alignment requirement
+  movq(rax, (int64_t)StubRoutines::verify_oop_subroutine_entry_address());
+  Assembler::call(rax); // no alignment requirement
   // everything popped by receiver
 }
 
 
-void MacroAssembler::stop(const char* msg) {
+void MacroAssembler::stop(const char* msg) 
+{
   address rip = pc();
   pushaq(); // get regs on stack
-  lea(c_rarg0, ExternalAddress((address) msg));
-  lea(c_rarg1, InternalAddress(rip));
+  movq(c_rarg0, (int64_t) msg);
+  leaq(c_rarg1, Address(rip, relocInfo::none)); // get pc
   movq(c_rarg2, rsp); // pass pointer to regs array
   andq(rsp, -16); // align stack as required by ABI
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, MacroAssembler::debug)));
+  call(CAST_FROM_FN_PTR(address, MacroAssembler::debug),
+       relocInfo::runtime_call_type);
   hlt();
 }
 
-void MacroAssembler::warn(const char* msg) {
+void MacroAssembler::warn(const char* msg) 
+{
   pushq(r12);
   movq(r12, rsp); 
   andq(rsp, -16);     // align stack as required by push_CPU_state and call
 
   push_CPU_state();   // keeps alignment at 16 bytes
-  lea(c_rarg0, ExternalAddress((address) msg));
+  movq(c_rarg0, (int64_t) msg);
   call_VM_leaf(CAST_FROM_FN_PTR(address, warning), c_rarg0);
   pop_CPU_state();
 
@@ -4514,7 +7017,8 @@ void MacroAssembler::warn(const char* msg) {
   popq(r12);
 }
 
-void MacroAssembler::debug(char* msg, int64_t pc, int64_t regs[]) {
+void MacroAssembler::debug(char* msg, int64_t pc, int64_t regs[])
+{
   // In order to get locks to work, we need to fake a in_VM state
   if (ShowMessageBoxOnError ) {
     JavaThread* thread = JavaThread::current();
@@ -4556,11 +7060,13 @@ void MacroAssembler::debug(char* msg, int64_t pc, int64_t regs[]) {
   }
 }
 
-void MacroAssembler::os_breakpoint() {
+void MacroAssembler::os_breakpoint() 
+{
   // instead of directly emitting a breakpoint, call os:breakpoint for
   // better debugability
   // This shouldn't need alignment, it's an empty function
-  call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+  call(CAST_FROM_FN_PTR(address, os::breakpoint), 
+       relocInfo::runtime_call_type);
 }
 
 // Write serialization page so VM thread can do a pseudo remote membar.
@@ -4568,19 +7074,18 @@ void MacroAssembler::os_breakpoint() {
 // offset to write to within the page. This minimizes bus traffic
 // due to cache line collision.
 void MacroAssembler::serialize_memory(Register thread, 
-                                      Register tmp) { 
-
-  movl(tmp, thread);
-  shrl(tmp, os::get_serialize_page_shift_count());
-  andl(tmp, (os::vm_page_size() - sizeof(int)));
-
-  Address index(noreg, tmp, Address::times_1);
-  ExternalAddress page(os::get_memory_serialize_page());
-
-  movptr(ArrayAddress(page, index), tmp);
+                                      Register tmp1, 
+                                      Register tmp2) 
+{
+  movq(tmp2, thread);
+  shrq(tmp2, os::get_serialize_page_shift_count());
+  movq(tmp1, (int64_t)os::get_memory_serialize_page());
+  andq(tmp2, (os::vm_page_size() - sizeof(int)));
+  movl(Address(tmp2, tmp1,Address::times_1), tmp2); 
 }
 
-void MacroAssembler::verify_tlab() {
+void MacroAssembler::verify_tlab()
+{
 #ifdef ASSERT
   if (UseTLAB) {
     Label next, ok;
@@ -4613,14 +7118,14 @@ void MacroAssembler::eden_allocate(Register obj,
                                    Register var_size_in_bytes,
                                    int con_size_in_bytes,
                                    Register t1,
-                                   Label& slow_case) {
+                                   Label& slow_case)
+{
   assert(obj == rax, "obj must be in rax for cmpxchg");
   assert_different_registers(obj, var_size_in_bytes, t1);
   Register end = t1;
   Label retry;
   bind(retry);
-  ExternalAddress heap_top((address) Universe::heap()->top_addr());
-  movptr(obj, heap_top);
+  movq(obj, Address((address) Universe::heap()->top_addr(), relocInfo::none));
   if (var_size_in_bytes == noreg) {
     leaq(end, Address(obj, con_size_in_bytes));
   } else {
@@ -4629,8 +7134,7 @@ void MacroAssembler::eden_allocate(Register obj,
   // if end < obj then we wrapped around => object too long => slow case
   cmpq(end, obj);
   jcc(Assembler::below, slow_case);
-  cmpptr(end, ExternalAddress((address) Universe::heap()->end_addr()));
-
+  cmpq(end, Address((address) Universe::heap()->end_addr(), relocInfo::none));
   jcc(Assembler::above, slow_case);
   // Compare obj with the top addr, and if still equal, store the new
   // top addr in end at the address of the top addr pointer. Sets ZF
@@ -4639,7 +7143,8 @@ void MacroAssembler::eden_allocate(Register obj,
   if (os::is_MP()) {
     lock();
   }
-  cmpxchgptr(end, heap_top);
+  cmpxchgq(end, 
+           Address((address) Universe::heap()->top_addr(), relocInfo::none));
   // if someone beat us on the allocation, try again, otherwise continue 
   jcc(Assembler::notEqual, retry);
 }
@@ -4650,7 +7155,8 @@ void MacroAssembler::tlab_allocate(Register obj,
                                    int con_size_in_bytes,
                                    Register t1,
                                    Register t2,
-                                   Label& slow_case) {
+                                   Label& slow_case)
+{
   assert_different_registers(obj, t1, t2);
   assert_different_registers(obj, var_size_in_bytes, t1);
   Register end = t2;
@@ -4679,7 +7185,8 @@ void MacroAssembler::tlab_allocate(Register obj,
 // Preserves rbx and rdx.
 void MacroAssembler::tlab_refill(Label& retry,
                                  Label& try_eden,
-                                 Label& slow_case) {
+                                 Label& slow_case)
+{
   Register top = rax;
   Register t1 = rcx; 
   Register t2 = rsi;
@@ -4708,7 +7215,7 @@ void MacroAssembler::tlab_refill(Label& retry,
   jcc(Assembler::lessEqual, discard_tlab);
 
   // Retain
-  mov64(t2, ThreadLocalAllocBuffer::refill_waste_limit_increment());
+  movq(t2, ThreadLocalAllocBuffer::refill_waste_limit_increment());
   addq(Address(thread_reg,  // size_t
                in_bytes(JavaThread::tlab_refill_waste_limit_offset())),
        t2);
@@ -4738,7 +7245,7 @@ void MacroAssembler::tlab_refill(Label& retry,
   jcc(Assembler::zero, do_refill);
 
   // set up the mark word
-  mov64(t3, (int64_t) markOopDesc::prototype()->copy_set_hash(0x2));
+  movq(t3, (int64_t) markOopDesc::prototype()->copy_set_hash(0x2));
   movq(Address(top, oopDesc::mark_offset_in_bytes()), t3);
   // set the length to the remaining space
   subq(t1, typeArrayOopDesc::header_size(T_INT));
@@ -4746,7 +7253,8 @@ void MacroAssembler::tlab_refill(Label& retry,
   shlq(t1, log2_intptr(HeapWordSize / sizeof(jint)));
   movq(Address(top, arrayOopDesc::length_offset_in_bytes()), t1);
   // set klass to intArrayKlass
-  movptr(t1, ExternalAddress((address) Universe::intArrayKlassObj_addr()));
+  movq(t1,
+       Address((address) Universe::intArrayKlassObj_addr(), relocInfo::none));
   movq(Address(top, oopDesc::klass_offset_in_bytes()), t1);
 
   // refill the tlab with an eden allocation
@@ -4795,7 +7303,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   assert(markOopDesc::age_shift == markOopDesc::lock_bits + markOopDesc::biased_lock_bits, "biased locking makes assumptions about bit layout");
   Address mark_addr      (obj_reg, oopDesc::mark_offset_in_bytes());
   Address klass_addr     (obj_reg, oopDesc::klass_offset_in_bytes());
-  Address saved_mark_addr(lock_reg, 0);
+  Address saved_mark_addr(lock_reg);
 
   if (PrintBiasedLockingStatistics && counters == NULL)
     counters = BiasedLocking::counters();
@@ -4824,8 +7332,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   xorq(tmp_reg, swap_reg);
   andq(tmp_reg, ~((int) markOopDesc::age_mask_in_place));
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address) counters->anonymously_biased_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((address) counters->biased_lock_entry_count_addr(), relocInfo::none));
   }
   jcc(Assembler::equal, done);
 
@@ -4869,14 +7376,13 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   if (os::is_MP()) {
     lock();
   }    
-  cmpxchgq(tmp_reg, Address(obj_reg, 0));
+  cmpxchgq(tmp_reg, Address(obj_reg));
   // If the biasing toward our thread failed, this means that
   // another thread succeeded in biasing it toward itself and we
   // need to revoke that bias. The revocation will occur in the
   // interpreter runtime in the slow case.
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address) counters->anonymously_biased_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((address) counters->anonymously_biased_lock_entry_count_addr(), relocInfo::none));
   }
   if (slow_case != NULL) {
     jcc(Assembler::notZero, *slow_case);
@@ -4899,13 +7405,12 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   if (os::is_MP()) {
     lock();
   }    
-  cmpxchgq(tmp_reg, Address(obj_reg, 0));
+  cmpxchgq(tmp_reg, Address(obj_reg));
   // If the biasing toward our thread failed, then another thread
   // succeeded in biasing it toward itself and we need to revoke that
   // bias. The revocation will occur in the runtime in the slow case.
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address) counters->rebiased_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((address) counters->rebiased_lock_entry_count_addr(), relocInfo::none));
   }
   if (slow_case != NULL) {
     jcc(Assembler::notZero, *slow_case);
@@ -4929,13 +7434,12 @@ int MacroAssembler::biased_locking_enter(Register lock_reg, Register obj_reg, Re
   if (os::is_MP()) {
     lock();
   }    
-  cmpxchgq(tmp_reg, Address(obj_reg, 0));
+  cmpxchgq(tmp_reg, Address(obj_reg));
   // Fall through to the normal CAS-based lock, because no matter what
   // the result of the above CAS, some thread must have succeeded in
   // removing the bias bit from the object's header.
   if (counters != NULL) {
-    cond_inc32(Assembler::zero,
-               ExternalAddress((address) counters->revoked_lock_entry_count_addr()));
+    cond_incl(Assembler::zero, Address((address) counters->revoked_lock_entry_count_addr(), relocInfo::none));
   }
 
   bind(cas_label);
@@ -4984,7 +7488,7 @@ Assembler::Condition MacroAssembler::negate_condition(Assembler::Condition cond)
 }
 
 
-void MacroAssembler::cond_inc32(Condition cond, AddressLiteral counter_addr) {
+void MacroAssembler::cond_incl(Condition cond, Address counter_addr) {
   Condition negated_cond = negate_condition(cond);
   Label L;
   jcc(negated_cond, L);
@@ -4992,7 +7496,7 @@ void MacroAssembler::cond_inc32(Condition cond, AddressLiteral counter_addr) {
   bind(L);
 }
 
-void MacroAssembler::atomic_incl(AddressLiteral counter_addr) {
+void MacroAssembler::atomic_incl(Address counter_addr) {
   pushfq();
   if (os::is_MP())
     lock();
@@ -5003,7 +7507,8 @@ void MacroAssembler::atomic_incl(AddressLiteral counter_addr) {
 SkipIfEqual::SkipIfEqual(
     MacroAssembler* masm, const bool* flag_addr, bool value) {
   _masm = masm;
-  _masm->cmp8(ExternalAddress((address)flag_addr), value);
+  _masm->movq(rscratch1, (address)flag_addr, relocInfo::none);
+  _masm->cmpb(rscratch1, value);
   _masm->jcc(Assembler::equal, _label);
 }
 

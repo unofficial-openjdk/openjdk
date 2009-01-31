@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_FrameMap_i486.hpp	1.57 07/05/05 17:04:11 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -53,24 +53,24 @@
  public:
   static LIR_Opr receiver_opr;
   
-  static LIR_Opr rsi_opr;
-  static LIR_Opr rdi_opr;
-  static LIR_Opr rbx_opr;
-  static LIR_Opr rax_opr;
-  static LIR_Opr rdx_opr;
-  static LIR_Opr rcx_opr;
-  static LIR_Opr rsp_opr;
-  static LIR_Opr rbp_opr;
+  static LIR_Opr esi_opr;
+  static LIR_Opr edi_opr;
+  static LIR_Opr ebx_opr;
+  static LIR_Opr eax_opr;
+  static LIR_Opr edx_opr;
+  static LIR_Opr ecx_opr;
+  static LIR_Opr esp_opr;
+  static LIR_Opr ebp_opr;
 
-  static LIR_Opr rsi_oop_opr;
-  static LIR_Opr rdi_oop_opr;
-  static LIR_Opr rbx_oop_opr;
-  static LIR_Opr rax_oop_opr;
-  static LIR_Opr rdx_oop_opr;
-  static LIR_Opr rcx_oop_opr;
+  static LIR_Opr esi_oop_opr;
+  static LIR_Opr edi_oop_opr;
+  static LIR_Opr ebx_oop_opr;
+  static LIR_Opr eax_oop_opr;
+  static LIR_Opr edx_oop_opr;
+  static LIR_Opr ecx_oop_opr;
 
-  static LIR_Opr rax_rdx_long_opr;
-  static LIR_Opr rbx_rcx_long_opr;
+  static LIR_Opr eax_edx_long_opr;
+  static LIR_Opr ebx_ecx_long_opr;
   static LIR_Opr fpu0_float_opr;
   static LIR_Opr fpu0_double_opr;
   static LIR_Opr xmm0_float_opr;

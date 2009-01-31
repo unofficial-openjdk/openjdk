@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)c1_Runtime1_i486.cpp	1.194 07/06/28 16:50:05 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 int StubAssembler::call_RT(Register oop_result1, Register oop_result2, address entry, int args_size) {
   // setup registers
-  const Register thread = rdi; // is callee-saved register (Visual C++ calling conventions)
+  const Register thread = edi; // is callee-saved register (Visual C++ calling conventions)
   assert(!(oop_result1->is_valid() || oop_result2->is_valid()) || oop_result1 != oop_result2, "registers must be different");
   assert(oop_result1 != thread && oop_result2 != thread, "registers must be different");
   assert(args_size >= 0, "illegal args_size");
@@ -44,35 +44,35 @@ int StubAssembler::call_RT(Register oop_result1, Register oop_result2, address e
   get_thread(thread);
   pushl(thread);
 
-  set_last_Java_frame(thread, noreg, rbp, NULL);
+  set_last_Java_frame(thread, noreg, ebp, NULL);
   // do the call
-  call(RuntimeAddress(entry));
+  call(entry, relocInfo::runtime_call_type);
   int call_offset = offset();
   // verify callee-saved register
 #ifdef ASSERT
-  guarantee(thread != rax, "change this code");
-  pushl(rax);
+  guarantee(thread != eax, "change this code");
+  pushl(eax);
   { Label L;
-    get_thread(rax);
-    cmpl(thread, rax);
+    get_thread(eax);
+    cmpl(thread, eax);
     jcc(Assembler::equal, L);
     int3();
-    stop("StubAssembler::call_RT: rdi not callee saved?");
+    stop("StubAssembler::call_RT: edi not callee saved?");
     bind(L);
   }
-  popl(rax);
+  popl(eax);
 #endif
   reset_last_Java_frame(thread, true, false);
 
   // discard thread and arguments
-  addl(rsp, (1 + args_size)*BytesPerWord);
+  addl(esp, (1 + args_size)*BytesPerWord);
 
   // check for pending exceptions
   { Label L;
     cmpl(Address(thread, Thread::pending_exception_offset()), NULL_WORD);
     jcc(Assembler::equal, L);
     // exception pending => remove activation and forward to exception handler
-    movl(rax, Address(thread, Thread::pending_exception_offset()));
+    movl(eax, Address(thread, Thread::pending_exception_offset()));
     // make sure that the vm_results are cleared
     if (oop_result1->is_valid()) {
       movl(Address(thread, JavaThread::vm_result_offset()), NULL_WORD);
@@ -82,11 +82,11 @@ int StubAssembler::call_RT(Register oop_result1, Register oop_result2, address e
     }
     if (frame_size() == no_frame_size) {
       leave();
-      jump(RuntimeAddress(StubRoutines::forward_exception_entry()));
+      jmp(StubRoutines::forward_exception_entry(), relocInfo::runtime_call_type);
     } else if (_stub_id == Runtime1::forward_exception_id) {
       should_not_reach_here();
     } else {
-      jump(RuntimeAddress(Runtime1::entry_for(Runtime1::forward_exception_id)));
+      jmp(Runtime1::entry_for(Runtime1::forward_exception_id), relocInfo::runtime_call_type);
     }
     bind(L);
   }
@@ -151,13 +151,13 @@ StubFrame::StubFrame(StubAssembler* sasm, const char* name, bool must_gc_argumen
 // load parameters that were stored with LIR_Assembler::store_parameter
 // Note: offsets for store_parameter and load_argument must match
 void StubFrame::load_argument(int offset_in_words, Register reg) {
-  // rbp, + 0: link
+  // ebp + 0: link
   //     + 1: return address
   //     + 2: argument with offset 0
   //     + 3: argument with offset 1
   //     + 4: ...
 
-  __ movl(reg, Address(rbp, (offset_in_words + 2) * BytesPerWord));
+  __ movl(reg, Address(ebp, (offset_in_words + 2) * BytesPerWord));
 }
 
 
@@ -195,15 +195,15 @@ enum reg_save_layout {
   fpu_state_end_off = fpu_state_off + FPUStateSizeInWords,
   marker = fpu_state_end_off,
   extra_space_offset,
-  rdi_off = extra_space_offset,
-  rsi_off,
-  rbp_off,
-  rsp_off,
-  rbx_off,
-  rdx_off,
-  rcx_off,
-  rax_off,      
-  saved_rbp_off,
+  edi_off = extra_space_offset,
+  esi_off,
+  ebp_off,
+  esp_off,
+  ebx_off,
+  edx_off,
+  ecx_off,
+  eax_off,      
+  saved_ebp_off,
   return_off,
   reg_save_frame_size,  // As noted: neglects any parameters to runtime
 
@@ -238,12 +238,12 @@ static OopMap* generate_oop_map(StubAssembler* sasm, int num_rt_args,
   // record saved value locations in an OopMap
   // locations are offsets from sp after runtime call; num_rt_args is number of arguments in call, including thread
   OopMap* map = new OopMap(frame_size, 0);
-  map->set_callee_saved(VMRegImpl::stack2reg(rax_off + num_rt_args), rax->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(rcx_off + num_rt_args), rcx->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(rdx_off + num_rt_args), rdx->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(rbx_off + num_rt_args), rbx->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(rsi_off + num_rt_args), rsi->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(rdi_off + num_rt_args), rdi->as_VMReg());
+  map->set_callee_saved(VMRegImpl::stack2reg(eax_off + num_rt_args), eax->as_VMReg());
+  map->set_callee_saved(VMRegImpl::stack2reg(ecx_off + num_rt_args), ecx->as_VMReg());
+  map->set_callee_saved(VMRegImpl::stack2reg(edx_off + num_rt_args), edx->as_VMReg());
+  map->set_callee_saved(VMRegImpl::stack2reg(ebx_off + num_rt_args), ebx->as_VMReg());
+  map->set_callee_saved(VMRegImpl::stack2reg(esi_off + num_rt_args), esi->as_VMReg());
+  map->set_callee_saved(VMRegImpl::stack2reg(edi_off + num_rt_args), edi->as_VMReg());
 
   if (save_fpu_registers) {
     if (UseSSE < 2) {
@@ -300,21 +300,21 @@ static OopMap* save_live_registers(StubAssembler* sasm, int num_rt_args,
   // assert(float_regs_as_doubles_off % 2 == 0, "misaligned offset");
   // assert(xmm_regs_as_doubles_off % 2 == 0, "misaligned offset");
 
-  __ subl(rsp, extra_space_offset * wordSize);
+  __ subl(esp, extra_space_offset * wordSize);
 
 #ifdef ASSERT
-  __ movl(Address(rsp, marker * wordSize), 0xfeedbeef);
+  __ movl(Address(esp, marker * wordSize), 0xfeedbeef);
 #endif
 
   if (save_fpu_registers) {
     if (UseSSE < 2) {
       // save FPU stack
-      __ fnsave(Address(rsp, fpu_state_off * wordSize));
+      __ fnsave(Address(esp, fpu_state_off * wordSize));
       __ fwait();
 
 #ifdef ASSERT
       Label ok;
-      __ cmpw(Address(rsp, fpu_state_off * wordSize), StubRoutines::fpu_cntrl_wrd_std());
+      __ cmpw(Address(esp, fpu_state_off * wordSize), StubRoutines::fpu_cntrl_wrd_std());
       __ jccb(Assembler::equal, ok);
       __ stop("corrupted control word detected");
       __ bind(ok);
@@ -324,18 +324,18 @@ static OopMap* save_live_registers(StubAssembler* sasm, int num_rt_args,
       // since fstp_d can cause FPU stack underflow exceptions.  Write it
       // into the on stack copy and then reload that to make sure that the
       // current and future values are correct.
-      __ movw(Address(rsp, fpu_state_off * wordSize), StubRoutines::fpu_cntrl_wrd_std());
-      __ frstor(Address(rsp, fpu_state_off * wordSize));
+      __ movw(Address(esp, fpu_state_off * wordSize), StubRoutines::fpu_cntrl_wrd_std());
+      __ frstor(Address(esp, fpu_state_off * wordSize));
 
       // Save the FPU registers in de-opt-able form 
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord +  0));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord +  8));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord + 16));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord + 24));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord + 32));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord + 40));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord + 48));
-      __ fstp_d(Address(rsp, float_regs_as_doubles_off * BytesPerWord + 56));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord +  0));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord +  8));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord + 16));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord + 24));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord + 32));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord + 40));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord + 48));
+      __ fstp_d(Address(esp, float_regs_as_doubles_off * BytesPerWord + 56));
     }
 
     if (UseSSE >= 2) {
@@ -344,24 +344,24 @@ static OopMap* save_live_registers(StubAssembler* sasm, int num_rt_args,
       // so always save them as doubles.
       // note that float values are _not_ converted automatically, so for float values 
       // the second word contains only garbage data.
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize +  0), xmm0);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize +  8), xmm1);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize + 16), xmm2);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize + 24), xmm3);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize + 32), xmm4);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize + 40), xmm5);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize + 48), xmm6);
-      __ movdbl(Address(rsp, xmm_regs_as_doubles_off * wordSize + 56), xmm7);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize +  0), xmm0);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize +  8), xmm1);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize + 16), xmm2);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize + 24), xmm3);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize + 32), xmm4);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize + 40), xmm5);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize + 48), xmm6);
+      __ movdbl(Address(esp, xmm_regs_as_doubles_off * wordSize + 56), xmm7);
     } else if (UseSSE == 1) {
       // save XMM registers as float because double not supported without SSE2
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize +  0), xmm0);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize +  8), xmm1);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize + 16), xmm2);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize + 24), xmm3);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize + 32), xmm4);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize + 40), xmm5);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize + 48), xmm6);
-      __ movflt(Address(rsp, xmm_regs_as_doubles_off * wordSize + 56), xmm7);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize +  0), xmm0);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize +  8), xmm1);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize + 16), xmm2);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize + 24), xmm3);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize + 32), xmm4);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize + 40), xmm5);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize + 48), xmm6);
+      __ movflt(Address(esp, xmm_regs_as_doubles_off * wordSize + 56), xmm7);
     }
   }
 
@@ -376,28 +376,28 @@ static void restore_fpu(StubAssembler* sasm, bool restore_fpu_registers = true) 
   if (restore_fpu_registers) {
     if (UseSSE >= 2) {
       // restore XMM registers
-      __ movdbl(xmm0, Address(rsp, xmm_regs_as_doubles_off * wordSize +  0));
-      __ movdbl(xmm1, Address(rsp, xmm_regs_as_doubles_off * wordSize +  8));
-      __ movdbl(xmm2, Address(rsp, xmm_regs_as_doubles_off * wordSize + 16));
-      __ movdbl(xmm3, Address(rsp, xmm_regs_as_doubles_off * wordSize + 24));
-      __ movdbl(xmm4, Address(rsp, xmm_regs_as_doubles_off * wordSize + 32));
-      __ movdbl(xmm5, Address(rsp, xmm_regs_as_doubles_off * wordSize + 40));
-      __ movdbl(xmm6, Address(rsp, xmm_regs_as_doubles_off * wordSize + 48));
-      __ movdbl(xmm7, Address(rsp, xmm_regs_as_doubles_off * wordSize + 56));
+      __ movdbl(xmm0, Address(esp, xmm_regs_as_doubles_off * wordSize +  0));
+      __ movdbl(xmm1, Address(esp, xmm_regs_as_doubles_off * wordSize +  8));
+      __ movdbl(xmm2, Address(esp, xmm_regs_as_doubles_off * wordSize + 16));
+      __ movdbl(xmm3, Address(esp, xmm_regs_as_doubles_off * wordSize + 24));
+      __ movdbl(xmm4, Address(esp, xmm_regs_as_doubles_off * wordSize + 32));
+      __ movdbl(xmm5, Address(esp, xmm_regs_as_doubles_off * wordSize + 40));
+      __ movdbl(xmm6, Address(esp, xmm_regs_as_doubles_off * wordSize + 48));
+      __ movdbl(xmm7, Address(esp, xmm_regs_as_doubles_off * wordSize + 56));
     } else if (UseSSE == 1) {
       // restore XMM registers
-      __ movflt(xmm0, Address(rsp, xmm_regs_as_doubles_off * wordSize +  0));
-      __ movflt(xmm1, Address(rsp, xmm_regs_as_doubles_off * wordSize +  8));
-      __ movflt(xmm2, Address(rsp, xmm_regs_as_doubles_off * wordSize + 16));
-      __ movflt(xmm3, Address(rsp, xmm_regs_as_doubles_off * wordSize + 24));
-      __ movflt(xmm4, Address(rsp, xmm_regs_as_doubles_off * wordSize + 32));
-      __ movflt(xmm5, Address(rsp, xmm_regs_as_doubles_off * wordSize + 40));
-      __ movflt(xmm6, Address(rsp, xmm_regs_as_doubles_off * wordSize + 48));
-      __ movflt(xmm7, Address(rsp, xmm_regs_as_doubles_off * wordSize + 56));
+      __ movflt(xmm0, Address(esp, xmm_regs_as_doubles_off * wordSize +  0));
+      __ movflt(xmm1, Address(esp, xmm_regs_as_doubles_off * wordSize +  8));
+      __ movflt(xmm2, Address(esp, xmm_regs_as_doubles_off * wordSize + 16));
+      __ movflt(xmm3, Address(esp, xmm_regs_as_doubles_off * wordSize + 24));
+      __ movflt(xmm4, Address(esp, xmm_regs_as_doubles_off * wordSize + 32));
+      __ movflt(xmm5, Address(esp, xmm_regs_as_doubles_off * wordSize + 40));
+      __ movflt(xmm6, Address(esp, xmm_regs_as_doubles_off * wordSize + 48));
+      __ movflt(xmm7, Address(esp, xmm_regs_as_doubles_off * wordSize + 56));
     }
 
     if (UseSSE < 2) {
-      __ frstor(Address(rsp, fpu_state_off * wordSize));
+      __ frstor(Address(esp, fpu_state_off * wordSize));
     } else {
       // check that FPU stack is really empty
       __ verify_FPU(0, "restore_live_registers"); 
@@ -411,14 +411,14 @@ static void restore_fpu(StubAssembler* sasm, bool restore_fpu_registers = true) 
 #ifdef ASSERT
   {
     Label ok;
-    __ cmpl(Address(rsp, marker * wordSize), 0xfeedbeef);
+    __ cmpl(Address(esp, marker * wordSize), 0xfeedbeef);
     __ jcc(Assembler::equal, ok);
     __ stop("bad offsets in frame");
     __ bind(ok);
   }
 #endif
 
-  __ addl(rsp, extra_space_offset * wordSize);
+  __ addl(esp, extra_space_offset * wordSize);
 }
 
 
@@ -430,19 +430,19 @@ static void restore_live_registers(StubAssembler* sasm, bool restore_fpu_registe
 }
 
 
-static void restore_live_registers_except_rax(StubAssembler* sasm, bool restore_fpu_registers = true) {
-  __ block_comment("restore_live_registers_except_rax");
+static void restore_live_registers_except_eax(StubAssembler* sasm, bool restore_fpu_registers = true) {
+  __ block_comment("restore_live_registers_except_eax");
 
   restore_fpu(sasm, restore_fpu_registers);
 
-  __ popl(rdi);
-  __ popl(rsi);
-  __ popl(rbp);
-  __ popl(rbx); // skip this value
-  __ popl(rbx);
-  __ popl(rdx);
-  __ popl(rcx);
-  __ addl(rsp, 4);
+  __ popl(edi);
+  __ popl(esi);
+  __ popl(ebp);
+  __ popl(ebx); // skip this value
+  __ popl(ebx);
+  __ popl(edx);
+  __ popl(ecx);
+  __ addl(esp, 4);
 }
 
 
@@ -464,11 +464,11 @@ OopMapSet* Runtime1::generate_exception_throw(StubAssembler* sasm, address targe
   __ invalidate_registers(true, true, true, true, true, true);
 
   // registers used by this stub
-  const Register temp_reg = rbx;
+  const Register temp_reg = ebx;
 
   // load argument for exception that is passed as an argument into the stub
   if (has_argument) {
-    __ movl(temp_reg, Address(rbp, 2*BytesPerWord));
+    __ movl(temp_reg, Address(ebp, 2*BytesPerWord));
     __ pushl(temp_reg);
   }
 
@@ -485,11 +485,11 @@ OopMapSet* Runtime1::generate_exception_throw(StubAssembler* sasm, address targe
 
 void Runtime1::generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_maps, OopMap* oop_map, bool save_fpu_registers) {
   // incoming parameters
-  const Register exception_oop = rax;
-  const Register exception_pc = rdx;
+  const Register exception_oop = eax;
+  const Register exception_pc = edx;
   // other registers used in this stub
-  const Register real_return_addr = rbx;
-  const Register thread = rdi;
+  const Register real_return_addr = ebx;
+  const Register thread = edi;
 
   __ block_comment("generate_handle_exception");
 
@@ -500,9 +500,9 @@ void Runtime1::generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_map
   }
 #endif // TIERED
 
-  // verify that only rax, and rdx is valid at this time
+  // verify that only eax and edx is valid at this time
   __ invalidate_registers(false, true, true, false, true, true);
-  // verify that rax, contains a valid exception
+  // verify that eax contains a valid exception
   __ verify_not_null_oop(exception_oop);
 
   // load address of JavaThread object for thread-local data
@@ -530,33 +530,33 @@ void Runtime1::generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_map
   __ movl(Address(thread, JavaThread::exception_pc_offset()), exception_pc);
 
   // save real return address (pc that called this stub)
-  __ movl(real_return_addr, Address(rbp, 1*BytesPerWord));   
-  __ movl(Address(rsp, temp_1_off * BytesPerWord), real_return_addr);
+  __ movl(real_return_addr, Address(ebp, 1*BytesPerWord));   
+  __ movl(Address(esp, temp_1_off * BytesPerWord), real_return_addr);
 
   // patch throwing pc into return address (has bci & oop map)
-  __ movl(Address(rbp, 1*BytesPerWord), exception_pc);       
+  __ movl(Address(ebp, 1*BytesPerWord), exception_pc);       
 
   // compute the exception handler. 
   // the exception oop and the throwing pc are read from the fields in JavaThread
   int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, exception_handler_for_pc));
   oop_maps->add_gc_map(call_offset, oop_map);
 
-  // rax,: handler address or NULL if no handler exists
+  // eax: handler address or NULL if no handler exists
   //      will be the deopt blob if nmethod was deoptimized while we looked up
   //      handler regardless of whether handler existed in the nmethod.
 
-  // only rax, is valid at this time, all other registers have been destroyed by the runtime call
+  // only eax is valid at this time, all other registers have been destroyed by the runtime call
   __ invalidate_registers(false, true, true, true, true, true);
 
   // Do we have an exception handler in the nmethod?
   Label no_handler;
   Label done;
-  __ testl(rax, rax);
+  __ testl(eax, eax);
   __ jcc(Assembler::zero, no_handler);
 
   // exception handler found
   // patch the return address -> the stub will directly return to the exception handler
-  __ movl(Address(rbp, 1*BytesPerWord), rax); 
+  __ movl(Address(ebp, 1*BytesPerWord), eax); 
 
   // restore registers
   restore_live_registers(sasm, save_fpu_registers);
@@ -571,12 +571,12 @@ void Runtime1::generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_map
   // there is no need to restore the registers
 
   // restore the real return address that was saved before the RT-call
-  __ movl(real_return_addr, Address(rsp, temp_1_off * BytesPerWord));
-  __ movl(Address(rbp, 1*BytesPerWord), real_return_addr);
+  __ movl(real_return_addr, Address(esp, temp_1_off * BytesPerWord));
+  __ movl(Address(ebp, 1*BytesPerWord), real_return_addr);
 
   // load address of JavaThread object for thread-local data
   __ get_thread(thread);
-  // restore exception oop into rax, (convention for unwind code)
+  // restore exception oop into eax (convention for unwind code)
   __ movl(exception_oop, Address(thread, JavaThread::exception_oop_offset()));
 
   // clear exception fields in JavaThread because they are no longer needed
@@ -594,13 +594,13 @@ void Runtime1::generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_map
 
 void Runtime1::generate_unwind_exception(StubAssembler *sasm) {
   // incoming parameters
-  const Register exception_oop = rax;
+  const Register exception_oop = eax;
   // other registers used in this stub
-  const Register exception_pc = rdx;
-  const Register handler_addr = rbx;
-  const Register thread = rdi;
+  const Register exception_pc = edx;
+  const Register handler_addr = ebx;
+  const Register thread = edi;
 
-  // verify that only rax, is valid at this time
+  // verify that only eax is valid at this time
   __ invalidate_registers(false, true, true, true, true, true);
 
 #ifdef ASSERT
@@ -625,34 +625,34 @@ void Runtime1::generate_unwind_exception(StubAssembler *sasm) {
   // leave activation of nmethod
   __ leave();                  
   // store return address (is on top of stack after leave)
-  __ movl(exception_pc, Address(rsp, 0));  
+  __ movl(exception_pc, Address(esp));  
 
   __ verify_oop(exception_oop);
 
-  // save exception oop from rax, to stack before call
+  // save exception oop from eax to stack before call
   __ pushl(exception_oop);
 
   // search the exception handler address of the caller (using the return address)
   __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::exception_handler_for_return_address), exception_pc);
-  // rax,: exception handler address of the caller
+  // eax: exception handler address of the caller
 
-  // only rax, is valid at this time, all other registers have been destroyed by the call
+  // only eax is valid at this time, all other registers have been destroyed by the call
   __ invalidate_registers(false, true, true, true, true, true);
   
   // move result of call into correct register
-  __ movl(handler_addr, rax);
+  __ movl(handler_addr, eax);
 
-  // restore exception oop in rax, (required convention of exception handler)
+  // restore exception oop in eax (required convention of exception handler)
   __ popl(exception_oop);
 
   __ verify_oop(exception_oop);
 
   // get throwing pc (= return address). 
-  // rdx has been destroyed by the call, so it must be set again
+  // edx has been destroyed by the call, so it must be set again
   // the pop is also necessary to simulate the effect of a ret(0) 
   __ popl(exception_pc);
 
-  // verify that that there is really a valid exception in rax,
+  // verify that that there is really a valid exception in eax
   __ verify_not_null_oop(exception_oop);
 
   // continue at exception handler (return address removed)
@@ -661,9 +661,9 @@ void Runtime1::generate_unwind_exception(StubAssembler *sasm) {
   //       all arguments on the stack when entering the
   //       runtime to determine the exception handler
   //       (GC happens at call site with arguments!)
-  // rax,: exception oop
-  // rdx: throwing pc
-  // rbx,: exception handler
+  // eax: exception oop
+  // edx: throwing pc
+  // ebx: exception handler
   __ jmp(handler_addr);
 }
 
@@ -680,33 +680,33 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
 
   OopMap* oop_map = save_live_registers(sasm, num_rt_args);
 
-  __ pushl(rax); // push dummy
+  __ pushl(eax); // push dummy
 
-  const Register thread = rdi; // is callee-saved register (Visual C++ calling conventions)
+  const Register thread = edi; // is callee-saved register (Visual C++ calling conventions)
   // push java thread (becomes first argument of C function)
   __ get_thread(thread);
   __ pushl(thread);
-  __ set_last_Java_frame(thread, noreg, rbp, NULL);
+  __ set_last_Java_frame(thread, noreg, ebp, NULL);
   // do the call
-  __ call(RuntimeAddress(target));
+  __ call(target, relocInfo::runtime_call_type);
   OopMapSet* oop_maps = new OopMapSet();
   oop_maps->add_gc_map(__ offset(), oop_map);
   // verify callee-saved register
 #ifdef ASSERT
-  guarantee(thread != rax, "change this code");
-  __ pushl(rax);
+  guarantee(thread != eax, "change this code");
+  __ pushl(eax);
   { Label L;
-    __ get_thread(rax);
-    __ cmpl(thread, rax);
+    __ get_thread(eax);
+    __ cmpl(thread, eax);
     __ jcc(Assembler::equal, L);
-    __ stop("StubAssembler::call_RT: rdi not callee saved?");
+    __ stop("StubAssembler::call_RT: edi not callee saved?");
     __ bind(L);
   }
-  __ popl(rax);
+  __ popl(eax);
 #endif
   __ reset_last_Java_frame(thread, true, false);
-  __ popl(rcx); // discard thread arg
-  __ popl(rcx); // discard dummy
+  __ popl(ecx); // discard thread arg
+  __ popl(ecx); // discard dummy
 
   // check for pending exceptions
   { Label L;
@@ -714,27 +714,27 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
     __ jcc(Assembler::equal, L);
     // exception pending => remove activation and forward to exception handler
 
-    __ testl(rax, rax);                                   // have we deoptimized?
-    __ jump_cc(Assembler::equal,
-               RuntimeAddress(Runtime1::entry_for(Runtime1::forward_exception_id)));
+    __ testl(eax, eax);                                   // have we deoptimized?
+    __ jcc(Assembler::equal, Runtime1::entry_for(Runtime1::forward_exception_id),
+           relocInfo::runtime_call_type);
 
     // the deopt blob expects exceptions in the special fields of
     // JavaThread, so copy and clear pending exception.
 
     // load and clear pending exception
-    __ movl(rax, Address(thread, Thread::pending_exception_offset()));
+    __ movl(eax, Address(thread, Thread::pending_exception_offset()));
     __ movl(Address(thread, Thread::pending_exception_offset()), NULL_WORD);
 
     // check that there is really a valid exception 
-    __ verify_not_null_oop(rax);
+    __ verify_not_null_oop(eax);
 
     // load throwing pc: this is the return address of the stub
-    __ movl(rdx, Address(rsp, return_off * BytesPerWord));
+    __ movl(edx, Address(esp, return_off * BytesPerWord));
 
 #ifdef ASSERT
     // check that fields in JavaThread for exception oop and issuing pc are empty
     Label oop_empty;
-    __ cmpoop(Address(thread, JavaThread::exception_oop_offset()), 0);
+    __ cmpl(Address(thread, JavaThread::exception_oop_offset()), 0);
     __ jcc(Assembler::equal, oop_empty);
     __ stop("exception oop must be empty");
     __ bind(oop_empty);
@@ -747,19 +747,19 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
 #endif
 
     // store exception oop and throwing pc to JavaThread
-    __ movl(Address(thread, JavaThread::exception_oop_offset()), rax);
-    __ movl(Address(thread, JavaThread::exception_pc_offset()), rdx);
+    __ movl(Address(thread, JavaThread::exception_oop_offset()), eax);
+    __ movl(Address(thread, JavaThread::exception_pc_offset()), edx);
 
     restore_live_registers(sasm);
 
     __ leave();
-    __ addl(rsp, 4);  // remove return address from stack
+    __ addl(esp, 4);  // remove return address from stack
 
     // Forward the exception directly to deopt blob. We can blow no
     // registers and must leave throwing pc on the stack.  A patch may
     // have values live in registers so the entry point with the
     // exception in tls.
-    __ jump(RuntimeAddress(deopt_blob->unpack_with_exception_in_tls()));
+    __ jmp(deopt_blob->unpack_with_exception_in_tls(), relocInfo::runtime_call_type);
 
     __ bind(L);
   }
@@ -770,14 +770,14 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
 
   Label reexecuteEntry, cont;
 
-  __ testl(rax, rax);                                   // have we deoptimized?
+  __ testl(eax, eax);                                   // have we deoptimized?
   __ jcc(Assembler::equal, cont);                       // no
 
   // Will reexecute. Proper return address is already on the stack we just restore
   // registers, pop all of our frame but the return address and jump to the deopt blob
   restore_live_registers(sasm);
   __ leave();
-  __ jump(RuntimeAddress(deopt_blob->unpack_with_reexecution()));
+  __ jmp(deopt_blob->unpack_with_reexecution(), relocInfo::runtime_call_type);
 
   __ bind(cont);
   restore_live_registers(sasm);
@@ -809,23 +809,23 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         // dispatch to the handler if found.  Otherwise unwind and
         // dispatch to the callers exception handler.
 
-        const Register thread = rdi;
-        const Register exception_oop = rax;
-        const Register exception_pc = rdx;
+        const Register thread = edi;
+        const Register exception_oop = eax;
+        const Register exception_pc = edx;
 
-        // load pending exception oop into rax,
+        // load pending exception oop into eax
         __ movl(exception_oop, Address(thread, Thread::pending_exception_offset()));
         // clear pending exception
         __ movl(Address(thread, Thread::pending_exception_offset()), NULL_WORD);
 
-        // load issuing PC (the return address for this stub) into rdx
-        __ movl(exception_pc, Address(rbp, 1*BytesPerWord));
+        // load issuing PC (the return address for this stub) into edx
+        __ movl(exception_pc, Address(ebp, 1*BytesPerWord));
 
         // make sure that the vm_results are cleared (may be unnecessary)
         __ movl(Address(thread, JavaThread::vm_result_offset()), NULL_WORD);
         __ movl(Address(thread, JavaThread::vm_result_2_offset()), NULL_WORD);
 
-        // verify that that there is really a valid exception in rax,
+        // verify that that there is really a valid exception in eax
         __ verify_not_null_oop(exception_oop);
 
 
@@ -840,8 +840,8 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
     case fast_new_instance_id:
     case fast_new_instance_init_check_id:
       {
-        Register klass = rdx; // Incoming
-        Register obj   = rax; // Result
+        Register klass = edx; // Incoming
+        Register obj   = eax; // Result
 
         if (id == new_instance_id) {
           __ set_info("new_instance", dont_gc_arguments);
@@ -855,13 +855,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         if ((id == fast_new_instance_id || id == fast_new_instance_init_check_id) &&
             UseTLAB && FastTLABRefill) {
           Label slow_path;
-          Register obj_size = rcx;
-          Register t1       = rbx;
-          Register t2       = rsi;
+          Register obj_size = ecx;
+          Register t1       = ebx;
+          Register t2       = esi;
           assert_different_registers(klass, obj, obj_size, t1, t2);
         
-          __ pushl(rdi);
-          __ pushl(rbx);
+          __ pushl(edi);
+          __ pushl(ebx);
 
           if (id == fast_new_instance_init_check_id) {
             // make sure the klass is initialized
@@ -888,7 +888,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           // if we got here then the TLAB allocation failed, so try
           // refilling the TLAB or allocating directly from eden.
           Label retry_tlab, try_eden;
-          __ tlab_refill(retry_tlab, try_eden, slow_path); // does not destroy rdx (klass)
+          __ tlab_refill(retry_tlab, try_eden, slow_path); // does not destroy edx (klass)
           
           __ bind(retry_tlab);
 
@@ -897,8 +897,8 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ tlab_allocate(obj, obj_size, 0, t1, t2, slow_path);
           __ initialize_object(obj, klass, obj_size, 0, t1, t2);
           __ verify_oop(obj);
-          __ popl(rbx);
-          __ popl(rdi);
+          __ popl(ebx);
+          __ popl(edi);
           __ ret(0);
 
           __ bind(try_eden);
@@ -907,13 +907,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ eden_allocate(obj, obj_size, 0, t1, slow_path);
           __ initialize_object(obj, klass, obj_size, 0, t1, t2);
           __ verify_oop(obj);
-          __ popl(rbx);
-          __ popl(rdi);
+          __ popl(ebx);
+          __ popl(edi);
           __ ret(0);
 
           __ bind(slow_path);
-          __ popl(rbx);
-          __ popl(rdi);
+          __ popl(ebx);
+          __ popl(edi);
         }
         
         __ enter();
@@ -921,12 +921,12 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         int call_offset = __ call_RT(obj, noreg, CAST_FROM_FN_PTR(address, new_instance), klass);
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
-        restore_live_registers_except_rax(sasm);
+        restore_live_registers_except_eax(sasm);
         __ verify_oop(obj);
         __ leave();
         __ ret(0);
 
-        // rax,: new instance
+        // eax: new instance
       }
 
       break;
@@ -934,11 +934,11 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 #ifdef TIERED
     case counter_overflow_id:
       {
-        Register bci = rax;
+        Register bci = eax;
         __ enter();
         OopMap* map = save_live_registers(sasm, 2);
         // Retrieve bci
-        __ movl(bci, Address(rbp, 2*BytesPerWord));
+        __ movl(bci, Address(ebp, 2*BytesPerWord));
         int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, counter_overflow), bci);
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
@@ -952,9 +952,9 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
     case new_type_array_id:
     case new_object_array_id:
       { 
-        Register length   = rbx; // Incoming
-        Register klass    = rdx; // Incoming
-        Register obj      = rax; // Result
+        Register length   = ebx; // Incoming
+        Register klass    = edx; // Incoming
+        Register obj      = eax; // Result
 
         if (id == new_type_array_id) {
           __ set_info("new_type_array", dont_gc_arguments);
@@ -981,9 +981,9 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 #endif // ASSERT
 
         if (UseTLAB && FastTLABRefill) {
-          Register arr_size = rsi;
-          Register t1       = rcx;  // must be rcx for use as shift count
-          Register t2       = rdi;
+          Register arr_size = esi;
+          Register t1       = ecx;  // must be ecx for use as shift count
+          Register t2       = edi;
           Label slow_path;
           assert_different_registers(length, klass, obj, arr_size, t1, t2);
 
@@ -994,15 +994,15 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           // if we got here then the TLAB allocation failed, so try
           // refilling the TLAB or allocating directly from eden.
           Label retry_tlab, try_eden;
-          __ tlab_refill(retry_tlab, try_eden, slow_path); // preserves rbx, & rdx
+          __ tlab_refill(retry_tlab, try_eden, slow_path); // preserves ebx & edx
           
           __ bind(retry_tlab);
 
           // get the allocation size: round_up(hdr + length << (layout_helper & 0x1F))
           __ movl(t1, Address(klass, klassOopDesc::header_size() * HeapWordSize + Klass::layout_helper_offset_in_bytes()));
           __ movl(arr_size, length);
-          assert(t1 == rcx, "fixed register usage");
-          __ shll(arr_size /* by t1=rcx, mod 32 */);
+          assert(t1 == ecx, "fixed register usage");
+          __ shll(arr_size /* by t1=ecx, mod 32 */);
           __ shrl(t1, Klass::_lh_header_size_shift);
           __ andl(t1, Klass::_lh_header_size_mask);
           __ addl(arr_size, t1);
@@ -1026,8 +1026,8 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           // get the allocation size: round_up(hdr + length << (layout_helper & 0x1F))
           __ movl(t1, Address(klass, klassOopDesc::header_size() * HeapWordSize + Klass::layout_helper_offset_in_bytes()));
           __ movl(arr_size, length);
-          assert(t1 == rcx, "fixed register usage");
-          __ shll(arr_size /* by t1=rcx, mod 32 */);
+          assert(t1 == ecx, "fixed register usage");
+          __ shll(arr_size /* by t1=ecx, mod 32 */);
           __ shrl(t1, Klass::_lh_header_size_shift);
           __ andl(t1, Klass::_lh_header_size_mask);
           __ addl(arr_size, t1);
@@ -1061,30 +1061,30 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
-        restore_live_registers_except_rax(sasm);
+        restore_live_registers_except_eax(sasm);
 
         __ verify_oop(obj);
         __ leave();
         __ ret(0);
 
-        // rax,: new array
+        // eax: new array
       }
       break;
 
     case new_multi_array_id:
       { StubFrame f(sasm, "new_multi_array", dont_gc_arguments);
-        // rax,: klass
-        // rbx,: rank
-        // rcx: address of 1st dimension
+        // eax: klass
+        // ebx: rank
+        // ecx: address of 1st dimension
         OopMap* map = save_live_registers(sasm, 4);
-        int call_offset = __ call_RT(rax, noreg, CAST_FROM_FN_PTR(address, new_multi_array), rax, rbx, rcx);
+        int call_offset = __ call_RT(eax, noreg, CAST_FROM_FN_PTR(address, new_multi_array), eax, ebx, ecx);
 
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
-        restore_live_registers_except_rax(sasm);
+        restore_live_registers_except_eax(sasm);
 
-        // rax,: new multi array
-        __ verify_oop(rax);
+        // eax: new multi array
+        __ verify_oop(eax);
       }
       break;
 
@@ -1094,13 +1094,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         
         // The object is passed on the stack and we haven't pushed a
         // frame yet so it's one work away from top of stack.
-        __ movl(rax, Address(rsp, 1 * BytesPerWord));
-        __ verify_oop(rax);
+        __ movl(eax, Address(esp, 1 * BytesPerWord));
+        __ verify_oop(eax);
 
         // load the klass and check the has finalizer flag
         Label register_finalizer;
-        Register t = rsi;
-        __ movl(t, Address(rax, oopDesc::klass_offset_in_bytes()));
+        Register t = esi;
+        __ movl(t, Address(eax, oopDesc::klass_offset_in_bytes()));
         __ movl(t, Address(t, Klass::access_flags_offset_in_bytes() + sizeof(oopDesc)));
         __ testl(t, JVM_ACC_HAS_FINALIZER);
         __ jcc(Assembler::notZero, register_finalizer);
@@ -1110,7 +1110,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ enter();
         OopMap* oop_map = save_live_registers(sasm, 2 /*num_rt_args */);
         int call_offset = __ call_RT(noreg, noreg,
-                                     CAST_FROM_FN_PTR(address, SharedRuntime::register_finalizer), rax);
+                                     CAST_FROM_FN_PTR(address, SharedRuntime::register_finalizer), eax);
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, oop_map);
 
@@ -1188,11 +1188,11 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
     case slow_subtype_check_id:
       {
         enum layout {
-          rax_off,
-          rcx_off,
-          rsi_off,
-          rdi_off,
-          saved_rbp_off,
+          eax_off,
+          ecx_off,
+          esi_off,
+          edi_off,
+          saved_ebp_off,
           return_off,
           sub_off,
           super_off,
@@ -1200,34 +1200,34 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         };
         
         __ set_info("slow_subtype_check", dont_gc_arguments);
-        __ pushl(rdi);
-        __ pushl(rsi);
-        __ pushl(rcx);
-        __ pushl(rax);
-        __ movl(rsi, Address(rsp, (super_off - 1) * BytesPerWord)); // super
-        __ movl(rax, Address(rsp, (sub_off   - 1) * BytesPerWord)); // sub
+        __ pushl(edi);
+        __ pushl(esi);
+        __ pushl(ecx);
+        __ pushl(eax);
+        __ movl(esi, Address(esp, (super_off - 1) * BytesPerWord)); // super
+        __ movl(eax, Address(esp, (sub_off   - 1) * BytesPerWord)); // sub
 
-        __ movl(rdi,Address(rsi,sizeof(oopDesc) + Klass::secondary_supers_offset_in_bytes()));
-        __ movl(rcx,Address(rdi,arrayOopDesc::length_offset_in_bytes()));
-        __ addl(rdi,arrayOopDesc::base_offset_in_bytes(T_OBJECT));
+        __ movl(edi,Address(esi,sizeof(oopDesc) + Klass::secondary_supers_offset_in_bytes()));
+        __ movl(ecx,Address(edi,arrayOopDesc::length_offset_in_bytes()));
+        __ addl(edi,arrayOopDesc::base_offset_in_bytes(T_OBJECT));
 
         Label miss;
         __ repne_scan();
         __ jcc(Assembler::notEqual, miss);
-        __ movl(Address(rsi,sizeof(oopDesc) + Klass::secondary_super_cache_offset_in_bytes()), rax);
-        __ movl(Address(rsp, (super_off   - 1) * BytesPerWord), 1); // result
-        __ popl(rax);
-        __ popl(rcx);
-        __ popl(rsi);
-        __ popl(rdi);
+        __ movl(Address(esi,sizeof(oopDesc) + Klass::secondary_super_cache_offset_in_bytes()), eax);
+        __ movl(Address(esp, (super_off   - 1) * BytesPerWord), 1); // result
+        __ popl(eax);
+        __ popl(ecx);
+        __ popl(esi);
+        __ popl(edi);
         __ ret(0);
 
         __ bind(miss);
-        __ movl(Address(rsp, (super_off   - 1) * BytesPerWord), 0); // result
-        __ popl(rax);
-        __ popl(rcx);
-        __ popl(rsi);
-        __ popl(rdi);
+        __ movl(Address(esp, (super_off   - 1) * BytesPerWord), 0); // result
+        __ popl(eax);
+        __ popl(ecx);
+        __ popl(esi);
+        __ popl(edi);
         __ ret(0);
       }
       break;
@@ -1240,10 +1240,10 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         StubFrame f(sasm, "monitorenter", dont_gc_arguments);
         OopMap* map = save_live_registers(sasm, 3, save_fpu_registers);
 
-        f.load_argument(1, rax); // rax,: object
-        f.load_argument(0, rbx); // rbx,: lock address
+        f.load_argument(1, eax); // eax: object
+        f.load_argument(0, ebx); // ebx: lock address
 
-        int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, monitorenter), rax, rbx);
+        int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, monitorenter), eax, ebx);
         
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
@@ -1259,12 +1259,12 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         StubFrame f(sasm, "monitorexit", dont_gc_arguments);
         OopMap* map = save_live_registers(sasm, 2, save_fpu_registers);
 
-        f.load_argument(0, rax); // rax,: lock address
+        f.load_argument(0, eax); // eax: lock address
         
         // note: really a leaf routine but must setup last java sp
         //       => use call_RT for now (speed can be improved by
         //       doing last java sp setup manually)
-        int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, monitorexit), rax);
+        int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, monitorexit), eax);
 
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
@@ -1288,12 +1288,12 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
       break;
 
     case jvmti_exception_throw_id:
-      { // rax,: exception oop
+      { // eax: exception oop
         StubFrame f(sasm, "jvmti_exception_throw", dont_gc_arguments);
         // Preserve all registers across this potentially blocking call
         const int num_rt_args = 2;  // thread, exception oop
         OopMap* map = save_live_registers(sasm, num_rt_args);
-        int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, Runtime1::post_jvmti_exception_throw), rax);
+        int call_offset = __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, Runtime1::post_jvmti_exception_throw), eax);
         oop_maps = new OopMapSet();
         oop_maps->add_gc_map(call_offset, map);
         restore_live_registers(sasm);
@@ -1301,15 +1301,16 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
       break;
 
     case dtrace_object_alloc_id:
-      { // rax,: object
+      { // eax: object
         StubFrame f(sasm, "dtrace_object_alloc", dont_gc_arguments);
         // we can't gc here so skip the oopmap but make sure that all
         // the live registers get saved.
         save_live_registers(sasm, 1);
 
-        __ pushl(rax);
-        __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_object_alloc)));
-        __ popl(rax);
+        __ pushl(eax);
+        __ call(CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_object_alloc),
+                relocInfo::runtime_call_type);
+        __ popl(eax);
 
         restore_live_registers(sasm);
       }
@@ -1317,48 +1318,48 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
     case fpu2long_stub_id:
       {
-        // rax, and rdx are destroyed, but should be free since the result is returned there
-        // preserve rsi,ecx
-        __ pushl(rsi);
-        __ pushl(rcx);
+        // eax and edx are destroyed, but should be free since the result is returned there
+        // preserve esi,ecx
+        __ pushl(esi);
+        __ pushl(ecx);
         
         // check for NaN
         Label return0, do_return, return_min_jlong, do_convert;
         
-        Address value_high_word(rsp, 8);
-        Address value_low_word(rsp, 4);
-        Address result_high_word(rsp, 16);
-        Address result_low_word(rsp, 12);
+        Address value_high_word(esp, 8);
+        Address value_low_word(esp, 4);
+        Address result_high_word(esp, 16);
+        Address result_low_word(esp, 12);
         
-        __ subl(rsp, 20);
+        __ subl(esp, 20);
         __ fst_d(value_low_word);
-        __ movl(rax, value_high_word);
-        __ andl(rax, 0x7ff00000);
-        __ cmpl(rax, 0x7ff00000);
+        __ movl(eax, value_high_word);
+        __ andl(eax, 0x7ff00000);
+        __ cmpl(eax, 0x7ff00000);
         __ jcc(Assembler::notEqual, do_convert);
-        __ movl(rax, value_high_word);
-        __ andl(rax, 0xfffff);
-        __ orl(rax, value_low_word);
+        __ movl(eax, value_high_word);
+        __ andl(eax, 0xfffff);
+        __ orl(eax, value_low_word);
         __ jcc(Assembler::notZero, return0);
         
         __ bind(do_convert);
-        __ fnstcw(Address(rsp, 0));
-        __ movzxw(rax, Address(rsp, 0));
-        __ orl(rax, 0xc00);
-        __ movw(Address(rsp, 2), rax);
-        __ fldcw(Address(rsp, 2));
+        __ fnstcw(Address(esp));
+        __ movzxw(eax, Address(esp));
+        __ orl(eax, 0xc00);
+        __ movw(Address(esp, 2), eax);
+        __ fldcw(Address(esp, 2));
         __ fwait();
         __ fistp_d(result_low_word);
-        __ fldcw(Address(rsp, 0));
+        __ fldcw(Address(esp));
         __ fwait();
-        __ movl(rax, result_low_word);
-        __ movl(rdx, result_high_word);
-        __ movl(rcx, rax);
+        __ movl(eax, result_low_word);
+        __ movl(edx, result_high_word);
+        __ movl(ecx, eax);
         // What the heck is the point of the next instruction???
-        __ xorl(rcx, 0x0);
-        __ movl(rsi, 0x80000000);
-        __ xorl(rsi, rdx);
-        __ orl(rcx, rsi);
+        __ xorl(ecx, 0x0);
+        __ movl(esi, 0x80000000);
+        __ xorl(esi, edx);
+        __ orl(ecx, esi);
         __ jcc(Assembler::notEqual, do_return);
         __ fldz();
         __ fcomp_d(value_low_word);
@@ -1366,32 +1367,32 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ sahf();
         __ jcc(Assembler::above, return_min_jlong);
         // return max_jlong
-        __ movl(rdx, 0x7fffffff);
-        __ movl(rax, 0xffffffff);
+        __ movl(edx, 0x7fffffff);
+        __ movl(eax, 0xffffffff);
         __ jmp(do_return);
         
         __ bind(return_min_jlong);
-        __ movl(rdx, 0x80000000);
-        __ xorl(rax, rax);
+        __ movl(edx, 0x80000000);
+        __ xorl(eax, eax);
         __ jmp(do_return);
         
         __ bind(return0);
         __ fpop();
-        __ xorl(rdx,rdx);
-        __ xorl(rax,rax);
+        __ xorl(edx,edx);
+        __ xorl(eax,eax);
         
         __ bind(do_return);
-        __ addl(rsp, 20);
-        __ popl(rcx);
-        __ popl(rsi);
+        __ addl(esp, 20);
+        __ popl(ecx);
+        __ popl(esi);
         __ ret(0);
       }
       break;
       
     default:
       { StubFrame f(sasm, "unimplemented entry", dont_gc_arguments);
-        __ movl(rax, (int)id);
-        __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, unimplemented_entry), rax);
+        __ movl(eax, (int)id);
+        __ call_RT(noreg, noreg, CAST_FROM_FN_PTR(address, unimplemented_entry), eax);
         __ should_not_reach_here();
       }
       break;

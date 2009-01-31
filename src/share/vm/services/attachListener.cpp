@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)attachListener.cpp	1.22 07/05/05 17:07:04 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -140,7 +140,6 @@ static jint thread_dump(AttachOperation* op, outputStream* out) {
   return JNI_OK;
 }
 
-#ifndef SERVICES_KERNEL   // Heap dumping not supported
 // Implementation of "dumpheap" command.
 // 
 // Input arguments :-
@@ -181,7 +180,6 @@ jint dump_heap(AttachOperation* op, outputStream* out) {
   }
   return JNI_OK;
 }
-#endif // SERVICES_KERNEL
 
 // Implementation of "inspectheap" command
 //
@@ -328,9 +326,7 @@ static jint print_flag(AttachOperation* op, outputStream* out) {
 static AttachOperationFunctionInfo funcs[] = {
   { "agentProperties", 	get_agent_properties },
   { "datadump",         data_dump },
-#ifndef SERVICES_KERNEL
   { "dumpheap",         dump_heap },
-#endif  // SERVICES_KERNEL
   { "load",             JvmtiExport::load_agent_library },
   { "properties",       get_system_properties },
   { "threaddump",	thread_dump },

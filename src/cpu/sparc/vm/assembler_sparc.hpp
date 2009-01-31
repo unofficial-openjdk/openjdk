@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_sparc.hpp	1.179 07/05/17 15:47:51 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -120,37 +120,12 @@ REGISTER_DECLARATION(Register, Gtemp  , G5);
 // maximum of two or three G-register arguments.
 
 
-// stub frames
-
-REGISTER_DECLARATION(Register, Lentry_args      , L0); // pointer to args passed to callee (interpreter) not stub itself
-
 // Interpreter frames
 
-#ifdef CC_INTERP
-REGISTER_DECLARATION(Register, Lstate           , L0); // interpreter state object pointer
-REGISTER_DECLARATION(Register, L1_scratch       , L1); // scratch
-REGISTER_DECLARATION(Register, Lmirror          , L1); // mirror (for native methods only)
-REGISTER_DECLARATION(Register, L2_scratch       , L2);
-REGISTER_DECLARATION(Register, L3_scratch       , L3);
-REGISTER_DECLARATION(Register, L4_scratch       , L4);
-REGISTER_DECLARATION(Register, Lscratch         , L5); // C1 uses
-REGISTER_DECLARATION(Register, Lscratch2        , L6); // C1 uses
-REGISTER_DECLARATION(Register, L7_scratch       , L7); // constant pool cache
-REGISTER_DECLARATION(Register, O5_savedSP       , O5);
-REGISTER_DECLARATION(Register, I5_savedSP       , I5); // Saved SP before bumping for locals.  This is simply
-                                                       // a copy SP, so in 64-bit it's a biased value.  The bias
-                                                       // is added and removed as needed in the frame code.
-// Interface to signature handler
-REGISTER_DECLARATION(Register, Llocals          , L7); // pointer to locals for signature handler
-REGISTER_DECLARATION(Register, Lmethod          , L6); // methodOop when calling signature handler
-
-#else
 REGISTER_DECLARATION(Register, Lesp             , L0); // expression stack pointer
 REGISTER_DECLARATION(Register, Lbcp             , L1); // pointer to next bytecode
 REGISTER_DECLARATION(Register, Lmethod          , L2);
 REGISTER_DECLARATION(Register, Llocals          , L3);
-REGISTER_DECLARATION(Register, Largs            , L3); // pointer to locals for signature handler
-                                                       // must match Llocals in asm interpreter
 REGISTER_DECLARATION(Register, Lmonitors        , L4);
 REGISTER_DECLARATION(Register, Lbyte_code       , L5);
 // When calling out from the interpreter we record SP so that we can remove any extra stack
@@ -168,7 +143,6 @@ REGISTER_DECLARATION(Register, I5_savedSP       , I5); // Saved SP before bumpin
 REGISTER_DECLARATION(Register, IdispatchTables  , I4); // Base address of the bytecode dispatch tables
 REGISTER_DECLARATION(Register, IdispatchAddress , I3); // Register which saves the dispatch address for each bytecode
 REGISTER_DECLARATION(Register, ImethodDataPtr   , I2); // Pointer to the current method data
-#endif /* CC_INTERP */
 
 // NOTE: Lscratch2 and LcpoolCache point to the same registers in
 //       the interpreter code. If Lscratch2 needs to be used for some
@@ -224,19 +198,6 @@ REGISTER_DECLARATION(Register, Oissuing_pc , O1); // where the exception is comi
 #define Gframe_size         AS_REGISTER(Register, Gframe_size)
 #define Gtemp               AS_REGISTER(Register, Gtemp)
 
-#ifdef CC_INTERP
-#define Lstate              AS_REGISTER(Register, Lstate)
-#define Lesp                AS_REGISTER(Register, Lesp)
-#define L1_scratch          AS_REGISTER(Register, L1_scratch)
-#define Lmirror             AS_REGISTER(Register, Lmirror)
-#define L2_scratch          AS_REGISTER(Register, L2_scratch)
-#define L3_scratch          AS_REGISTER(Register, L3_scratch)
-#define L4_scratch          AS_REGISTER(Register, L4_scratch)
-#define Lscratch            AS_REGISTER(Register, Lscratch)
-#define Lscratch2           AS_REGISTER(Register, Lscratch2)
-#define L7_scratch          AS_REGISTER(Register, L7_scratch)
-#define Ostate              AS_REGISTER(Register, Ostate)
-#else
 #define Lesp                AS_REGISTER(Register, Lesp)
 #define Lbcp                AS_REGISTER(Register, Lbcp)
 #define Lmethod             AS_REGISTER(Register, Lmethod)
@@ -246,9 +207,7 @@ REGISTER_DECLARATION(Register, Oissuing_pc , O1); // where the exception is comi
 #define Lscratch            AS_REGISTER(Register, Lscratch)
 #define Lscratch2           AS_REGISTER(Register, Lscratch2)
 #define LcpoolCache         AS_REGISTER(Register, LcpoolCache)
-#endif /* ! CC_INTERP */
 
-#define Lentry_args         AS_REGISTER(Register, Lentry_args)
 #define I5_savedSP          AS_REGISTER(Register, I5_savedSP)
 #define O5_savedSP          AS_REGISTER(Register, O5_savedSP)
 #define IdispatchAddress    AS_REGISTER(Register, IdispatchAddress)
@@ -1653,13 +1612,7 @@ class MacroAssembler: public Assembler {
   // This is the base routine called by the different versions of call_VM_leaf. The interpreter
   // may customize this version by overriding it for its purposes (e.g., to save/restore
   // additional registers when doing a VM call).
-#ifdef CC_INTERP
-  #define VIRTUAL
-#else
-  #define VIRTUAL virtual
-#endif
-
-  VIRTUAL void call_VM_leaf_base(Register thread_cache, address entry_point, int number_of_arguments);
+  void call_VM_leaf_base(Register thread_cache, address entry_point, int number_of_arguments);
 
   //
   // It is imperative that all calls into the VM are handled via the call_VM macros.
@@ -2226,9 +2179,6 @@ class MacroAssembler: public Assembler {
   void cond_inc(Condition cond, address counter_addr, Register Rtemp1, Register Rtemp2);
   // Unconditional increment.
   void inc_counter(address counter_addr, Register Rtemp1, Register Rtemp2);
-
-#undef VIRTUAL
-
 };
 
 /**

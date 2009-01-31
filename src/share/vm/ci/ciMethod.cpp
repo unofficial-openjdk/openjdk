@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)ciMethod.cpp	1.104 07/05/05 17:05:15 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -255,7 +255,7 @@ address ciMethod::interpreter_entry() {
   check_is_loaded();
   VM_ENTRY_MARK;
   methodHandle mh(THREAD, get_methodOop());
-  return Interpreter::entry_for_method(mh);
+  return AbstractInterpreter::entry_for_method(mh);
 }
 
 
@@ -408,6 +408,7 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
     if (data != NULL && data->is_CounterData()) {
       // Every profiled call site has a counter.
       int count = data->as_CounterData()->count();
+      result._count = count;
 
       if (!data->is_ReceiverTypeData()) {
         result._receiver_count[0] = 0;  // that's a definite zero
@@ -420,6 +421,8 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
           ciKlass* receiver = call->receiver(i);
           if (receiver == NULL)  continue;
           morphism += 1;
+          // we don't support array klasses this way
+          if (!receiver->is_instance_klass()) continue;
           int rcount = call->receiver_count(i);
           if (rcount == 0) rcount = 1; // Should be valid value
           receivers_count_total += rcount;
@@ -441,17 +444,7 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
              result._morphism = morphism;
            }
         }
-        // Make the count consistent if this is a call profile. If count is
-        // zero or less, presume that this is a typecheck profile and
-        // do nothing.  Otherwise, increase count to be the sum of all
-        // receiver's counts.
-        if (count > 0) {
-          if (count < receivers_count_total) {
-            count = receivers_count_total;
-          }
-        }
       }
-      result._count = count;
     }
   }
   return result;
@@ -634,9 +627,7 @@ ciMethod* ciMethod::resolve_invoke(ciKlass* caller, ciKlass* exact_receiver) {
    methodHandle m;
    // Only do exact lookup if receiver klass has been linked.  Otherwise,
    // the vtable has not been setup, and the LinkResolver will fail.
-   if (h_recv->oop_is_javaArray()
-        ||
-       instanceKlass::cast(h_recv())->is_linked() && !exact_receiver->is_interface()) {
+   if (instanceKlass::cast(h_recv())->is_linked() && !exact_receiver->is_interface()) {
      if (holder()->is_interface()) {
        m = LinkResolver::resolve_interface_call_or_null(h_recv, h_resolved, h_name, h_signature, caller_klass);
      } else {
@@ -769,23 +760,26 @@ ciMethodData* ciMethod::method_data() {
   if (_method_data != NULL) {
     return _method_data;
   }
-  VM_ENTRY_MARK;
-  ciEnv* env = CURRENT_ENV;
-  Thread* my_thread = JavaThread::current();
-  methodHandle h_m(my_thread, get_methodOop());
+  if (ProfileInterpreter || Tier1UpdateMethodData) {
+    VM_ENTRY_MARK;
+    ciEnv* env = CURRENT_ENV;
+    Thread* my_thread = JavaThread::current();
+    methodHandle h_m(my_thread, get_methodOop());
 
-  if (Tier1UpdateMethodData && is_tier1_compile(env->comp_level())) {
-    build_method_data(h_m);
-  }
+    if (Tier1UpdateMethodData && is_tier1_compile(env->comp_level())) {
+      build_method_data(h_m);
+    }
 
-  if (h_m()->method_data() != NULL) {
-    _method_data = CURRENT_ENV->get_object(h_m()->method_data())->as_method_data();
-    _method_data->load_data();
-  } else {
-    _method_data = CURRENT_ENV->get_empty_methodData();
+    if (h_m()->method_data() != NULL) {
+      _method_data = CURRENT_ENV->get_object(h_m()->method_data())->as_method_data();
+      _method_data->load_data();
+    } else {
+      _method_data = CURRENT_ENV->get_empty_methodData();
+    }
+    return _method_data;
   }
-  return _method_data;
                      
+  return NULL;
 }
 
 
@@ -955,7 +949,7 @@ void ciMethod::log_nmethod_identity(xmlStream* log) {
 bool ciMethod::is_not_reached(int bci) {
   check_is_loaded();
   VM_ENTRY_MARK;
-  return Interpreter::is_not_reached(
+  return AbstractInterpreter::is_not_reached(
                methodHandle(THREAD, get_methodOop()), bci);
 }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)systemDictionary.hpp	1.153 07/05/05 17:05:56 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -183,6 +183,9 @@ public:
   // Applies "f->do_oop" to all root oops in the system dictionary.
   static void oops_do(OopClosure* f);
 
+  // Applies "f->do_oop" to root oops that are loaded from a shared heap.
+  static void shared_oops_do(OopClosure* f);
+
   // System loader lock
   static oop system_loader_lock()	    { return _system_loader_lock_obj; }
 
@@ -306,9 +309,6 @@ public:
 
   static klassOop sun_misc_AtomicLongCSImpl_klass() { return _sun_misc_AtomicLongCSImpl_klass; }
 
-  // To support incremental JRE downloads (KERNEL JRE). Null if not present.
-  static klassOop sun_jkernel_DownloadManager_klass() { return _sun_jkernel_DownloadManager_klass; }
-
   static klassOop boolean_klass()           { return check_klass(_boolean_klass); }
   static klassOop char_klass()              { return check_klass(_char_klass); }
   static klassOop float_klass()             { return check_klass(_float_klass); }
@@ -355,6 +355,20 @@ private:
   }
 
 public:
+  static oop int_mirror()                   { return check_mirror(_int_mirror); }
+  static oop float_mirror()                 { return check_mirror(_float_mirror); }
+  static oop double_mirror()                { return check_mirror(_double_mirror); }
+  static oop byte_mirror()                  { return check_mirror(_byte_mirror); }
+  static oop bool_mirror()                  { return check_mirror(_bool_mirror); }
+  static oop char_mirror()                  { return check_mirror(_char_mirror); }
+  static oop long_mirror()                  { return check_mirror(_long_mirror); }
+  static oop short_mirror()                 { return check_mirror(_short_mirror); }
+  static oop void_mirror()                  { return check_mirror(_void_mirror); }
+
+  static oop java_mirror(BasicType t) {
+    assert((uint)t < T_VOID+1, "range check");
+    return check_mirror(_mirrors[t]);
+  }
   // Note:  java_lang_Class::primitive_type is the inverse of java_mirror
 
   // Check class loader constraints
@@ -491,6 +505,7 @@ private:
   
   // Initialization
   static void initialize_preloaded_classes(TRAPS);
+  static void initialize_basic_type_mirrors(TRAPS);
     
   // Class loader constraints
   static void check_constraints(int index, unsigned int hash,
@@ -558,9 +573,6 @@ private:
 
   static klassOop _sun_misc_AtomicLongCSImpl_klass;
 
-  // KERNEL JRE support.
-  static klassOop _sun_jkernel_DownloadManager_klass;
-
   // Lazily loaded klasses
   static volatile klassOop _abstract_ownable_synchronizer_klass;
 
@@ -581,4 +593,18 @@ private:
 
   static bool _has_loadClassInternal;
   static bool _has_checkPackageAccess;
+
+  // Primitive classes
+  static oop _int_mirror;
+  static oop _float_mirror;
+  static oop _double_mirror;
+  static oop _byte_mirror;
+  static oop _bool_mirror;
+  static oop _char_mirror;
+  static oop _long_mirror;
+  static oop _short_mirror;
+  static oop _void_mirror;
+
+  // table of same
+  static oop _mirrors[T_VOID+1];
 };

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)os_win32.cpp	1.528 07/06/19 03:53:39 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -144,9 +144,6 @@ void os::run_periodic_checks() {
   return;
 }
 
-#ifndef _WIN64
-LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo);
-#endif
 void os::init_system_properties_values() {
   /* sysclasspath, java_home, dll_dir */
   {
@@ -261,10 +258,6 @@ void os::init_system_properties_values() {
     Arguments::set_endorsed_dirs(buf);
     #undef ENDORSED_DIR
   }
-
-#ifndef _WIN64
-  SetUnhandledExceptionFilter(Handle_FLT_Exception);
-#endif 
 
   // Done
   return;
@@ -993,7 +986,7 @@ const char * os::get_temp_directory()
 // Needs to be in os specific directory because windows requires another
 // header file <direct.h>
 const char* os::get_current_directory(char *buf, int buflen) {
-  return _getcwd(buf, buflen);
+  return getcwd(buf, buflen);
 }
 
 //-----------------------------------------------------------
@@ -1840,52 +1833,6 @@ LONG Handle_IDiv_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
   return EXCEPTION_CONTINUE_EXECUTION;
 }
 
-#ifndef  _WIN64
-//-----------------------------------------------------------------------------
-LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
-  // handle exception caused by native mothod modifying control word
-  PCONTEXT ctx = exceptionInfo->ContextRecord;
-  DWORD exception_code = exceptionInfo->ExceptionRecord->ExceptionCode;
-
-  switch (exception_code) {
-    case EXCEPTION_FLT_DENORMAL_OPERAND:
-    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-    case EXCEPTION_FLT_INEXACT_RESULT:
-    case EXCEPTION_FLT_INVALID_OPERATION:
-    case EXCEPTION_FLT_OVERFLOW:
-    case EXCEPTION_FLT_STACK_CHECK:
-    case EXCEPTION_FLT_UNDERFLOW:
-      jint fp_control_word = (* (jint*) StubRoutines::addr_fpu_cntrl_wrd_std());
-      if (fp_control_word != ctx->FloatSave.ControlWord) {
-        // Restore FPCW and mask out FLT exceptions
-        ctx->FloatSave.ControlWord = fp_control_word | 0xffffffc0;
-        // Mask out pending FLT exceptions
-        ctx->FloatSave.StatusWord &=  0xffffff00;
-        return EXCEPTION_CONTINUE_EXECUTION;
-      }
-  }
-  return EXCEPTION_CONTINUE_SEARCH;
-}
-#else //_WIN64
-/*
-  On Windows, the mxcsr control bits are non-volatile across calls
-  See also CR 6192333
-  If EXCEPTION_FLT_* happened after some native method modified 
-  mxcsr - it is not a jvm fault.
-  However should we decide to restore of mxcsr after a faulty 
-  native method we can uncomment following code
-      jint MxCsr = INITIAL_MXCSR;
-        // we can't use StubRoutines::addr_mxcsr_std()
-        // because in Win64 mxcsr is not saved there
-      if (MxCsr != ctx->MxCsr) {
-        ctx->MxCsr = MxCsr;
-        return EXCEPTION_CONTINUE_EXECUTION;
-      }
-
-*/
-#endif //_WIN64
-
-
 // Fatal error reporting is single threaded so we can make this a
 // static and preallocated.  If it's more than MAX_PATH silently ignore
 // it.
@@ -2011,8 +1958,8 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
     PEXCEPTION_RECORD exceptionRecord = exceptionInfo->ExceptionRecord;
     address addr = (address) exceptionRecord->ExceptionInformation[1];
     if ( os::is_memory_serialize_page(thread, addr) ) {
-      // Block current thread until the memory serialize page permission restored.
-      os::block_on_serialize_page_trap();
+       // Block current thread until the memory serialize page permission restored. 
+       os::block_on_serialize_page_trap(); 
       return EXCEPTION_CONTINUE_EXECUTION;
     }
   }
@@ -2224,15 +2171,7 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
       
       } // switch
     }
-#ifndef _WIN64
-    if ((thread->thread_state() == _thread_in_Java) || 
-        (thread->thread_state() == _thread_in_native) )
-    {
-      LONG result=Handle_FLT_Exception(exceptionInfo);
-      if (result==EXCEPTION_CONTINUE_EXECUTION) return result;
-    }
-#endif //_WIN64
-   }
+  }
 
   if (exception_code != EXCEPTION_BREAKPOINT) {    
 #ifndef _WIN64
@@ -2626,14 +2565,6 @@ class HighResolutionInterval {
   // the duration of their interval.
   // We carefully set the resolution back, since otherwise we 
   // seem to incur an overhead (3%?) that we don't need.
-  // CONSIDER: if ms is small, say 3, then we should run with a high resolution time.
-  // Buf if ms is large, say 500, or 503, we should avoid the call to timeBeginPeriod().
-  // Alternatively, we could compute the relative error (503/500 = .6%) and only use
-  // timeBeginPeriod() if the relative error exceeded some threshold. 
-  // timeBeginPeriod() has been linked to problems with clock drift on win32 systems and
-  // to decreased efficiency related to increased timer "tick" rates.  We want to minimize
-  // (a) calls to timeBeginPeriod() and timeEndPeriod() and (b) time spent with high
-  // resolution timers running.  
 private:
     jlong resolution;
 public:
@@ -2707,7 +2638,7 @@ void os::infinite_sleep() {
 
 typedef BOOL (WINAPI * STTSignature)(void) ; 
 
-os::YieldResult os::NakedYield() { 
+void os::yield() {  
   // Use either SwitchToThread() or Sleep(0)
   // Consider passing back the return value from SwitchToThread().  
   // We use GetProcAddress() as ancient Win9X versions of windows doen't support SwitchToThread.
@@ -2719,14 +2650,13 @@ os::YieldResult os::NakedYield() {
     // It's OK if threads race during initialization as the operation above is idempotent.
   }
   if (stt != NULL) { 
-    return (*stt)() ? os::YIELD_SWITCHED : os::YIELD_NONEREADY ; 
+    (*stt)() ; 
   } else { 
-    Sleep (0) ;     
+    Sleep (0) ; 
   }
-  return os::YIELD_UNKNOWN ; 
 }
 
-void os::yield() {  os::NakedYield(); } 
+void os::NakedYield() { os::yield(); } 
 
 void os::yield_all(int attempts) {
   // Yields to all threads, including threads with lower priorities    
@@ -3669,105 +3599,6 @@ void os::PlatformEvent::unpark() {
   }
   if (v < 0) {
      ::SetEvent (_ParkHandle) ; 
-  }
-}
-
-
-// JSR166
-// -------------------------------------------------------
-
-/*
- * The Windows implementation of Park is very straightforward: Basic
- * operations on Win32 Events turn out to have the right semantics to
- * use them directly. We opportunistically resuse the event inherited
- * from Monitor.
- */
-
-
-void Parker::park(bool isAbsolute, jlong time) {
-  guarantee (_ParkEvent != NULL, "invariant") ; 
-  // First, demultiplex/decode time arguments
-  if (time < 0) { // don't wait
-    return;  
-  }
-  else if (time == 0) {
-    time = INFINITE;
-  }
-  else if  (isAbsolute) {
-    time -= os::javaTimeMillis(); // convert to relative time
-    if (time <= 0) // already elapsed
-      return;
-  }
-  else { // relative
-    time /= 1000000; // Must coarsen from nanos to millis
-    if (time == 0)   // Wait for the minimal time unit if zero
-      time = 1;
-  } 
-
-  JavaThread* thread = (JavaThread*)(Thread::current());
-  assert(thread->is_Java_thread(), "Must be JavaThread");
-  JavaThread *jt = (JavaThread *)thread;
-
-  // Don't wait if interrupted or already triggered
-  if (Thread::is_interrupted(thread, false) || 
-    WaitForSingleObject(_ParkEvent, 0) == WAIT_OBJECT_0) {
-    ResetEvent(_ParkEvent);
-    return;
-  }
-  else {
-    ThreadBlockInVM tbivm(jt);
-    OSThreadWaitState osts(thread->osthread(), false /* not Object.wait() */);
-    jt->set_suspend_equivalent();
-    
-    WaitForSingleObject(_ParkEvent,  time);
-    ResetEvent(_ParkEvent);
-    
-    // If externally suspended while waiting, re-suspend
-    if (jt->handle_special_suspend_equivalent_condition()) {
-      jt->java_suspend_self();
-    }
-  }
-}
-
-void Parker::unpark() {
-  guarantee (_ParkEvent != NULL, "invariant") ; 
-  SetEvent(_ParkEvent);
-}
-
-// Run the specified command in a separate process. Return its exit value,
-// or -1 on failure (e.g. can't create a new process).
-int os::fork_and_exec(char* cmd) {
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
-
-  memset(&si, 0, sizeof(si));
-  si.cb = sizeof(si);
-  memset(&pi, 0, sizeof(pi));
-  BOOL rslt = CreateProcess(NULL,   // executable name - use command line
-                            cmd,    // command line
-                            NULL,   // process security attribute
-                            NULL,   // thread security attribute
-                            TRUE,   // inherits system handles
-                            0,      // no creation flags
-                            NULL,   // use parent's environment block
-                            NULL,   // use parent's starting directory
-                            &si,    // (in) startup information
-                            &pi);   // (out) process information
-
-  if (rslt) {
-    // Wait until child process exits.
-    WaitForSingleObject(pi.hProcess, INFINITE);
-
-    DWORD exit_code;
-    GetExitCodeProcess(pi.hProcess, &exit_code);
-
-    // Close process and thread handles.
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    return (int)exit_code;
-  } else {
-    return -1;
   }
 }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)ciSymbol.hpp	1.15 07/05/17 15:50:09 JVM"
 #endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.

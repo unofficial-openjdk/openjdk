@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)stubRoutines.cpp	1.115 07/07/19 12:19:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,6 +43,7 @@ address StubRoutines::_call_stub_entry                          = NULL;
 address StubRoutines::_catch_exception_entry                    = NULL;
 address StubRoutines::_forward_exception_entry                  = NULL;
 address StubRoutines::_throw_AbstractMethodError_entry          = NULL;
+address StubRoutines::_throw_IncompatibleClassChangeError_entry = NULL;
 address StubRoutines::_throw_ArithmeticException_entry          = NULL;
 address StubRoutines::_throw_NullPointerException_entry         = NULL;
 address StubRoutines::_throw_NullPointerException_at_call_entry = NULL;

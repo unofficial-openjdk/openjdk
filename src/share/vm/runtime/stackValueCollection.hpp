@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)stackValueCollection.hpp	1.14 07/05/05 17:06:58 JVM"
 #endif
 /*
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.

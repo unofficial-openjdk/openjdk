@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)atomic_win32_i486.inline.hpp	1.20 07/05/17 15:49:10 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.

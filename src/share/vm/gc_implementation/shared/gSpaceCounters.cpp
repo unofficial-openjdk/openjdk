@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)gSpaceCounters.cpp	1.11 07/05/05 17:05:33 JVM"
 #endif
 /*
  * Copyright 2002-2004 Sun Microsystems, Inc.  All Rights Reserved.

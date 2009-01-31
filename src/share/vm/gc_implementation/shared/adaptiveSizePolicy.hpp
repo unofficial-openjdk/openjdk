@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)adaptiveSizePolicy.hpp	1.15 07/05/05 17:05:32 JVM"
 #endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.

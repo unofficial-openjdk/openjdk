@@ -59,9 +59,8 @@ ARCH=i486
 
 !if "$(ARCH)" != "amd64"
 !if "$(ARCH)" != "ia64"
-!ifndef CC_INTERP
+# uncomment this line to have build of compiler2 actually build tiered
 FORCE_TIERED=1
-!endif
 !endif
 !endif
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)stubRoutines.hpp	1.118 07/07/19 12:19:07 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -87,6 +87,7 @@ class StubRoutines: AllStatic {
   static address _forward_exception_entry;
   static address _catch_exception_entry;
   static address _throw_AbstractMethodError_entry;
+  static address _throw_IncompatibleClassChangeError_entry;
   static address _throw_ArithmeticException_entry;
   static address _throw_NullPointerException_entry;
   static address _throw_NullPointerException_at_call_entry;
@@ -187,6 +188,7 @@ class StubRoutines: AllStatic {
   static address forward_exception_entry()                 { return _forward_exception_entry; }
   // Implicit exceptions
   static address throw_AbstractMethodError_entry()         { return _throw_AbstractMethodError_entry; }
+  static address throw_IncompatibleClassChangeError_entry(){ return _throw_IncompatibleClassChangeError_entry; }
   static address throw_ArithmeticException_entry()         { return _throw_ArithmeticException_entry; }
   static address throw_NullPointerException_entry()        { return _throw_NullPointerException_entry; }
   static address throw_NullPointerException_at_call_entry(){ return _throw_NullPointerException_at_call_entry; }

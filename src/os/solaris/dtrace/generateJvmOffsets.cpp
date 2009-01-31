@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)generateJvmOffsets.cpp	1.33 07/05/05 17:04:38 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -31,7 +31,7 @@
  * contents of __JvmOffsets[] table.
  * The __JvmOffsets[] table is located in generated JvmOffsets.cpp.
  *
- * GENOFFS_SCCS_VER %L%
+ * GENOFFS_SCCS_VER 33
  */
 
 #include "generateJvmOffsets.h"

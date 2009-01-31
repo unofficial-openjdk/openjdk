@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)jvm.h	1.87 07/08/20 16:26:30 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1499,8 +1499,7 @@ typedef struct {
      * the new bit is also added in the main/baseline.
      */
     unsigned int is_attachable : 1;
-    unsigned int is_kernel_jvm : 1;
-    unsigned int : 30;
+    unsigned int : 31;
     unsigned int : 32;
     unsigned int : 32;
 } jvm_version_info;

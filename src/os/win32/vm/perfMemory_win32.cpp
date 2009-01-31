@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)perfMemory_win32.cpp	1.33 07/09/26 12:45:28 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,10 +34,10 @@
 #include <errno.h>
 #include <lmcons.h>
 
-// enable the use of the NT low level security APIs for creating
-// access control lists for the user temporary directory, the shared
-// shared memory object, and the backing store file.
-#define USE_NT_SECURITY 
+typedef BOOL (WINAPI *SetSecurityDescriptorControlFnPtr)(
+   IN PSECURITY_DESCRIPTOR pSecurityDescriptor,
+   IN SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+   IN SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet);
 
 // Standard Memory Implementation Details
 
@@ -713,7 +713,6 @@ static HANDLE create_file_mapping(const char* name, HANDLE fh, LPSECURITY_ATTRIB
   return fmh;
 }
 
-#ifdef USE_NT_SECURITY
 
 // method to free the given security descriptor and the contained
 // access control list.
@@ -824,17 +823,25 @@ static PSID get_user_sid(HANDLE hProcess) {
   return pSID;
 }
 
-#define ACL_SIZE 1024  // hard coded value taken from example code
+// structure used to consolidate access control entry information
+//
+typedef struct ace_data {
+  PSID pSid;      // SID of the ACE
+  DWORD mask;     // mask for the ACE
+} ace_data_t;
+
 
 // method to add an allow access control entry with the access rights
 // indicated in mask for the principal indicated in SID to the given
-// security descriptor.
+// security descriptor. Much of the DACL handling was adapted from
+// the example provided here:
+//      http://support.microsoft.com/kb/102102/EN-US/
 //
-static bool add_allow_ace(PSECURITY_DESCRIPTOR pSD, PSID pSID, DWORD mask) {
 
-  PACL pACL = NULL;
-  PACL pSDACL = NULL;
-  DWORD rsize = 0;
+static bool add_allow_aces(PSECURITY_DESCRIPTOR pSD,
+                           ace_data_t aces[], int ace_count) {
+  PACL newACL = NULL;
+  PACL oldACL = NULL;
 
   if (pSD == NULL) {
     return false;
@@ -843,7 +850,7 @@ static bool add_allow_ace(PSECURITY_DESCRIPTOR pSD, PSID pSID, DWORD mask) {
   BOOL exists, isdefault;
 
   // retrieve any existing access control list.
-  if (!GetSecurityDescriptorDacl(pSD, &exists, &pSDACL, &isdefault)) {
+  if (!GetSecurityDescriptorDacl(pSD, &exists, &oldACL, &isdefault)) {
     if (PrintMiscellaneous && Verbose) {
       warning("GetSecurityDescriptor failure: lasterror = %d \n",
 	      GetLastError());
@@ -851,62 +858,172 @@ static bool add_allow_ace(PSECURITY_DESCRIPTOR pSD, PSID pSID, DWORD mask) {
     return false;
   }
 
-  // check if the access control list is one that we added or a
-  // a null or default access control list.
-  if (pSDACL == NULL || (exists && isdefault)) {
+  // get the size of the DACL
+  ACL_SIZE_INFORMATION aclinfo;
 
-    // create our own access control list for this security descriptor
-    pACL = (PACL) NEW_C_HEAP_ARRAY(char, ACL_SIZE);
+  // GetSecurityDescriptorDacl may return true value for exists (lpbDaclPresent) 
+  // while oldACL is NULL for some case.
+  if (oldACL == NULL) {
+    exists = FALSE;
+  }
 
-    if (!InitializeAcl(pACL, ACL_SIZE, ACL_REVISION)) {
+  if (exists) {
+    if (!GetAclInformation(oldACL, &aclinfo,
+                           sizeof(ACL_SIZE_INFORMATION),
+                           AclSizeInformation)) {
       if (PrintMiscellaneous && Verbose) {
-        warning("InitializeAcl failure: lasterror = %d \n", GetLastError());
+        warning("GetAclInformation failure: lasterror = %d \n", GetLastError());
+        return false;
       }
-      FREE_C_HEAP_ARRAY(char, pACL);
+    }
+  } else {
+    aclinfo.AceCount = 0; // assume NULL DACL
+    aclinfo.AclBytesFree = 0;
+    aclinfo.AclBytesInUse = sizeof(ACL);
+  }
+
+  // compute the size needed for the new ACL
+  // initial size of ACL is sum of the following:
+  //   * size of ACL structure.
+  //   * size of each ACE structure that ACL is to contain minus the sid
+  //     sidStart member (DWORD) of the ACE.
+  //   * length of the SID that each ACE is to contain. 
+  DWORD newACLsize = aclinfo.AclBytesInUse + 
+			(sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) * ace_count;
+  for (int i = 0; i < ace_count; i++) {
+     newACLsize += GetLengthSid(aces[i].pSid);
+  }
+
+  // create the new ACL
+  newACL = (PACL) NEW_C_HEAP_ARRAY(char, newACLsize);
+
+  if (!InitializeAcl(newACL, newACLsize, ACL_REVISION)) {
+    if (PrintMiscellaneous && Verbose) {
+      warning("InitializeAcl failure: lasterror = %d \n", GetLastError());
+    }
+    FREE_C_HEAP_ARRAY(char, newACL);
+    return false;
+  }
+
+  unsigned int ace_index = 0;
+  // copy any existing ACEs from the old ACL (if any) to the new ACL.
+  if (aclinfo.AceCount != 0) {
+    while (ace_index < aclinfo.AceCount) {
+      LPVOID ace;
+      if (!GetAce(oldACL, ace_index, &ace)) {
+        if (PrintMiscellaneous && Verbose) {
+          warning("InitializeAcl failure: lasterror = %d \n", GetLastError());
+        }
+        FREE_C_HEAP_ARRAY(char, newACL);
+        return false;
+      }
+      if (((ACCESS_ALLOWED_ACE *)ace)->Header.AceFlags && INHERITED_ACE) {
+        // this is an inherited, allowed ACE; break from loop so we can
+        // add the new access allowed, non-inherited ACE in the correct
+        // position, immediately following all non-inherited ACEs.
+        break;
+      }
+
+      // determine if the SID of this ACE matches any of the SIDs
+      // for which we plan to set ACEs.
+      int matches = 0;
+      for (int i = 0; i < ace_count; i++) {
+        if (EqualSid(aces[i].pSid, &(((ACCESS_ALLOWED_ACE *)ace)->SidStart))) {
+          matches++;
+	  break;
+        }
+      }
+
+      // if there are no SID matches, then add this existing ACE to the new ACL
+      if (matches == 0) {
+        if (!AddAce(newACL, ACL_REVISION, MAXDWORD, ace,
+                    ((PACE_HEADER)ace)->AceSize)) {
+          if (PrintMiscellaneous && Verbose) {
+            warning("AddAce failure: lasterror = %d \n", GetLastError());
+          }
+          FREE_C_HEAP_ARRAY(char, newACL);
+          return false;
+        }
+      }
+      ace_index++;
+    }
+  }
+
+  // add the passed-in access control entries to the new ACL
+  for (int i = 0; i < ace_count; i++) {
+    if (!AddAccessAllowedAce(newACL, ACL_REVISION,
+                             aces[i].mask, aces[i].pSid)) {
+      if (PrintMiscellaneous && Verbose) {
+        warning("AddAccessAllowedAce failure: lasterror = %d \n",
+                GetLastError());
+      }
+      FREE_C_HEAP_ARRAY(char, newACL);
       return false;
     }
   }
-  else {
-   // use the access control list that we previously added to this
-   // security descriptor 
-   //
-   pACL = pSDACL;
-  }
 
-  // add the access control entry to the ACL
-  if (!AddAccessAllowedAce(pACL, ACL_REVISION, mask, pSID)) {
-    if (PrintMiscellaneous && Verbose) {
-      warning("AddAccessAllowedAce failure: lasterror = %d \n",
-	      GetLastError());
+  // now copy the rest of the inherited ACEs from the old ACL
+  if (aclinfo.AceCount != 0) {
+    // picking up at ace_index, where we left off in the
+    // previous ace_index loop
+    while (ace_index < aclinfo.AceCount) {
+      LPVOID ace;
+      if (!GetAce(oldACL, ace_index, &ace)) {
+        if (PrintMiscellaneous && Verbose) {
+          warning("InitializeAcl failure: lasterror = %d \n", GetLastError());
+        }
+        FREE_C_HEAP_ARRAY(char, newACL);
+        return false;
+      }
+      if (!AddAce(newACL, ACL_REVISION, MAXDWORD, ace,
+                  ((PACE_HEADER)ace)->AceSize)) {
+        if (PrintMiscellaneous && Verbose) {
+          warning("AddAce failure: lasterror = %d \n", GetLastError());
+        }
+        FREE_C_HEAP_ARRAY(char, newACL);
+        return false;
+      }
+      ace_index++;
     }
-    if (pACL != pSDACL) FREE_C_HEAP_ARRAY(char, pACL);
-    return false;
   }
 
-  // add the ACL to the security descriptor.
-  if (!SetSecurityDescriptorDacl(pSD, TRUE, pACL, FALSE)) {
+  // add the new ACL to the security descriptor.
+  if (!SetSecurityDescriptorDacl(pSD, TRUE, newACL, FALSE)) {
     if (PrintMiscellaneous && Verbose) {
       warning("SetSecurityDescriptorDacl failure:"
-	      " lasterror = %d \n", GetLastError());
+              " lasterror = %d \n", GetLastError());
     }
-    if (pACL != pSDACL) FREE_C_HEAP_ARRAY(char, pACL);
+    FREE_C_HEAP_ARRAY(char, newACL);
     return false;
   }
 
-  // Note, the security descriptor maintains a reference to the pACL, not
-  // a copy of it. Therefore, the pACL is not freed here. It is freed when
-  // the security descriptor containing its reference is freed.
-  //
-  return true;
+  // if running on windows 2000 or later, set the automatic inheritence
+  // control flags. 
+  SetSecurityDescriptorControlFnPtr _SetSecurityDescriptorControl;
+  _SetSecurityDescriptorControl = (SetSecurityDescriptorControlFnPtr)
+       GetProcAddress(GetModuleHandle(TEXT("advapi32.dll")),
+                      "SetSecurityDescriptorControl");
+
+  if (_SetSecurityDescriptorControl != NULL) {
+    // We do not want to further propogate inherited DACLs, so making them
+    // protected prevents that.
+    if (!_SetSecurityDescriptorControl(pSD, SE_DACL_PROTECTED,
+                                            SE_DACL_PROTECTED)) {
+      if (PrintMiscellaneous && Verbose) {
+        warning("SetSecurityDescriptorControl failure:"
+                " lasterror = %d \n", GetLastError());
+      }
+      FREE_C_HEAP_ARRAY(char, newACL);
+      return false;
+    }
+  }
+   // Note, the security descriptor maintains a reference to the newACL, not
+   // a copy of it. Therefore, the newACL is not freed here. It is freed when
+   // the security descriptor containing its reference is freed.
+   //
+   return true;
 }
-
-// structure used to consolidate access control entry information
-//
-typedef struct ace_data {
-  PSID pSid;      // SID of the ACE
-  DWORD mask;     // mask for the ACE
-} ace_data_t;
-
+ 
 // method to create a security attributes structure, which contains a
 // security descriptor and an access control list comprised of 0 or more
 // access control entries. The method take an array of ace_data structures
@@ -918,7 +1035,7 @@ typedef struct ace_data {
 //
 static LPSECURITY_ATTRIBUTES make_security_attr(ace_data_t aces[], int count) {
 
-  // allocate space of a security descriptor
+  // allocate space for a security descriptor
   PSECURITY_DESCRIPTOR pSD = (PSECURITY_DESCRIPTOR)
                          NEW_C_HEAP_ARRAY(char, SECURITY_DESCRIPTOR_MIN_LENGTH);
 
@@ -932,17 +1049,10 @@ static LPSECURITY_ATTRIBUTES make_security_attr(ace_data_t aces[], int count) {
     return NULL;
   }
 
-  // add an access control entry for each of the elements in the
-  // ace_data array.
-  //
-  for (int i = 0; i < count; i++) {
-
-    // set the requested ACE on the security descriptor
-    if (aces[i].pSid == NULL ||
-        !add_allow_ace(pSD, aces[i].pSid, aces[i].mask)) {
-      free_security_desc(pSD);
-      return NULL;
-    }
+  // add the access control entries
+  if (!add_allow_aces(pSD, aces, count)) {
+    free_security_desc(pSD);
+    return NULL;
   }
 
   // allocate and initialize the security attributes structure and
@@ -960,44 +1070,69 @@ static LPSECURITY_ATTRIBUTES make_security_attr(ace_data_t aces[], int count) {
 // method to create a security attributes structure with a restrictive
 // access control list that creates a set access rights for the user/owner
 // of the securable object and a separate set access rights for everyone else.
+// also provides for full access rights for the administrator group.
 //
 // the caller must free the resources associated with the security
 // attributes structure created by this method by calling the
 // free_security_attr() method.
 //
-static LPSECURITY_ATTRIBUTES make_user_everybody_security_attr(DWORD umask, DWORD emask) {
 
-  ace_data_t aces[2];
+static LPSECURITY_ATTRIBUTES make_user_everybody_admin_security_attr(
+                                DWORD umask, DWORD emask, DWORD amask) {
+
+  ace_data_t aces[3];
 
   // initialize the user ace data
   aces[0].pSid = get_user_sid(GetCurrentProcess());
   aces[0].mask = umask;
 
-  // get the well know SID for the universal Everybody
-  PSID everyoneSid = NULL;
-  SID_IDENTIFIER_AUTHORITY SIDAuth = SECURITY_WORLD_SID_AUTHORITY;
-  
-  if (!AllocateAndInitializeSid( &SIDAuth, 1, SECURITY_WORLD_RID,
-           0, 0, 0, 0, 0, 0, 0, &everyoneSid)) {
+  // get the well known SID for BUILTIN\Administrators
+  PSID administratorsSid = NULL;
+  SID_IDENTIFIER_AUTHORITY SIDAuthAdministrators = SECURITY_NT_AUTHORITY;
+
+  if (!AllocateAndInitializeSid( &SIDAuthAdministrators, 2,
+           SECURITY_BUILTIN_DOMAIN_RID,
+           DOMAIN_ALIAS_RID_ADMINS,
+           0, 0, 0, 0, 0, 0, &administratorsSid)) {
 
     if (PrintMiscellaneous && Verbose) {
       warning("AllocateAndInitializeSid failure: "
-	      "lasterror = %d \n", GetLastError());
+              "lasterror = %d \n", GetLastError());
+    }
+    return NULL;
+  }
+
+  // initialize the ace data for administrator group
+  aces[1].pSid = administratorsSid;
+  aces[1].mask = amask;
+
+  // get the well known SID for the universal Everybody
+  PSID everybodySid = NULL;
+  SID_IDENTIFIER_AUTHORITY SIDAuthEverybody = SECURITY_WORLD_SID_AUTHORITY;
+  
+  if (!AllocateAndInitializeSid( &SIDAuthEverybody, 1, SECURITY_WORLD_RID,
+           0, 0, 0, 0, 0, 0, 0, &everybodySid)) {
+
+    if (PrintMiscellaneous && Verbose) {
+      warning("AllocateAndInitializeSid failure: "
+              "lasterror = %d \n", GetLastError());
     }
     return NULL;
   }
 
   // initialize the ace data for everybody else.
-  aces[1].pSid = everyoneSid;
-  aces[1].mask = emask;
+  aces[2].pSid = everybodySid;
+  aces[2].mask = emask;
 
   // create a security attributes structure with access control
   // entries as initialized above.
-  LPSECURITY_ATTRIBUTES lpSA = make_security_attr(aces, 2);
+  LPSECURITY_ATTRIBUTES lpSA = make_security_attr(aces, 3);
   FREE_C_HEAP_ARRAY(char, aces[0].pSid);
-  FreeSid(everyoneSid);
+  FreeSid(everybodySid);
+  FreeSid(administratorsSid);
   return(lpSA);
 }
+
 
 // method to create the security attributes structure for restricting
 // access to the user temporary directory.
@@ -1014,8 +1149,9 @@ static LPSECURITY_ATTRIBUTES make_tmpdir_security_attr() {
   //
   DWORD umask = STANDARD_RIGHTS_REQUIRED | FILE_ALL_ACCESS;
   DWORD emask = GENERIC_READ | FILE_LIST_DIRECTORY | FILE_TRAVERSE;
+  DWORD amask = STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS;
 
-  return make_user_everybody_security_attr(umask, emask);
+  return make_user_everybody_admin_security_attr(umask, emask, amask);
 }
 
 // method to create the security attributes structure for restricting
@@ -1031,13 +1167,12 @@ static LPSECURITY_ATTRIBUTES make_file_security_attr() {
   // and attribute read-only access rights for everybody else. This
   // is effectively equivalent to UNIX 600 permissions on a file.
   //
-  DWORD umask = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE |
-                FILE_READ_ATTRIBUTES | FILE_READ_DATA | FILE_READ_EA |
-                FILE_WRITE_ATTRIBUTES | FILE_WRITE_DATA | FILE_WRITE_EA |
-                FILE_APPEND_DATA;
-  DWORD emask = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | FILE_READ_EA;
+  DWORD umask = STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS;
+  DWORD emask = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES |
+                 FILE_READ_EA | FILE_LIST_DIRECTORY | FILE_TRAVERSE;
+  DWORD amask = STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS;
 
-  return make_user_everybody_security_attr(umask, emask);
+  return make_user_everybody_admin_security_attr(umask, emask, amask);
 }
 
 // method to create the security attributes structure for restricting
@@ -1056,27 +1191,21 @@ static LPSECURITY_ATTRIBUTES make_smo_security_attr() {
   //
   DWORD umask = STANDARD_RIGHTS_REQUIRED | FILE_MAP_ALL_ACCESS;
   DWORD emask = STANDARD_RIGHTS_READ; // attributes only
+  DWORD amask = STANDARD_RIGHTS_ALL | FILE_MAP_ALL_ACCESS;
 
-  return make_user_everybody_security_attr(umask, emask);
+  return make_user_everybody_admin_security_attr(umask, emask, amask);
 }
-#endif
 
 // make the user specific temporary directory
 //
 static bool make_user_tmp_dir(const char* dirname) {
 
-#ifdef USE_NT_SECURITY
 
   LPSECURITY_ATTRIBUTES pDirSA = make_tmpdir_security_attr();
   if (pDirSA == NULL) {
     return false;
   }
 
-#else
-
-  LPSECURITY_ATTRIBUTES pDirSA = NULL;
-
-#endif
 
   // create the directory with the given security attributes
   if (!CreateDirectory(dirname, pDirSA)) {
@@ -1093,6 +1222,19 @@ static bool make_user_tmp_dir(const char* dirname) {
         }
         return false;
       }
+      // The administrator should be able to delete this directory.
+      // But the directory created by previous version of JVM may not
+      // have permission for administrators to delete this directory.
+      // So add full permission to the administrator. Also setting new
+      // DACLs might fix the corrupted the DACLs.
+      SECURITY_INFORMATION secInfo = DACL_SECURITY_INFORMATION;
+      if (!SetFileSecurity(dirname, secInfo, pDirSA->lpSecurityDescriptor)) {
+        if (PrintMiscellaneous && Verbose) {
+	  lasterror = GetLastError();
+          warning("SetFileSecurity failed for %s directory.  lasterror %d \n", 
+							dirname, lasterror);
+        }
+      } 
     }
     else {
       if (PrintMiscellaneous && Verbose) {
@@ -1102,10 +1244,8 @@ static bool make_user_tmp_dir(const char* dirname) {
     }
   }
 
-#ifdef USE_NT_SECURITY
   // free the security attributes structure
   free_security_attr(pDirSA);
-#endif
 
   return true;
 }
@@ -1120,7 +1260,6 @@ static HANDLE create_sharedmem_resources(const char* dirname, const char* filena
   HANDLE fh = INVALID_HANDLE_VALUE;
   HANDLE fmh = NULL;
 
-#ifdef USE_NT_SECURITY
 
   // create the security attributes for the backing store file
   LPSECURITY_ATTRIBUTES lpFileSA = make_file_security_attr();
@@ -1134,13 +1273,6 @@ static HANDLE create_sharedmem_resources(const char* dirname, const char* filena
     free_security_attr(lpFileSA);
     return NULL;
   }
-
-#else
-
-  LPSECURITY_ATTRIBUTES lpFileSA = NULL;
-  LPSECURITY_ATTRIBUTES lpSmoSA = NULL;
-
-#endif
 
   // create the user temporary directory
   if (!make_user_tmp_dir(dirname)) {
@@ -1174,9 +1306,7 @@ static HANDLE create_sharedmem_resources(const char* dirname, const char* filena
 
              NULL);                      /* HANDLE template file access */
 
-#ifdef USE_NT_SECURITY
   free_security_attr(lpFileSA);
-#endif
 
   if (fh == INVALID_HANDLE_VALUE) {
     DWORD lasterror = GetLastError();
@@ -1189,9 +1319,7 @@ static HANDLE create_sharedmem_resources(const char* dirname, const char* filena
   // try to create the file mapping
   fmh = create_file_mapping(objectname, fh, lpSmoSA, size);
 
-#ifdef USE_NT_SECURITY
   free_security_attr(lpSmoSA);
-#endif
 
   if (fmh == NULL) {
     // closing the file handle here will decrement the reference count

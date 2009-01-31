@@ -61,7 +61,7 @@ encode %{
 
   enc_class linux_breakpoint  %{
     MacroAssembler* masm = new MacroAssembler(&cbuf);    
-    masm->call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+    masm->call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
   %}
 
   enc_class call_epilog %{
@@ -145,7 +145,7 @@ void emit_break(CodeBuffer &cbuf) {
 
   // Debugger doesn't really catch this but best we can do so far QQQ
   MacroAssembler* masm = new MacroAssembler(&cbuf);
-  masm->call(RuntimeAddress(CAST_FROM_FN_PTR(address, os::breakpoint)));
+  masm->call(CAST_FROM_FN_PTR(address, os::breakpoint), relocInfo::runtime_call_type);
 }
 
 void MachBreakpointNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {

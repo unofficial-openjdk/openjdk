@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)vectornode.cpp	1.5 07/05/17 16:02:33 JVM"
 #endif
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "%W% %E% %U% JVM"
+#pragma ident "@(#)assembler_win32_i486.cpp	1.15 07/05/05 17:04:56 JVM"
 #endif
 /*
  * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #include "incls/_assembler_win32_i486.cpp.incl"
 
 
-void MacroAssembler::int3() {
+void Assembler::int3() {
   emit_byte(0xCC);
 }
 
@@ -52,11 +52,7 @@ void MacroAssembler::int3() {
 // movl reg, [reg + thread_ptr_offset]     Load thread
 //
 void MacroAssembler::get_thread(Register thread) {
-  // can't use ExternalAddress because it can't take NULL
-  AddressLiteral null(0, relocInfo::none);
-
-  prefix(FS_segment);
-  movptr(thread, null);
+  prefix(FS_segment); movl(thread, Address(0, relocInfo::none));
   assert(ThreadLocalStorage::get_thread_ptr_offset() != 0, 
          "Thread Pointer Offset has not been initialized");
   movl(thread, Address(thread, ThreadLocalStorage::get_thread_ptr_offset()));
